@@ -44,35 +44,37 @@ export default function Home() {
     <div className="min-h-screen bg-[#F8FAFF] font-sans">
       {/* Header */}
       <motion.header
-        className="bg-white px-8 py-6"
+        className="bg-white py-4 pr-18 border border-b-2 shadow-md"
         variants={headerVariants}
         initial="hidden"
         animate="visible"
       >
-        <div className="flex items-center gap-3">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          >
-            <Image
-              src="/images/qalert-icon.png"
-              alt="QAlert Logo"
-              width={40}
-              height={40}
-              priority
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <h1 className="text-2xl font-bold text-[#25323A]">QAlert</h1>
-            <p className="text-sm text-[#6C757D]">
-              Digital Queue & Notification System
-            </p>
-          </motion.div>
+        <div className="max-w-6xl mx-auto px-8">
+          <div className="flex items-center gap-3">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            >
+              <Image
+                src="/images/qalert-icon.png"
+                alt="QAlert Logo"
+                width={40}
+                height={40}
+                priority
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <h1 className="text-xl font-bold text-[#25323A]">QAlert</h1>
+              <p className="text-sm text-[#6C757D]">
+                Digital Queue & Notification System
+              </p>
+            </motion.div>
+          </div>
         </div>
       </motion.header>
 
