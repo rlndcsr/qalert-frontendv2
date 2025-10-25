@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -156,6 +159,7 @@ export default function Home() {
               className="w-full bg-[#4ad294] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#3bb882] transition-colors text-sm hover:cursor-pointer"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/patient")}
             >
               Enter as Patient
             </motion.button>
