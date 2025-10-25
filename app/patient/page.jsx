@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
@@ -21,11 +22,8 @@ export default function PatientPortal() {
   } = useAuth();
 
   const handleLogin = async (formData) => {
-    console.log("Login submitted:", formData);
-
     // Prevent multiple login attempts
     if (isLoggingIn) {
-      console.log("Login already in progress, ignoring duplicate request");
       return;
     }
 
@@ -33,21 +31,17 @@ export default function PatientPortal() {
       const result = await loginWithAPI(formData.email, formData.password);
 
       if (result.success) {
-        console.log("Login successful:", result.user);
+        toast.success("Login successful! Welcome back.");
         // User is now authenticated, the useAuth hook will handle the state update
       } else {
-        console.error("Login failed:", result.error);
-        // TODO: Show error message to user
-        alert(`Login failed: ${result.error}`);
+        // Error toast is already shown in useAuth hook
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert("An unexpected error occurred during login");
+      toast.error("An unexpected error occurred during login");
     }
   };
 
   const handleRegister = (formData) => {
-    console.log("Register submitted:", formData);
     // TODO: Implement actual registration API call
     // For now, simulate successful registration
     const mockUser = {
@@ -59,6 +53,7 @@ export default function PatientPortal() {
     };
 
     login(mockUser);
+    toast.success("Registration successful! Welcome to QAlert.");
   };
 
   return (

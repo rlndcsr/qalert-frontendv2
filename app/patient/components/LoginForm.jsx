@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function LoginForm({ onSubmit, isLoading = false }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,7 +20,6 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
 
     // Prevent submission if already loading
     if (isLoading) {
@@ -32,7 +31,7 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
     // If numeric, treat as phone and enforce PH local format: 09XXXXXXXXX (11 digits)
     if (/^\d+$/.test(identifier)) {
       if (!/^09\d{9}$/.test(identifier)) {
-        setError("Phone numbers must start with 09 and be 11 digits.");
+        toast.error("Phone numbers must start with 09 and be 11 digits.");
         return;
       }
     }
@@ -68,7 +67,6 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
           <p className="text-sm text-gray-500 mt-1">
             Enter your email, phone number, or university ID
           </p>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
 
         <div>

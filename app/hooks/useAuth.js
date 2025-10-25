@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
@@ -22,8 +23,7 @@ export function useAuth() {
         setIsAuthenticated(true);
         setUser(parsedUser);
       } catch (error) {
-        console.error("Error parsing user data:", error);
-        // Clear invalid data
+        // Clear invalid data silently
         localStorage.removeItem("token");
         localStorage.removeItem("userData");
       }
@@ -35,12 +35,10 @@ export function useAuth() {
   const loginWithAPI = async (emailAddress, password) => {
     // Prevent multiple simultaneous login attempts
     if (isLoggingIn) {
-      console.log("Login already in progress, ignoring duplicate request");
       return { success: false, error: "Login already in progress" };
     }
 
     setIsLoggingIn(true);
-    console.log("Starting login API call for:", emailAddress);
 
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
@@ -61,7 +59,6 @@ export function useAuth() {
       }
 
       const data = await response.json();
-      console.log("Login API response:", data);
 
       // Store token and user data
       localStorage.setItem("token", data.token);
@@ -72,7 +69,9 @@ export function useAuth() {
 
       return { success: true, user: data.user };
     } catch (error) {
-      console.error("Login error:", error);
+      toast.error(
+        error.message || "Login failed. Please check your credentials."
+      );
       return { success: false, error: error.message };
     } finally {
       setIsLoggingIn(false);
