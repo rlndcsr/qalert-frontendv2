@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-export default function LoginForm({ onSubmit }) {
+export default function LoginForm({ onSubmit, isLoading = false }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,6 +21,12 @@ export default function LoginForm({ onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
+
+    // Prevent submission if already loading
+    if (isLoading) {
+      return;
+    }
+
     const identifier = (formData.email || "").trim();
 
     // If numeric, treat as phone and enforce PH local format: 09XXXXXXXXX (11 digits)
@@ -81,9 +87,14 @@ export default function LoginForm({ onSubmit }) {
 
         <button
           type="submit"
-          className="w-full bg-[#4ad294] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#3bb882] transition-colors tracking-wide cursor-pointer"
+          disabled={isLoading}
+          className={`w-full font-medium py-2 px-4 rounded-lg transition-colors tracking-wide ${
+            isLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[#4ad294] text-white hover:bg-[#3bb882] cursor-pointer"
+          }`}
         >
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
     </motion.div>

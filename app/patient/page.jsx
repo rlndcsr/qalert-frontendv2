@@ -11,20 +11,39 @@ import { useAuth } from "../hooks/useAuth";
 export default function PatientPortal() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
-  const { isAuthenticated, user, isLoading, login, logout } = useAuth();
+  const {
+    isAuthenticated,
+    user,
+    isLoading,
+    isLoggingIn,
+    loginWithAPI,
+    logout,
+  } = useAuth();
 
-  const handleLogin = (formData) => {
+  const handleLogin = async (formData) => {
     console.log("Login submitted:", formData);
-    // TODO: Implement actual login API call
-    // For now, simulate successful login
-    const mockUser = {
-      id: 1,
-      name: "John Doe",
-      email: formData.email,
-      phone: formData.email.includes("09") ? formData.email : null,
-    };
 
-    login(mockUser);
+    // Prevent multiple login attempts
+    if (isLoggingIn) {
+      console.log("Login already in progress, ignoring duplicate request");
+      return;
+    }
+
+    try {
+      const result = await loginWithAPI(formData.email, formData.password);
+
+      if (result.success) {
+        console.log("Login successful:", result.user);
+        // User is now authenticated, the useAuth hook will handle the state update
+      } else {
+        console.error("Login failed:", result.error);
+        // TODO: Show error message to user
+        alert(`Login failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An unexpected error occurred during login");
+    }
   };
 
   const handleRegister = (formData) => {
@@ -143,7 +162,7 @@ export default function PatientPortal() {
               {/* Animated Forms */}
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "login" ? (
-                  <LoginForm onSubmit={handleLogin} />
+                  <LoginForm onSubmit={handleLogin} isLoading={isLoggingIn} />
                 ) : (
                   <RegisterForm onSubmit={handleRegister} />
                 )}
