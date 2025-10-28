@@ -92,6 +92,48 @@ export function useAuth() {
     setUser(null);
   };
 
+  const registerWithAPI = async (formData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email_address: formData.emailRegister,
+          phone_number: formData.phoneNumber,
+          id_number: formData.universityId || null,
+          password: formData.passwordRegister,
+          password_confirmation: formData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Only treat as success if response is actually successful
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        // Handle validation errors from backend
+        // Display the main message as toast
+        toast.error(data.message || "Registration failed");
+        return { success: false, error: data.message };
+      }
+    } catch (error) {
+      // Handle network errors or validation errors
+      if (error.name === "TypeError" || error.name === "SyntaxError") {
+        toast.error("Network error. Please check your connection.");
+        return { success: false, error: error.message };
+      }
+
+      // Handle validation errors from backend
+      toast.error(error.message || "Registration failed. Please try again.");
+      return { success: false, error: error.message };
+    }
+  };
+
   const updateUser = (updatedUserData) => {
     const newUserData = { ...user, ...updatedUserData };
     localStorage.setItem("userData", JSON.stringify(newUserData));
@@ -105,6 +147,7 @@ export function useAuth() {
     isLoggingIn,
     login,
     loginWithAPI,
+    registerWithAPI,
     logout,
     updateUser,
   };

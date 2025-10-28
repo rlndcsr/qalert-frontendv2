@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function RegisterForm({ onSubmit }) {
+  const { registerWithAPI } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     emailRegister: "",
@@ -13,6 +15,7 @@ export default function RegisterForm({ onSubmit }) {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,17 +25,37 @@ export default function RegisterForm({ onSubmit }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError(""); // Clear any existing errors
+    setIsSubmitting(true);
 
-    const phone = (formData.phoneNumber || "").trim();
-    if (!/^09\d{9}$/.test(phone)) {
-      setError("Phone numbers must start with 09 and be 11 digits.");
-      return;
+    try {
+      const result = await registerWithAPI(formData);
+      if (result.success) {
+        // Call the original onSubmit if provided (for any additional handling)
+        if (onSubmit) {
+          onSubmit(formData);
+        }
+        // Reset form on success
+        setFormData({
+          fullName: "",
+          emailRegister: "",
+          phoneNumber: "",
+          universityId: "",
+          passwordRegister: "",
+          confirmPassword: "",
+        });
+      } else {
+        // Registration failed - error toast already shown by useAuth hook
+        // No need to set form error since backend errors are shown as toasts
+      }
+    } catch (error) {
+      // Handle unexpected errors - error toast already shown by useAuth hook
+      console.error("Registration error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onSubmit(formData);
   };
 
   return (
@@ -136,12 +159,16 @@ export default function RegisterForm({ onSubmit }) {
           />
         </div>
 
-        {error && <p className="-mt-2 mb-4 text-sm text-red-600">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-[#4ad294] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#3bb882] transition-colors cursor-pointer"
+          disabled={isSubmitting}
+          className={`w-full font-medium py-2 px-4 rounded-lg transition-colors ${
+            isSubmitting
+              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+              : "bg-[#4ad294] text-white hover:bg-[#3bb882] cursor-pointer"
+          }`}
         >
-          Register
+          {isSubmitting ? "Registering..." : "Register"}
         </button>
       </form>
     </motion.div>

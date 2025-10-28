@@ -42,18 +42,12 @@ export default function PatientPortal() {
   };
 
   const handleRegister = (formData) => {
-    // TODO: Implement actual registration API call
-    // For now, simulate successful registration
-    const mockUser = {
-      id: 1,
-      name: formData.fullName,
-      email: formData.emailRegister,
-      phone: formData.phoneNumber,
-      universityId: formData.universityId,
-    };
-
-    login(mockUser);
-    toast.success("Registration successful! Welcome to QAlert.");
+    // Registration is handled by the RegisterForm component
+    // After successful registration, switch to login tab
+    setActiveTab("login");
+    toast.success(
+      "Registration successful! Please log in with your credentials."
+    );
   };
 
   return (
