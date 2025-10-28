@@ -83,16 +83,25 @@ export default function PatientPortal() {
             </div>
 
             {isAuthenticated && user && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Computer"
+                  className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <Image
+                    src="/icons/computer.png"
+                    alt="Computer"
+                    width={20}
+                    height={20}
+                  />
+                </button>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-[#25323A]">
-                    {user.name}
-                  </p>
                   <p className="text-xs text-gray-600">{user.email}</p>
                 </div>
                 <button
                   onClick={logout}
-                  className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                 >
                   Logout
                 </button>
@@ -158,43 +167,61 @@ export default function PatientPortal() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            // Patient Dashboard
+            // Patient Dashboard - UI only (no functionality wired yet)
             <motion.div
-              className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-4xl"
+              className="w-full max-w-5xl -mt-36"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[#25323A] mb-2">
-                  Welcome, {user?.name}!
-                </h2>
-                <p className="text-gray-600">
-                  Manage your appointments and queue status
-                </p>
-              </div>
-
-              {/* Dashboard Content Placeholder */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-[#25323A] mb-4">
-                    Current Queue Status
-                  </h3>
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No active queue</p>
-                    <button className="mt-4 bg-[#4ad294] text-white px-6 py-2 rounded-lg hover:bg-[#3bb882] transition-colors cursor-pointer">
-                      Join Queue
-                    </button>
+              <div className="space-y-6">
+                {/* Welcome Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-[#25323A] mb-2">
+                    Welcome, {user?.name}!
+                  </h2>
+                  <p className="text-gray-700 mb-2">
+                    {user?.email || user?.email_address}
+                  </p>
+                  <div className="flex items-center gap-2 text-gray-700 pt-6">
+                    {/* Phone icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5 text-gray-500"
+                      aria-hidden="true"
+                    >
+                      <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
+                    </svg>
+                    <span>{user?.phone_number || user?.phone || "—"}</span>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-[#25323A] mb-4">
-                    Recent Activity
+                {/* Join Queue Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-[#25323A] mb-2">
+                    Join the Queue
                   </h3>
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No recent activity</p>
-                  </div>
+                  <p className="text-gray-600 mb-4">
+                    You're not currently in the queue. Click below to register
+                    for service.
+                  </p>
+                  <button
+                    type="button"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-3 rounded-lg shadow-sm transition-colors cursor-pointer"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                      aria-hidden="true"
+                    >
+                      <path d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.75 20.25A7.5 7.5 0 0111.25 12h1.5a7.5 7.5 0 017.5 7.5v.75a.75.75 0 01-.75.75h-15a.75.75 0 01-.75-.75v-.75z" />
+                    </svg>
+                    <span className="font-medium">Join Queue Now</span>
+                  </button>
                 </div>
               </div>
             </motion.div>
