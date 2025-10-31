@@ -8,10 +8,12 @@ import { toast } from "sonner";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
+import { SyncLoader } from "react-spinners";
 
 export default function PatientPortal() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -48,6 +50,15 @@ export default function PatientPortal() {
     toast.success(
       "Registration successful! Please log in with your credentials."
     );
+  };
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    // brief delay so the spinner is visible
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    logout();
+    setIsLoggingOut(false);
   };
 
   return (
@@ -100,8 +111,9 @@ export default function PatientPortal() {
                   <p className="text-xs text-gray-600">{user.email}</p>
                 </div>
                 <button
-                  onClick={logout}
-                  className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   Logout
                 </button>
@@ -240,6 +252,11 @@ export default function PatientPortal() {
           )}
         </div>
       </main>
+      {isLoggingOut && (
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
+          <SyncLoader size={10} color="#4ad294" speedMultiplier={0.9} />
+        </div>
+      )}
     </div>
   );
 }
