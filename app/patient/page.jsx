@@ -9,11 +9,20 @@ import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
 import { SyncLoader } from "react-spinners";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function PatientPortal() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -208,7 +217,7 @@ export default function PatientPortal() {
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
                       fill="currentColor"
-                      className="w-5 h-5 text-gray-500"
+                      className="w-5 h-5 text-[#4ad294]"
                       aria-hidden="true"
                     >
                       <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
@@ -234,6 +243,7 @@ export default function PatientPortal() {
                   <button
                     type="button"
                     className="w-full inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-3 rounded-lg shadow-sm transition-colors cursor-pointer"
+                    onClick={() => setIsJoinOpen(true)}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -257,6 +267,88 @@ export default function PatientPortal() {
           <SyncLoader size={10} color="#4ad294" speedMultiplier={0.9} />
         </div>
       )}
+
+      {/* Join Queue Dialog */}
+      <AnimatePresence mode="wait" initial={false}>
+        {isJoinOpen && (
+          <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
+            <DialogContent
+              asChild
+              className="sm:max-w-xl p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="p-6">
+                  <DialogHeader className="mb-2">
+                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A]">
+                      Join the Queue
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      Please specify the purpose of your visit
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="mt-4">
+                    <label className="block text-[13px] font-medium text-[#25323A] mb-2">
+                      Purpose of Visit
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
+                      className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4ad294] focus:border-[#4ad294] text-[14px] p-3 placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+                    <Image
+                      src="/icons/bell.png"
+                      alt="Notifications"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 mt-[2px]"
+                    />
+                    <div className="text-sm">
+                      <p className="font-medium text-[#25323A]">
+                        You'll receive SMS notifications
+                      </p>
+                      <p className="text-gray-600">
+                        We'll send updates to{" "}
+                        {user?.phone_number ||
+                          user?.phone ||
+                          "your phone number"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="mt-6">
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => setIsJoinOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-white bg-[#4ad294] hover:bg-[#3bb882] rounded-md transition-colors cursor-pointer"
+                      onClick={() => {
+                        setIsJoinOpen(false);
+                        toast.success("You've joined the queue.");
+                      }}
+                    >
+                      Join Queue
+                    </button>
+                  </DialogFooter>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
