@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export default function LoginForm({ onSubmit, isLoading = false }) {
   const [formData, setFormData] = useState({
-    email: "",
+    login: "",
     password: "",
   });
 
@@ -26,7 +26,7 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
       return;
     }
 
-    const identifier = (formData.email || "").trim();
+    const identifier = (formData.login || "").trim();
 
     // If numeric, treat as phone and enforce PH local format: 09XXXXXXXXX (11 digits)
     if (/^\d+$/.test(identifier)) {
@@ -54,19 +54,16 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-[#25323A] mb-2">
-            Email / Phone / University ID
+            Email / ID Number
           </label>
           <input
             type="text"
-            name="email"
-            value={formData.email}
+            name="login"
+            value={formData.login}
             onChange={handleInputChange}
-            placeholder="e.g., you@gmail.com or 09XXXXXXXXX"
+            placeholder="name@gmail.com or 211-12345"
             className="w-full text-sm text-[#25323A] px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-colors placeholder:text-gray-600"
           />
-          <p className="text-sm text-gray-500 mt-1">
-            Enter your email, phone number, or university ID
-          </p>
         </div>
 
         <div>

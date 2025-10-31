@@ -28,7 +28,7 @@ export default function PatientPortal() {
     }
 
     try {
-      const result = await loginWithAPI(formData.email, formData.password);
+      const result = await loginWithAPI(formData.login, formData.password);
 
       if (result.success) {
         toast.success("Login successful! Welcome back.");

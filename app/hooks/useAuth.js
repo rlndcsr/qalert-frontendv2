@@ -32,7 +32,7 @@ export function useAuth() {
     setIsLoading(false);
   }, []);
 
-  const loginWithAPI = async (emailAddress, password) => {
+  const loginWithAPI = async (login, password) => {
     // Prevent multiple simultaneous login attempts
     if (isLoggingIn) {
       return { success: false, error: "Login already in progress" };
@@ -48,7 +48,7 @@ export function useAuth() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email_address: emailAddress,
+          login: login,
           password: password,
         }),
       });

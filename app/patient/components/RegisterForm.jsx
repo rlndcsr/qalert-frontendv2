@@ -116,7 +116,7 @@ export default function RegisterForm({ onSubmit }) {
 
         <div>
           <label className="block text-sm font-medium text-[#25323A] mb-2">
-            University ID (Optional)
+            ID Number (Optional)
           </label>
           <input
             type="text"
