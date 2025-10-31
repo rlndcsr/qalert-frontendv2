@@ -132,6 +132,7 @@ export default function PatientPortal() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
+              key="guest"
             >
               {/* Tab Selector */}
               <div className="flex mb-8">
@@ -173,10 +174,16 @@ export default function PatientPortal() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
+              key="authed"
             >
               <div className="space-y-6">
                 {/* Welcome Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <motion.div
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
                   <h2 className="text-xl md:text-2xl font-bold text-[#25323A] mb-2">
                     Welcome, {user?.name}!
                   </h2>
@@ -196,10 +203,15 @@ export default function PatientPortal() {
                     </svg>
                     <span>{user?.phone_number || user?.phone || "—"}</span>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Join Queue Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <motion.div
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
+                >
                   <h3 className="text-lg font-semibold text-[#25323A] mb-2">
                     Join the Queue
                   </h3>
@@ -222,7 +234,7 @@ export default function PatientPortal() {
                     </svg>
                     <span className="font-medium">Join Queue Now</span>
                   </button>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
