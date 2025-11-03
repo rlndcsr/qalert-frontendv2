@@ -77,10 +77,14 @@ export default function PatientPortal() {
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex items-center justify-between select-none">
             <div className="flex items-center gap-3">
-              <button
+              <motion.button
+                key={`back-${isAuthenticated ? "auth" : "guest"}`}
                 onClick={() => router.push("/")}
                 aria-label="Back to home"
                 className="p-1 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Image
                   src="/icons/back.png"
@@ -88,26 +92,53 @@ export default function PatientPortal() {
                   width={28}
                   height={28}
                 />
-              </button>
-              <div className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center">
+              </motion.button>
+              <motion.div
+                key={`users-${isAuthenticated ? "auth" : "guest"}`}
+                className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.02,
+                }}
+              >
                 <Image
                   src="/icons/users.png"
                   alt="Patient Portal"
                   width={20}
                   height={20}
                 />
-              </div>
-              <h1 className="text-lg font-bold text-[#25323A]">
+              </motion.div>
+              <motion.h1
+                key={`title-${isAuthenticated ? "auth" : "guest"}`}
+                className="text-lg font-bold text-[#25323A]"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.04,
+                }}
+              >
                 Patient Portal
-              </h1>
+              </motion.h1>
             </div>
 
             {isAuthenticated && user && (
               <div className="flex items-center gap-2">
-                <button
+                <motion.button
                   type="button"
                   aria-label="Computer"
                   className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.08,
+                  }}
                 >
                   <Image
                     src="/icons/computer.png"
@@ -115,17 +146,24 @@ export default function PatientPortal() {
                     width={20}
                     height={20}
                   />
-                </button>
+                </motion.button>
                 <div className="text-right">
                   <p className="text-xs text-gray-600">{user.email}</p>
                 </div>
-                <button
+                <motion.button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                   className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.16,
+                  }}
                 >
                   Logout
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
