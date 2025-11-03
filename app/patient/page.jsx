@@ -131,6 +131,7 @@ export default function PatientPortal() {
                 <motion.button
                   type="button"
                   aria-label="Computer"
+                  title="View queue display"
                   className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
