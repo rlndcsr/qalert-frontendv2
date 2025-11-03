@@ -425,15 +425,21 @@ export default function PatientPortal() {
       <main className="flex-1 w-full flex items-start justify-center px-8 py-16 overflow-y-auto min-h-0">
         <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
           {isLoading ? (
-            // Loading state
+            // Loading state with skeletons
             <motion.div
               className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4ad294] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
+              <div className="flex flex-col gap-6">
+                {/* Skeleton for Welcome Card */}
+                <div className="animate-pulse bg-gray-100 rounded-xl h-32 w-full mb-2" />
+                {/* Skeleton for Queue Status/Join Card */}
+                <div className="animate-pulse bg-gray-100 rounded-xl h-40 w-full mb-2" />
+                {/* Skeleton for What to do next Card */}
+                <div className="animate-pulse bg-gray-100 rounded-xl h-32 w-full" />
+              </div>
             </motion.div>
           ) : !isAuthenticated ? (
             // Authentication Forms
@@ -470,7 +476,13 @@ export default function PatientPortal() {
 
               {/* Animated Forms */}
               <AnimatePresence mode="wait" initial={false}>
-                {activeTab === "login" ? (
+                {isLoading ? (
+                  <div className="animate-pulse flex flex-col gap-4">
+                    <div className="bg-gray-100 h-10 w-full rounded" />
+                    <div className="bg-gray-100 h-10 w-full rounded" />
+                    <div className="bg-gray-100 h-10 w-full rounded" />
+                  </div>
+                ) : activeTab === "login" ? (
                   <LoginForm onSubmit={handleLogin} isLoading={isLoggingIn} />
                 ) : (
                   <RegisterForm onSubmit={handleRegister} />
@@ -488,50 +500,67 @@ export default function PatientPortal() {
             >
               <div className="space-y-6">
                 {/* Welcome Card */}
-                <motion.div
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                >
-                  <h2 className="text-xl md:text-2xl font-bold text-[#25323A] mb-2">
-                    Welcome, {user?.name}!
-                  </h2>
-                  <p className="text-gray-700 mb-2">
-                    {user?.email || user?.email_address}
-                  </p>
-                  {user?.id_number && (
-                    <div className="pt-6 font-semibold text-sm flex items-center gap-2 text-gray-700">
-                      <Image
-                        src="/icons/id-card.png"
-                        alt="ID Number"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span>{user.id_number}</span>
-                    </div>
-                  )}
-                  <div
-                    className={`flex items-center gap-2 text-gray-700 ${
-                      user?.id_number ? "pt-2" : "pt-6"
-                    }`}
+                {isQueueLoading ? (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                   >
-                    {/* Phone icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-5 h-5 text-[#4ad294]"
-                      aria-hidden="true"
+                    {/* Skeleton UI for Welcome Card */}
+                    <div className="animate-pulse flex flex-col gap-4">
+                      <div className="h-7 w-1/2 bg-gray-100 rounded mb-2" />
+                      <div className="h-5 w-1/3 bg-gray-100 rounded mb-2" />
+                      <div className="h-5 w-1/4 bg-gray-100 rounded mb-2" />
+                      <div className="h-5 w-1/3 bg-gray-100 rounded" />
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  >
+                    <h2 className="text-xl md:text-2xl font-bold text-[#25323A] mb-2">
+                      Welcome, {user?.name}!
+                    </h2>
+                    <p className="text-gray-700 mb-2">
+                      {user?.email || user?.email_address}
+                    </p>
+                    {user?.id_number && (
+                      <div className="pt-6 font-semibold text-sm flex items-center gap-2 text-gray-700">
+                        <Image
+                          src="/icons/id-card.png"
+                          alt="ID Number"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span>{user.id_number}</span>
+                      </div>
+                    )}
+                    <div
+                      className={`flex items-center gap-2 text-gray-700 ${
+                        user?.id_number ? "pt-2" : "pt-6"
+                      }`}
                     >
-                      <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
-                    </svg>
-                    <span className="font-semibold text-sm">
-                      {user?.phone_number || user?.phone || "—"}
-                    </span>
-                  </div>
-                </motion.div>
+                      {/* Phone icon */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-5 h-5 text-[#4ad294]"
+                        aria-hidden="true"
+                      >
+                        <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
+                      </svg>
+                      <span className="font-semibold text-sm">
+                        {user?.phone_number || user?.phone || "—"}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* Queue Status or Join Card */}
                 {isQueueLoading ? (
@@ -541,9 +570,17 @@ export default function PatientPortal() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
                   >
-                    <p className="text-gray-600">
-                      Loading your queue status...
-                    </p>
+                    {/* Skeleton UI for queue status card */}
+                    <div className="animate-pulse flex flex-col gap-4">
+                      <div className="h-6 w-1/3 bg-gray-100 rounded" />
+                      <div className="h-4 w-1/4 bg-gray-100 rounded" />
+                      <div className="h-5 w-2/3 bg-gray-100 rounded" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div className="h-16 bg-gray-100 rounded" />
+                        <div className="h-16 bg-gray-100 rounded" />
+                      </div>
+                      <div className="h-4 w-1/2 bg-gray-100 rounded mt-4" />
+                    </div>
                   </motion.div>
                 ) : queueEntry ? (
                   <motion.div
