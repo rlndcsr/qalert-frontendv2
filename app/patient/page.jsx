@@ -250,7 +250,23 @@ export default function PatientPortal() {
                   <p className="text-gray-700 mb-2">
                     {user?.email || user?.email_address}
                   </p>
-                  <div className="flex items-center gap-2 text-gray-700 pt-6">
+                  {user?.id_number && (
+                    <div className="pt-6 font-semibold text-sm flex items-center gap-2 text-gray-700">
+                      <Image
+                        src="/icons/id-card.png"
+                        alt="ID Number"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span>{user.id_number}</span>
+                    </div>
+                  )}
+                  <div
+                    className={`flex items-center gap-2 text-gray-700 ${
+                      user?.id_number ? "pt-2" : "pt-6"
+                    }`}
+                  >
                     {/* Phone icon */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -261,7 +277,9 @@ export default function PatientPortal() {
                     >
                       <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
                     </svg>
-                    <span>{user?.phone_number || user?.phone || "—"}</span>
+                    <span className="font-semibold text-sm">
+                      {user?.phone_number || user?.phone || "—"}
+                    </span>
                   </div>
                 </motion.div>
 
