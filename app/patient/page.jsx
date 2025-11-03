@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,11 +18,19 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
+
 export default function PatientPortal() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [joinReason, setJoinReason] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+  const [queueEntry, setQueueEntry] = useState(null);
+  const [queuePosition, setQueuePosition] = useState(null);
+  const [isQueueLoading, setIsQueueLoading] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -69,6 +77,248 @@ export default function PatientPortal() {
     logout();
     setIsLoggingOut(false);
   };
+
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token");
+  };
+
+  const getTodayDateString = () => {
+    // Use UTC YYYY-MM-DD to match server-side ISO dates and avoid local timezone
+    return new Date().toISOString().slice(0, 10);
+  };
+
+  // Normalize various date inputs to YYYY-MM-DD (returns null if not parseable)
+  const toYMD = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      // Already in YYYY-MM-DD format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+      // Try parsing ISO / datetime strings
+      const parsed = new Date(value);
+      if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+    }
+    if (value instanceof Date && !isNaN(value)) {
+      return value.toISOString().slice(0, 10);
+    }
+    return null;
+  };
+
+  const fetchUserQueue = async () => {
+    if (!isAuthenticated || !user) return;
+    const token = getAuthToken();
+    if (!token) return;
+
+    const userId = user?.id || user?.user_id || user?.uid;
+    if (!userId) return;
+
+    setIsQueueLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        setQueueEntry(null);
+        setQueuePosition(null);
+        return;
+      }
+
+      const data = await response.json();
+      const list = Array.isArray(data)
+        ? data
+        : data?.data || data?.queues || data?.items || [];
+      const today = getTodayDateString();
+
+      const todaysForUser = list
+        .filter((q) => {
+          const entryDate = toYMD(q?.date ?? q?.created_at);
+          // Exact match: only accept entries whose normalized date equals today
+          const dateMatches = entryDate === today;
+          return dateMatches && (q?.user_id ?? q?.user?.id) === userId;
+        })
+        .sort((a, b) => {
+          const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
+          return bTime - aTime; // pick latest
+        });
+
+      const selected = todaysForUser[0] || null;
+
+      // Debug: show what we found for this user today
+      // Remove after verifying
+      console.log("[queues] today:", today, "userId:", userId, {
+        total: list.length,
+        todaysCount: todaysForUser.length,
+        selected,
+      });
+
+      if (selected) {
+        setQueueEntry(selected);
+      } else {
+        setQueueEntry(null);
+        setQueuePosition(null);
+      }
+    } catch (e) {
+      // Silent fail; keep UI stable
+    } finally {
+      setIsQueueLoading(false);
+    }
+  };
+
+  const fetchQueuePosition = async () => {
+    if (!isAuthenticated || !user) return;
+    const token = getAuthToken();
+    if (!token) return;
+
+    const userId = user?.id || user?.user_id || user?.uid;
+    if (!userId) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        setQueuePosition(null);
+        return;
+      }
+
+      const data = await response.json();
+      const list = Array.isArray(data)
+        ? data
+        : data?.data || data?.queues || data?.items || [];
+      const today = getTodayDateString();
+
+      const todays = list
+        .filter((q) => {
+          const entryDate = toYMD(q?.date ?? q?.created_at);
+          // Exact-date filtering: only consider entries with a normalized date equal to today
+          const dateMatches = entryDate === today;
+          return (
+            dateMatches &&
+            (q?.queue_status ? q.queue_status !== "completed" : true)
+          );
+        })
+        .sort((a, b) => {
+          const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
+          return aTime - bTime;
+        });
+
+      const currentIndex = todays.findIndex(
+        (q) => (q?.user_id ?? q?.user?.id) === userId
+      );
+      if (currentIndex >= 0) {
+        setQueuePosition(currentIndex + 1);
+      } else {
+        setQueuePosition(null);
+      }
+    } catch (e) {
+      setQueuePosition(null);
+    }
+  };
+
+  // TEMP: Debug function to print all queues raw
+  const debugFetchAllQueues = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        method: "GET",
+      });
+      const data = await response
+        .json()
+        .catch(() => ({ error: "invalid json" }));
+      console.log("[queues][raw] status:", response.status, "data:", data);
+
+      // Also show filtered view for current user and today (debug only)
+      const list = Array.isArray(data) ? data : data?.data || [];
+      const today = getTodayDateString();
+      const filtered = list.filter((q) => {
+        const entryDate = toYMD(q?.date ?? q?.created_at);
+        const dateMatches = entryDate === today;
+        return dateMatches && (q?.user_id ?? q?.user?.id) === user?.user_id;
+      });
+      console.log(
+        "[queues][filtered] today:",
+        today,
+        "userId:",
+        user?.user_id,
+        filtered
+      );
+
+      // Also log the single matched entry (today) and any match across all returned queues
+      const matchedToday = filtered[0] || null;
+      const anyMatch =
+        list.find((q) => (q?.user_id ?? q?.user?.id) === user?.user_id) || null;
+
+      // Exact date match: only entries whose normalized date equals today's date
+      const matchedExactDate = list.find((q) => {
+        const entryDate = toYMD(q?.date ?? q?.created_at);
+        return (
+          entryDate === today && (q?.user_id ?? q?.user?.id) === user?.user_id
+        );
+      });
+
+      if (matchedToday) {
+        console.log(
+          "[queues][match][today] matched queue entry for current user:",
+          matchedToday
+        );
+      } else {
+        console.log(
+          "[queues][match][today] no matching queue entry found for current user for today"
+        );
+      }
+
+      if (anyMatch) {
+        console.log(
+          "[queues][match][any] matched queue entry (any date) for current user:",
+          anyMatch
+        );
+      } else {
+        console.log(
+          "[queues][match][any] no matching queue entry found for current user in returned list"
+        );
+      }
+
+      if (matchedExactDate) {
+        console.log(
+          "[queues][match][exactDate] matched queue entry where date === today for current user:",
+          matchedExactDate
+        );
+      } else {
+        console.log(
+          "[queues][match][exactDate] no matching queue entry found where date === today for current user"
+        );
+      }
+    } catch (err) {
+      console.log("[queues][raw] error:", err?.message || err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      // TEMP: print all queues as provided by the API
+      debugFetchAllQueues();
+      fetchUserQueue();
+      fetchQueuePosition();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isAuthenticated, user?.user_id, user?.id_number]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col overflow-x-hidden">
@@ -172,8 +422,8 @@ export default function PatientPortal() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full flex items-center justify-center px-8 py-16 overflow-y-auto min-h-0">
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-center">
+      <main className="flex-1 w-full flex items-start justify-center px-8 py-16 overflow-y-auto min-h-0">
+        <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
           {isLoading ? (
             // Loading state
             <motion.div
@@ -228,9 +478,9 @@ export default function PatientPortal() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            // Patient Dashboard - UI only (no functionality wired yet)
+            // Patient Dashboard
             <motion.div
-              className="w-full max-w-5xl -mt-36"
+              className="w-full max-w-5xl -mt-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -283,37 +533,222 @@ export default function PatientPortal() {
                   </div>
                 </motion.div>
 
-                {/* Join Queue Card */}
-                <motion.div
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
-                >
-                  <h3 className="text-lg font-semibold text-[#25323A] mb-2">
-                    Join the Queue
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    You're not currently in the queue. Click below to register
-                    for service.
-                  </p>
-                  <button
-                    type="button"
-                    className="w-full inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-3 rounded-lg shadow-sm transition-colors cursor-pointer"
-                    onClick={() => setIsJoinOpen(true)}
+                {/* Queue Status or Join Card */}
+                {isQueueLoading ? (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-5 h-5"
-                      aria-hidden="true"
+                    <p className="text-gray-600">
+                      Loading your queue status...
+                    </p>
+                  </motion.div>
+                ) : queueEntry ? (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-[#25323A]">
+                        Your Queue Status
+                      </h3>
+                      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
+                        {queueEntry.queue_status || "waiting"}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 mb-4">
+                      <span className="font-medium">Purpose:</span>{" "}
+                      {queueEntry.reason}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-5 h-5 text-[#4ad294]"
+                          aria-hidden="true"
+                        >
+                          <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            Queue Position
+                          </p>
+                          <p className="text-lg font-semibold">
+                            #{queuePosition ?? "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-purple-50 p-4">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-5 h-5 text-purple-500"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM11.25 6a.75.75 0 011.5 0v5.19l3.03 3.03a.75.75 0 11-1.06 1.06l-3.22-3.22A.75.75 0 0111.25 11V6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            Est. Wait Time
+                          </p>
+                          <p className="text-lg font-semibold">—</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm text-gray-600">
+                      Registered at:{" "}
+                      {new Date(queueEntry.created_at).toLocaleString()}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
+                  >
+                    <h3 className="text-lg font-semibold text-[#25323A] mb-2">
+                      Join the Queue
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      You're not currently in the queue. Click below to register
+                      for service.
+                    </p>
+                    <button
+                      type="button"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-3 rounded-lg shadow-sm transition-colors cursor-pointer"
+                      onClick={() => {
+                        setJoinReason("");
+                        setIsJoinOpen(true);
+                      }}
                     >
-                      <path d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.75 20.25A7.5 7.5 0 0111.25 12h1.5a7.5 7.5 0 017.5 7.5v.75a.75.75 0 01-.75.75h-15a.75.75 0 01-.75-.75v-.75z" />
-                    </svg>
-                    <span className="font-medium">Join Queue Now</span>
-                  </button>
-                </motion.div>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-5 h-5"
+                        aria-hidden="true"
+                      >
+                        <path d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.75 20.25A7.5 7.5 0 0111.25 12h1.5a7.5 7.5 0 017.5 7.5v.75a.75.75 0 01-.75.75h-15a.75.75 0 01-.75-.75v-.75z" />
+                      </svg>
+                      <span className="font-medium">Join Queue Now</span>
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* What to do next? card - only show when user has a queue entry for today */}
+                {queueEntry && (
+                  <motion.div
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.06 }}
+                  >
+                    <h3 className="text-lg font-semibold text-[#25323A] mb-4">
+                      What to do next?
+                    </h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-3">
+                        <span className="flex-none text-[#16a34a]">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              strokeWidth="1.5"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                            <path
+                              d="M9 12.5l1.8 1.8L15 10"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-sm">
+                          Keep your phone nearby to receive SMS notifications
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <span className="flex-none text-[#16a34a]">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              strokeWidth="1.5"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                            <path
+                              d="M9 12.5l1.8 1.8L15 10"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-sm">
+                          Monitor this dashboard for real-time queue updates
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <span className="flex-none text-[#16a34a]">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              strokeWidth="1.5"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                            <path
+                              d="M9 12.5l1.8 1.8L15 10"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-[#16a34a] stroke-current"
+                            />
+                          </svg>
+                        </span>
+                        <span className="text-sm">
+                          Proceed to the clinic immediately when notified
+                        </span>
+                      </li>
+                    </ul>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}
@@ -357,6 +792,8 @@ export default function PatientPortal() {
                       rows={3}
                       placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
                       className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4ad294] focus:border-[#4ad294] text-[14px] p-3 placeholder:text-gray-400"
+                      value={joinReason}
+                      onChange={(e) => setJoinReason(e.target.value)}
                     />
                   </div>
 
@@ -391,13 +828,70 @@ export default function PatientPortal() {
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 text-sm font-semibold text-white bg-[#4ad294] hover:bg-[#3bb882] rounded-md transition-colors cursor-pointer"
-                      onClick={() => {
-                        setIsJoinOpen(false);
-                        toast.success("You've joined the queue.");
+                      className="px-4 py-2 text-sm font-semibold text-white bg-[#4ad294] hover:bg-[#3bb882] rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                      disabled={isJoining}
+                      onClick={async () => {
+                        if (!joinReason.trim()) {
+                          toast.error("Please enter your purpose of visit.");
+                          return;
+                        }
+
+                        const token =
+                          typeof window !== "undefined"
+                            ? localStorage.getItem("token")
+                            : null;
+                        if (!token) {
+                          toast.error(
+                            "You are not authenticated. Please log in again."
+                          );
+                          return;
+                        }
+
+                        const userId = user?.id || user?.user_id || user?.uid;
+                        if (!userId) {
+                          toast.error("Unable to determine your user ID.");
+                          return;
+                        }
+
+                        setIsJoining(true);
+                        try {
+                          const endpoint = `${API_BASE_URL}/queues`;
+                          const response = await fetch(endpoint, {
+                            method: "POST",
+                            headers: {
+                              Accept: "application/json",
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              user_id: userId,
+                              reason: joinReason.trim(),
+                            }),
+                          });
+
+                          const data = await response.json().catch(() => ({}));
+                          if (!response.ok) {
+                            const message =
+                              data?.message || "Failed to join the queue.";
+                            throw new Error(message);
+                          }
+
+                          setIsJoinOpen(false);
+                          setJoinReason("");
+                          toast.success("You've joined the queue.");
+                          fetchUserQueue();
+                          fetchQueuePosition();
+                        } catch (err) {
+                          toast.error(
+                            err.message ||
+                              "An error occurred while joining the queue."
+                          );
+                        } finally {
+                          setIsJoining(false);
+                        }
                       }}
                     >
-                      Join Queue
+                      {isJoining ? "Joining..." : "Join Queue"}
                     </button>
                   </DialogFooter>
                 </div>
