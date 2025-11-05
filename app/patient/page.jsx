@@ -593,7 +593,17 @@ export default function PatientPortal() {
                       <h3 className="text-lg font-semibold text-[#25323A]">
                         Your Queue Status
                       </h3>
-                      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
+                      <span
+                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                          queueEntry.queue_status === "called"
+                            ? "bg-blue-100 text-blue-700"
+                            : queueEntry.queue_status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : queueEntry.queue_status === "cancelled"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
                         {queueEntry.queue_status || "waiting"}
                       </span>
                     </div>
@@ -613,10 +623,10 @@ export default function PatientPortal() {
                           <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
                         </svg>
                         <div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs text-gray-600">
                             Queue Position
                           </p>
-                          <p className="text-lg font-semibold">
+                          <p className="text-md font-semibold">
                             #{queuePosition ?? "—"}
                           </p>
                         </div>
@@ -636,10 +646,12 @@ export default function PatientPortal() {
                           />
                         </svg>
                         <div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs text-gray-600">
                             Est. Wait Time
                           </p>
-                          <p className="text-lg font-semibold">—</p>
+                          <p className="text-md font-semibold">
+                            {queueEntry.estimated_time_wait ?? "Pending"}
+                          </p>
                         </div>
                       </div>
                     </div>
