@@ -627,7 +627,7 @@ export default function PatientPortal() {
                             Queue Position
                           </p>
                           <p className="text-md font-semibold">
-                            #{queuePosition ?? "—"}
+                            #{queuePosition}
                           </p>
                         </div>
                       </div>
