@@ -660,9 +660,20 @@ export default function PatientPortal() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 text-sm text-gray-600">
-                      Registered at:{" "}
-                      {new Date(queueEntry.created_at).toLocaleString()}
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Registered at:{" "}
+                        {new Date(queueEntry.created_at).toLocaleString()}
+                      </div>
+                      {(!queueEntry.queue_status ||
+                        queueEntry.queue_status === "waiting") && (
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
+                        >
+                          Cancel Queue Entry
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 ) : (
