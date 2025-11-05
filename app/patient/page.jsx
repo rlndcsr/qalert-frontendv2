@@ -203,10 +203,9 @@ export default function PatientPortal() {
           const entryDate = toYMD(q?.date ?? q?.created_at);
           // Exact-date filtering: only consider entries with a normalized date equal to today
           const dateMatches = entryDate === today;
-          return (
-            dateMatches &&
-            (q?.queue_status ? q.queue_status !== "completed" : true)
-          );
+          // Only include entries that are in "waiting" status
+          const isWaiting = !q?.queue_status || q.queue_status === "waiting";
+          return dateMatches && isWaiting;
         })
         .sort((a, b) => {
           const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
@@ -627,7 +626,10 @@ export default function PatientPortal() {
                             Queue Position
                           </p>
                           <p className="text-md font-semibold">
-                            #{queuePosition}
+                            {!queueEntry.queue_status ||
+                            queueEntry.queue_status === "waiting"
+                              ? `#${queuePosition}`
+                              : "—"}
                           </p>
                         </div>
                       </div>
@@ -650,7 +652,10 @@ export default function PatientPortal() {
                             Est. Wait Time
                           </p>
                           <p className="text-md font-semibold">
-                            {queueEntry.estimated_time_wait ?? "Pending"}
+                            {!queueEntry.queue_status ||
+                            queueEntry.queue_status === "waiting"
+                              ? queueEntry.estimated_time_wait ?? "Pending"
+                              : "—"}
                           </p>
                         </div>
                       </div>
