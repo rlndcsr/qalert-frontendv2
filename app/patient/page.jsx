@@ -46,6 +46,7 @@ export default function PatientPortal() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [updatedReason, setUpdatedReason] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -141,6 +142,57 @@ export default function PatientPortal() {
       );
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleUpdateReason = async () => {
+    if (!queueEntry?.queue_entry_id || isUpdating) {
+      console.error("No queue entry ID found or already updating:", queueEntry);
+      return;
+    }
+
+    if (!updatedReason.trim()) {
+      toast.error("Please enter a valid reason for your visit.");
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("You are not authenticated. Please log in again.");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/reason/${queueEntry.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: updatedReason.trim(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || "Failed to update reason");
+      }
+
+      setIsUpdateOpen(false);
+      toast.success("Queue reason updated successfully");
+      fetchUserQueue();
+    } catch (error) {
+      toast.error(
+        error.message || "An error occurred while updating the reason"
+      );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -1220,18 +1272,17 @@ export default function PatientPortal() {
                       type="button"
                       className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => setIsUpdateOpen(false)}
+                      disabled={isUpdating}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors cursor-pointer"
-                      onClick={() => {
-                        // Update functionality will be implemented later
-                        setIsUpdateOpen(false);
-                      }}
+                      className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                      onClick={handleUpdateReason}
+                      disabled={isUpdating}
                     >
-                      Update Reason
+                      {isUpdating ? "Updating..." : "Update Reason"}
                     </button>
                   </DialogFooter>
                 </div>
