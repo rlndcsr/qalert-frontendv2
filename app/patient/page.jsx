@@ -31,6 +31,8 @@ export default function PatientPortal() {
   const [queueEntry, setQueueEntry] = useState(null);
   const [queuePosition, setQueuePosition] = useState(null);
   const [isQueueLoading, setIsQueueLoading] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -76,6 +78,56 @@ export default function PatientPortal() {
     await new Promise((resolve) => setTimeout(resolve, 500));
     logout();
     setIsLoggingOut(false);
+  };
+
+  const handleCancelQueue = async () => {
+    console.log("Attempting to cancel queue entry:", queueEntry);
+    if (!queueEntry?.queue_entry_id || isCancelling) {
+      console.error(
+        "No queue entry ID found or already cancelling:",
+        queueEntry
+      );
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("You are not authenticated. Please log in again.");
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/status/${queueEntry.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            queue_status: "cancelled",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to cancel queue entry");
+      }
+
+      setIsCancelOpen(false);
+      toast.success("Queue entry cancelled successfully");
+      fetchUserQueue();
+      fetchQueuePosition();
+    } catch (error) {
+      toast.error(
+        error.message || "An error occurred while cancelling the queue entry"
+      );
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const getAuthToken = () => {
@@ -158,8 +210,10 @@ export default function PatientPortal() {
       });
 
       if (selected) {
+        console.log("Setting queue entry:", selected);
         setQueueEntry(selected);
       } else {
+        console.log("No queue entry found for today");
         setQueueEntry(null);
         setQueuePosition(null);
       }
@@ -669,6 +723,13 @@ export default function PatientPortal() {
                         queueEntry.queue_status === "waiting") && (
                         <button
                           type="button"
+                          onClick={() => {
+                            console.log(
+                              "Cancel button clicked. Queue entry:",
+                              queueEntry
+                            );
+                            setIsCancelOpen(true);
+                          }}
                           className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
                         >
                           Cancel Queue Entry
@@ -957,6 +1018,56 @@ export default function PatientPortal() {
                       }}
                     >
                       {isJoining ? "Joining..." : "Join Queue"}
+                    </button>
+                  </DialogFooter>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Cancel Queue Dialog */}
+      <AnimatePresence mode="wait" initial={false}>
+        {isCancelOpen && (
+          <Dialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
+            <DialogContent
+              asChild
+              className="sm:max-w-lg p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="p-6">
+                  <DialogHeader className="mb-2">
+                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A]">
+                      Cancel Queue Entry
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      Are you sure you want to cancel your queue entry? This
+                      action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <DialogFooter className="mt-6">
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => setIsCancelOpen(false)}
+                      disabled={isCancelling}
+                    >
+                      No, Keep My Entry
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                      onClick={handleCancelQueue}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? "Cancelling..." : "Yes, Cancel Entry"}
                     </button>
                   </DialogFooter>
                 </div>
