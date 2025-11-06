@@ -75,6 +75,7 @@ export default function PatientPortal() {
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
+    router.push('/');
     setIsLoggingOut(true);
     // brief delay so the spinner is visible
     await new Promise((resolve) => setTimeout(resolve, 500));
