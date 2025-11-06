@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { Mail, Lock } from "lucide-react";
 
 export default function LoginForm({ onSubmit, isLoading = false }) {
   const [formData, setFormData] = useState({
@@ -56,28 +57,34 @@ export default function LoginForm({ onSubmit, isLoading = false }) {
           <label className="block text-sm font-medium text-[#25323A] mb-2">
             Email / ID Number
           </label>
-          <input
-            type="text"
-            name="login"
-            value={formData.login}
-            onChange={handleInputChange}
-            placeholder="name@gmail.com or 211-12345"
-            className="w-full text-sm text-[#25323A] px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-colors placeholder:text-gray-600"
-          />
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              name="login"
+              value={formData.login}
+              onChange={handleInputChange}
+              placeholder="name@gmail.com or 211-12345"
+              className="w-full text-sm text-[#25323A] pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-colors placeholder:text-gray-600"
+            />
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-[#25323A] mb-2">
             Password
           </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            placeholder="Enter your password"
-            className="w-full text-sm text-[#25323A] px-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-colors placeholder:text-gray-600"
-          />
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Enter your password"
+              className="w-full text-sm text-[#25323A] pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:border-transparent transition-colors placeholder:text-gray-600"
+            />
+          </div>
         </div>
 
         <button
