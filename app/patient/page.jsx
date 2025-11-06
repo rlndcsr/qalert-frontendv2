@@ -33,6 +33,8 @@ export default function PatientPortal() {
   const [isQueueLoading, setIsQueueLoading] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [updatedReason, setUpdatedReason] = useState("");
   const {
     isAuthenticated,
     user,
@@ -721,19 +723,41 @@ export default function PatientPortal() {
                       </div>
                       {(!queueEntry.queue_status ||
                         queueEntry.queue_status === "waiting") && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            console.log(
-                              "Cancel button clicked. Queue entry:",
-                              queueEntry
-                            );
-                            setIsCancelOpen(true);
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
-                        >
-                          Cancel Queue Entry
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Set the reason and move cursor to end by using setTimeout
+                              setIsUpdateOpen(true);
+                              setTimeout(() => {
+                                setUpdatedReason(queueEntry.reason);
+                                const textarea =
+                                  document.querySelector("textarea");
+                                if (textarea) {
+                                  textarea.selectionStart =
+                                    textarea.selectionEnd =
+                                      queueEntry.reason.length;
+                                }
+                              }, 100);
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors hover:cursor-pointer"
+                          >
+                            Update Reason
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              console.log(
+                                "Cancel button clicked. Queue entry:",
+                                queueEntry
+                              );
+                              setIsCancelOpen(true);
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
+                          >
+                            Cancel Queue Entry
+                          </button>
+                        </div>
                       )}
                     </div>
                   </motion.div>
@@ -1068,6 +1092,69 @@ export default function PatientPortal() {
                       disabled={isCancelling}
                     >
                       {isCancelling ? "Cancelling..." : "Yes, Cancel Entry"}
+                    </button>
+                  </DialogFooter>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Update Reason Dialog */}
+      <AnimatePresence mode="wait" initial={false}>
+        {isUpdateOpen && (
+          <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
+            <DialogContent
+              asChild
+              className="sm:max-w-lg p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="p-6">
+                  <DialogHeader className="mb-2">
+                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A]">
+                      Update Queue Reason
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      Please update the purpose of your visit below
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="mt-4">
+                    <label className="block text-[13px] font-medium text-[#25323A] mb-2">
+                      Purpose of Visit
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
+                      className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-300 text-[14px] p-3 placeholder:text-gray-400"
+                      value={updatedReason}
+                      onChange={(e) => setUpdatedReason(e.target.value)}
+                    />
+                  </div>
+
+                  <DialogFooter className="mt-6">
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => setIsUpdateOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors cursor-pointer"
+                      onClick={() => {
+                        // Update functionality will be implemented later
+                        setIsUpdateOpen(false);
+                      }}
+                    >
+                      Update Reason
                     </button>
                   </DialogFooter>
                 </div>
