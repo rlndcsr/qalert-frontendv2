@@ -170,6 +170,7 @@ export default function Home() {
               className="w-full bg-[#00968a] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#007a6e] transition-colors text-sm hover:cursor-pointer"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/admin")}
             >
               Staff Login
             </motion.button>
