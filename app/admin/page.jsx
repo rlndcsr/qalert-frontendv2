@@ -109,6 +109,7 @@ export default function AdminPortal() {
                 <input
                   type="email"
                   id="email_address"
+                  name="email_address"
                   value={email_address}
                   onChange={(e) => setEmail_address(e.target.value)}
                   placeholder="Enter your email address"
@@ -140,7 +141,7 @@ export default function AdminPortal() {
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-3 px-4 rounded-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-2 px-2 rounded-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoggingIn ? "Logging in..." : "Login"}
               </button>
