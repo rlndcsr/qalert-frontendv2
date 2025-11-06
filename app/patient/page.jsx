@@ -21,6 +21,17 @@ import {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
 
+const getTodayDateString = () => {
+  // Use local YYYY-MM-DD (user's local date) so "today" matches what the
+  // user expects in their timezone. Server timestamps may be in UTC; we
+  // normalize dates using the local date part for comparisons below.
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function PatientPortal() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("login");
@@ -138,17 +149,6 @@ export default function PatientPortal() {
     return localStorage.getItem("token");
   };
 
-  const getTodayDateString = () => {
-    // Use local YYYY-MM-DD (user's local date) so "today" matches what the
-    // user expects in their timezone. Server timestamps may be in UTC; we
-    // normalize dates using the local date part for comparisons below.
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   // Normalize various date inputs to YYYY-MM-DD (returns null if not parseable)
   const toYMD = (value) => {
     if (!value) return null;
@@ -173,6 +173,22 @@ export default function PatientPortal() {
       return `${yyyy}-${mm}-${dd}`;
     }
     return null;
+  };
+
+  // Convert YYYY-MM-DD string to a local Date at midnight
+  const ymdToLocalDate = (ymd) => {
+    if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+    const [y, m, d] = ymd.split("-").map((v) => parseInt(v, 10));
+    return new Date(y, m - 1, d);
+  };
+
+  // Days difference: dateA - dateB (both YYYY-MM-DD strings) in full days
+  const daysBetween = (aYmd, bYmd) => {
+    const aDate = ymdToLocalDate(aYmd);
+    const bDate = ymdToLocalDate(bYmd);
+    if (!aDate || !bDate) return null;
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((aDate - bDate) / msPerDay);
   };
 
   const fetchUserQueue = async () => {
@@ -205,39 +221,79 @@ export default function PatientPortal() {
         : data?.data || data?.queues || data?.items || [];
       const today = getTodayDateString();
 
-      const todaysForUser = list
+      console.log("[fetchUserQueue] Raw API response:", data);
+      console.log("[fetchUserQueue] Normalized list:", list);
+      console.log("[fetchUserQueue] Today's date:", today);
+      console.log("[fetchUserQueue] Current userId:", userId);
+
+      // First collect entries for this user and compute their date diffs vs today
+      const forUser = list
         .filter((q) => {
-          const entryDate = toYMD(q?.date ?? q?.created_at);
-          // Exact match: only accept entries whose normalized date equals today
-          const dateMatches = entryDate === today;
-          return dateMatches && (q?.user_id ?? q?.user?.id) === userId;
+          const qUserId = q?.user_id ?? q?.user?.id;
+          // Use == for loose equality to handle string vs number mismatch
+          const matches = qUserId == userId;
+          console.log(
+            "[fetchUserQueue] Checking queue entry:",
+            q,
+            "user_id:",
+            qUserId,
+            "userId:",
+            userId,
+            "matches:",
+            matches
+          );
+          return matches;
         })
-        .sort((a, b) => {
-          const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
-          const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
-          return bTime - aTime; // pick latest
+        .map((q) => {
+          const entryDate = toYMD(q?.date ?? q?.created_at);
+          const diff = entryDate ? daysBetween(entryDate, today) : null;
+          console.log("[fetchUserQueue] Entry date computation:", {
+            rawDate: q?.date,
+            rawCreatedAt: q?.created_at,
+            normalizedDate: entryDate,
+            diff: diff,
+          });
+          return { q, entryDate, diff };
         });
 
-      const selected = todaysForUser[0] || null;
+      console.log("[fetchUserQueue] Entries for current user:", forUser);
 
-      // Debug: show what we found for this user today
-      // Remove after verifying
-      console.log("[queues] today:", today, "userId:", userId, {
+      // Only show entries that match TODAY exactly (diff === 0)
+      const todayEntries = forUser
+        .filter((x) => x.entryDate && x.diff === 0)
+        .map((x) => x.q);
+
+      console.log(
+        "[fetchUserQueue] Today's entries (diff === 0):",
+        todayEntries
+      );
+
+      // Sort by most recent created_at first
+      const sorted = todayEntries.sort((a, b) => {
+        const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      const selected = sorted[0] || null;
+
+      console.log("[fetchUserQueue] Final selection:", {
         total: list.length,
-        todaysCount: todaysForUser.length,
-        selected,
+        forUserCount: forUser.length,
+        todayEntriesCount: todayEntries.length, // ✅ FIXED
+        selected: selected,
       });
 
       if (selected) {
-        console.log("Setting queue entry:", selected);
+        console.log("[fetchUserQueue] ✅ Setting queue entry:", selected);
         setQueueEntry(selected);
       } else {
-        console.log("No queue entry found for today");
+        console.log("[fetchUserQueue] ❌ No queue entry found for today");
         setQueueEntry(null);
         setQueuePosition(null);
       }
     } catch (e) {
-      // Silent fail; keep UI stable
+      console.error("[fetchUserQueue] Error:", e);
     } finally {
       setIsQueueLoading(false);
     }
@@ -271,14 +327,16 @@ export default function PatientPortal() {
         : data?.data || data?.queues || data?.items || [];
       const today = getTodayDateString();
 
+      // For queue position we only want entries that are for today's local date
       const todays = list
         .filter((q) => {
           const entryDate = toYMD(q?.date ?? q?.created_at);
-          // Exact-date filtering: only consider entries with a normalized date equal to today
-          const dateMatches = entryDate === today;
+          if (!entryDate) return false;
+          const diff = daysBetween(entryDate, today);
+          const isToday = diff === 0;
           // Only include entries that are in "waiting" status
           const isWaiting = !q?.queue_status || q.queue_status === "waiting";
-          return dateMatches && isWaiting;
+          return isToday && isWaiting;
         })
         .sort((a, b) => {
           const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
@@ -998,6 +1056,7 @@ export default function PatientPortal() {
                       className="px-4 py-2 text-sm font-semibold text-white bg-[#4ad294] hover:bg-[#3bb882] rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                       disabled={isJoining}
                       onClick={async () => {
+                        const localDate = getTodayDateString();
                         if (!joinReason.trim()) {
                           toast.error("Please enter your purpose of visit.");
                           return;
@@ -1033,6 +1092,7 @@ export default function PatientPortal() {
                             body: JSON.stringify({
                               user_id: userId,
                               reason: joinReason.trim(),
+                              date: localDate,
                             }),
                           });
 
