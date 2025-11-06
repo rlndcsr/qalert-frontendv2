@@ -716,14 +716,14 @@ export default function PatientPortal() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between">
                       <div className="text-sm text-gray-600">
                         Registered at:{" "}
                         {new Date(queueEntry.created_at).toLocaleString()}
                       </div>
                       {(!queueEntry.queue_status ||
                         queueEntry.queue_status === "waiting") && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mt-3 md:mt-0">
                           <button
                             type="button"
                             onClick={() => {
