@@ -139,8 +139,14 @@ export default function PatientPortal() {
   };
 
   const getTodayDateString = () => {
-    // Use UTC YYYY-MM-DD to match server-side ISO dates and avoid local timezone
-    return new Date().toISOString().slice(0, 10);
+    // Use local YYYY-MM-DD (user's local date) so "today" matches what the
+    // user expects in their timezone. Server timestamps may be in UTC; we
+    // normalize dates using the local date part for comparisons below.
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   // Normalize various date inputs to YYYY-MM-DD (returns null if not parseable)
@@ -151,10 +157,20 @@ export default function PatientPortal() {
       if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
       // Try parsing ISO / datetime strings
       const parsed = new Date(value);
-      if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+      if (!isNaN(parsed)) {
+        // Return the local date portion (YYYY-MM-DD) so comparisons use the
+        // user's local day instead of UTC date parts.
+        const yyyy = parsed.getFullYear();
+        const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+        const dd = String(parsed.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
     }
     if (value instanceof Date && !isNaN(value)) {
-      return value.toISOString().slice(0, 10);
+      const yyyy = value.getFullYear();
+      const mm = String(value.getMonth() + 1).padStart(2, "0");
+      const dd = String(value.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
     }
     return null;
   };
