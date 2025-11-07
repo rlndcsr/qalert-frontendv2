@@ -818,10 +818,34 @@ export default function PatientPortal() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-[#25323A]">
-                        Your Queue Status
-                      </h3>
+                    {/* Header Row */}
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 w-8 h-8 bg-[#4ad294]/10 rounded-md border border-[#4ad294]/30 flex items-center justify-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="w-5 h-5 text-[#4ad294]"
+                          >
+                            <path
+                              d="M4 7h16M4 12h10M4 17h7"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-[#25323A] flex items-center gap-1">
+                            <span>Your Queue Status</span>
+                          </h3>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                            {queueEntry.reason}
+                          </p>
+                        </div>
+                      </div>
                       <span
                         className={`text-xs font-semibold px-3 py-1 rounded-full ${
                           queueEntry.queue_status === "called"
@@ -836,26 +860,25 @@ export default function PatientPortal() {
                         {queueEntry.queue_status || "waiting"}
                       </span>
                     </div>
-                    <p className="text-gray-700 mb-4">
-                      <span className="font-medium">Purpose:</span>{" "}
-                      {queueEntry.reason}
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-5 h-5 text-[#4ad294]"
-                          aria-hidden="true"
-                        >
-                          <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
-                        </svg>
-                        <div>
-                          <p className="text-xs text-gray-600">
+
+                    {/* Metrics Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
                             Queue Position
                           </p>
-                          <p className="text-md font-semibold">
+                          <p className="text-sm font-semibold text-[#25323A] mt-1">
                             {!queueEntry.queue_status ||
                             queueEntry.queue_status === "waiting"
                               ? `#${queuePosition}`
@@ -863,25 +886,26 @@ export default function PatientPortal() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-purple-50 p-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-5 h-5 text-purple-500"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM11.25 6a.75.75 0 011.5 0v5.19l3.03 3.03a.75.75 0 11-1.06 1.06l-3.22-3.22A.75.75 0 0111.25 11V6z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <div>
-                          <p className="text-xs text-gray-600">
+                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM11.25 6a.75.75 0 011.5 0v5.19l3.03 3.03a.75.75 0 11-1.06 1.06l-3.22-3.22A.75.75 0 0111.25 11V6z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
                             Est. Wait Time
                           </p>
-                          <p className="text-md font-semibold">
+                          <p className="text-sm font-semibold text-[#25323A] mt-1">
                             {!queueEntry.queue_status ||
                             queueEntry.queue_status === "waiting"
                               ? queueEntry.estimated_time_wait ?? "Pending"
@@ -890,18 +914,59 @@ export default function PatientPortal() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between">
-                      <div className="text-sm text-gray-600">
+
+                    {/* Notifications Banner */}
+                    <div className="rounded-lg border border-[#4ad294]/20 bg-[#F0FDF4] p-4 mb-5 flex items-start gap-3">
+                      <div className="w-8 h-8 bg-white border border-[#4ad294]/30 rounded-full flex items-center justify-center">
+                        <Image
+                          src="/icons/bell.png"
+                          alt="Bell"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-[#25323A] mb-1">
+                          SMS Notifications Active
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          You'll receive real-time updates via SMS at{" "}
+                          <span className="font-medium">
+                            {user?.phone_number || user?.phone || "your phone"}
+                          </span>
+                          . Stay on this page for live queue status.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer Row */}
+                    <div className="pt-3 border-t border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="text-xs text-gray-500 flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          className="w-4 h-4 text-gray-400"
+                        >
+                          <path
+                            d="M12 8v4l3 3"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <circle cx="12" cy="12" r="9" strokeWidth="1.3" />
+                        </svg>
                         Registered at:{" "}
                         {new Date(queueEntry.created_at).toLocaleString()}
                       </div>
                       {(!queueEntry.queue_status ||
                         queueEntry.queue_status === "waiting") && (
-                        <div className="flex items-center gap-2 mt-3 md:mt-0">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => {
-                              // Set the reason and move cursor to end by using setTimeout
                               setIsUpdateOpen(true);
                               setTimeout(() => {
                                 setUpdatedReason(queueEntry.reason);
@@ -921,10 +986,6 @@ export default function PatientPortal() {
                           <button
                             type="button"
                             onClick={() => {
-                              console.log(
-                                "Cancel button clicked. Queue entry:",
-                                queueEntry
-                              );
                               setIsCancelOpen(true);
                             }}
                             className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
