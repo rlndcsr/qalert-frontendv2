@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function AdminPortal() {
   const router = useRouter();
@@ -36,12 +37,70 @@ export default function AdminPortal() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!email_address.trim() || !password.trim()) {
+      toast.error("Please enter both email and password.");
+      return;
+    }
+
     setIsLoggingIn(true);
 
-    // Functionality will be implemented later
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        "http://qalert-backend.test/api/adminLogin",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email_address: email_address.trim(),
+            password: password.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Login failed. Please check your credentials."
+        );
+      }
+
+      // Store admin token in localStorage (API returns "adminToken" field)
+      if (data?.adminToken) {
+        localStorage.setItem("adminToken", data.adminToken);
+        setIsAuthenticated(true);
+
+        // Store admin user info if provided by API
+        if (data?.user) {
+          setAdminUser({
+            name: data.user.name,
+            role: data.user.role,
+            email: data.user.email_address,
+            phone: data.user.phone_number,
+            userId: data.user.user_id,
+          });
+        } else {
+          // Fallback if API doesn't return user data
+          setAdminUser({
+            name: "Admin User",
+            role: "Staff",
+          });
+        }
+
+        toast.success("Login successful! Welcome back.");
+      } else {
+        throw new Error("No token received from server.");
+      }
+    } catch (error) {
+      toast.error(error.message || "An error occurred during login.");
+      console.error("Admin login error:", error);
+    } finally {
       setIsLoggingIn(false);
-    }, 1000);
+    }
   };
 
   const handleLogout = () => {
