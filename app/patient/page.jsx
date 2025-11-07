@@ -506,7 +506,7 @@ export default function PatientPortal() {
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="bg-white py-4 border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-8">
+        <div className="w-full px-8">
           <div className="flex items-center justify-between select-none">
             <div className="flex items-center gap-3">
               <motion.button
@@ -574,7 +574,7 @@ export default function PatientPortal() {
                   }}
                 >
                   <Image
-                    src="/icons/computer.png"
+                    src="/icons/pc.png"
                     alt="Computer"
                     width={20}
                     height={20}
@@ -586,7 +586,7 @@ export default function PatientPortal() {
                 <motion.button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{
@@ -594,8 +594,15 @@ export default function PatientPortal() {
                     ease: [0.22, 1, 0.36, 1],
                     delay: 0.16,
                   }}
+                  title="Logout"
                 >
-                  Logout
+                  <svg viewBox="0 0 512 512" className="w-5 h-5">
+                    <path
+                      fill="currentColor"
+                      className="text-gray-600"
+                      d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
+                    ></path>
+                  </svg>
                 </motion.button>
               </div>
             )}
@@ -684,62 +691,102 @@ export default function PatientPortal() {
                 {/* Welcome Card */}
                 {isQueueLoading ? (
                   <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    className="bg-gradient-to-br from-[#4ad294] to-[#3bb882] rounded-2xl shadow-lg p-8 relative overflow-hidden"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   >
                     {/* Skeleton UI for Welcome Card */}
                     <div className="animate-pulse flex flex-col gap-4">
-                      <div className="h-7 w-1/2 bg-gray-100 rounded mb-2" />
-                      <div className="h-5 w-1/3 bg-gray-100 rounded mb-2" />
-                      <div className="h-5 w-1/4 bg-gray-100 rounded mb-2" />
-                      <div className="h-5 w-1/3 bg-gray-100 rounded" />
+                      <div className="h-7 w-1/2 bg-white/20 rounded mb-2" />
+                      <div className="h-5 w-1/3 bg-white/20 rounded mb-2" />
+                      <div className="h-5 w-1/4 bg-white/20 rounded mb-2" />
+                      <div className="h-5 w-1/3 bg-white/20 rounded" />
                     </div>
                   </motion.div>
                 ) : (
                   <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    className="bg-gradient-to-br from-[#4ad294] via-[#3ec085] to-[#2fa872] rounded-xl shadow-md p-6 relative overflow-hidden"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   >
-                    <h2 className="text-xl md:text-2xl font-bold text-[#25323A] mb-2">
-                      Welcome, {user?.name}!
-                    </h2>
-                    <p className="text-gray-700 mb-2">
-                      {user?.email || user?.email_address}
-                    </p>
-                    {user?.id_number && (
-                      <div className="pt-6 font-semibold text-sm flex items-center gap-2 text-gray-700">
+                    {/* Heart Rate icon - top left with circular background */}
+                    <div className="absolute top-6 left-6 w-12 h-12 bg-white/15 rounded-full border-2 border-white/40 flex items-center justify-center backdrop-blur-sm">
+                      <Image
+                        src="/icons/heart-rate.png"
+                        alt=""
+                        width={48}
+                        height={48}
+                        className="w-6 h-6"
+                        quality={100}
+                      />
+                    </div>
+
+                    {/* Medical/Clean icon - top right with circular background */}
+                    <div className="hidden md:flex absolute top-8 right-8 w-28 h-28 bg-white/15 rounded-full border-2 border-white/30 items-center justify-center backdrop-blur-sm">
+                      <Image
+                        src="/icons/sparkles.png"
+                        alt=""
+                        width={112}
+                        height={112}
+                        className="w-14 h-14"
+                        quality={100}
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative z-10 pl-0">
+                      <h2 className="text-sm font-normal ml-16 text-white/90">
+                        Welcome back,
+                      </h2>
+                      <h3 className="text-lg font-semibold ml-16 text-white mb-8">
+                        {user?.name}
+                      </h3>
+
+                      {/* Email */}
+                      <div className="flex items-center gap-2 text-white mb-2">
                         <Image
-                          src="/icons/id-card.png"
-                          alt="ID Number"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
+                          src="/icons/mail.png"
+                          alt=""
+                          width={16}
+                          height={16}
+                          className="w-4 h-4 flex-shrink-0"
                         />
-                        <span>{user.id_number}</span>
+                        <span className="text-sm font-normal">
+                          {user?.email || user?.email_address}
+                        </span>
                       </div>
-                    )}
-                    <div
-                      className={`flex items-center gap-2 text-gray-700 ${
-                        user?.id_number ? "pt-2" : "pt-6"
-                      }`}
-                    >
-                      {/* Phone icon */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="w-5 h-5 text-[#4ad294]"
-                        aria-hidden="true"
-                      >
-                        <path d="M2.25 6.75c0-1.243 1.007-2.25 2.25-2.25h2.1c.99 0 1.86.64 2.16 1.584l.72 2.25c.27.846.03 1.77-.6 2.4l-1.14 1.14a12.036 12.036 0 005.46 5.46l1.14-1.14c.63-.63 1.554-.87 2.4-.6l2.25.72a2.25 2.25 0 011.584 2.16v2.1c0 1.243-1.007 2.25-2.25 2.25H18c-8.284 0-15-6.716-15-15v-1.5z" />
-                      </svg>
-                      <span className="font-semibold text-sm">
-                        {user?.phone_number || user?.phone || "—"}
-                      </span>
+
+                      {/* Phone */}
+                      <div className="flex items-center gap-2 text-white mb-2">
+                        <Image
+                          src="/icons/telephone.png"
+                          alt=""
+                          width={16}
+                          height={16}
+                          className="w-4 h-4 flex-shrink-0"
+                        />
+                        <span className="text-xs font-normal">
+                          {user?.phone_number || user?.phone || "—"}
+                        </span>
+                      </div>
+
+                      {/* ID Number */}
+                      {user?.id_number && (
+                        <div className="flex items-center gap-2 text-white">
+                          <Image
+                            src="/icons/id.png"
+                            alt=""
+                            width={16}
+                            height={16}
+                            className="w-4 h-4 flex-shrink-0"
+                          />
+                          <span className="text-xs font-normal">
+                            {user.id_number}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
