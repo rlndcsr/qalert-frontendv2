@@ -1274,23 +1274,27 @@ export default function PatientPortal() {
                     />
                   </div>
 
-                  <div className="mt-4 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3">
-                    <Image
-                      src="/icons/bell.png"
-                      alt="Notifications"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 mt-[2px]"
-                    />
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-[#4ad294]/30 bg-[#F0FDF4] p-3">
+                    <div className="w-8 h-8 bg-white border border-[#4ad294]/30 rounded-full flex items-center justify-center mt-[2px]">
+                      <Image
+                        src="/icons/bell.png"
+                        alt="Notifications"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                    </div>
                     <div className="text-sm">
                       <p className="font-medium text-[#25323A]">
-                        You'll receive SMS notifications
+                        SMS Notifications Enabled
                       </p>
                       <p className="text-gray-600">
-                        We'll send updates to{" "}
-                        {user?.phone_number ||
-                          user?.phone ||
-                          "your phone number"}
+                        Updates will be sent to{" "}
+                        <span className="font-semibold">
+                          {user?.phone_number ||
+                            user?.phone ||
+                            "your phone number"}
+                        </span>
                       </p>
                     </div>
                   </div>
