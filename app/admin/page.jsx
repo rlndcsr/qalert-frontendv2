@@ -117,10 +117,11 @@ export default function AdminPortal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-teal-50 font-sans flex flex-col overflow-x-hidden">
-      {/* Header */}
-      <header className="bg-white py-4 border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-8">
+      {/* Header (aligned & styled consistently with PatientPortal) */}
+      <header className="bg-white/80 backdrop-blur-md py-4 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
+        <div className="w-full px-8">
           <div className="flex items-center justify-between select-none">
+            {/* Left group: back button + portal icon + title */}
             <div className="flex items-center gap-3">
               <motion.button
                 onClick={() => router.push("/")}
@@ -138,7 +139,7 @@ export default function AdminPortal() {
                 />
               </motion.button>
               <motion.div
-                className="w-8 h-8 bg-white border-2 border-[#00968a] rounded-md flex items-center justify-center"
+                className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center"
                 initial={{ opacity: 0, y: -6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{
@@ -167,32 +168,69 @@ export default function AdminPortal() {
               >
                 {isAuthenticated ? "Staff Dashboard" : "Staff Portal"}
               </motion.h1>
-              {isAuthenticated && adminUser && (
-                <motion.p
-                  className="text-sm text-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  {adminUser.name} • {adminUser.role}
-                </motion.p>
-              )}
             </div>
 
-            {isAuthenticated && (
-              <motion.button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.45,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.16,
-                }}
-              >
-                Logout
-              </motion.button>
+            {/* Right group: user meta + logout */}
+            {isAuthenticated && adminUser ? (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs text-gray-600 font-medium">
+                    {adminUser.name}
+                  </p>
+                  <p className="text-[11px] text-gray-500">{adminUser.role}</p>
+                </div>
+                <motion.button
+                  onClick={handleLogout}
+                  className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.16,
+                  }}
+                  title="Logout"
+                >
+                  <svg
+                    viewBox="0 0 512 512"
+                    className="w-5 h-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="currentColor"
+                      className="text-gray-600"
+                      d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
+                    ></path>
+                  </svg>
+                </motion.button>
+              </div>
+            ) : (
+              isAuthenticated && (
+                <motion.button
+                  onClick={handleLogout}
+                  className="p-2 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.16,
+                  }}
+                  title="Logout"
+                >
+                  <svg
+                    viewBox="0 0 512 512"
+                    className="w-5 h-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="currentColor"
+                      className="text-gray-600"
+                      d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
+                    ></path>
+                  </svg>
+                </motion.button>
+              )
             )}
           </div>
         </div>
