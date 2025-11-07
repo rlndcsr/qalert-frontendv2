@@ -275,107 +275,104 @@ export default function AdminPortal() {
           <div className="max-w-7xl mx-auto">
             {/* Statistics Cards */}
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"
+              className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               {/* Active Queue */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6 text-blue-500"
-                  >
-                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                  </svg>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/icons/active-queue.png"
+                    alt="Active Queue"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 flex-shrink-0 mt-1"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-600">Active Queue</p>
+                    <p className="text-md font-semibold text-[#25323A]">
+                      {stats.activeQueue}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Active Queue</p>
-                <p className="text-2xl font-bold text-[#25323A]">
-                  {stats.activeQueue}
-                </p>
               </div>
 
               {/* Completed */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6 text-green-500"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/icons/completed.png"
+                    alt="Completed"
+                    width={20}
+                    height={20}
+                    className="w-4 h-4 flex-shrink-0 mr-1"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-600">Completed</p>
+                    <p className="text-md font-semibold text-[#25323A]">
+                      {stats.completed}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Completed</p>
-                <p className="text-2xl font-bold text-[#25323A]">
-                  {stats.completed}
-                </p>
               </div>
 
               {/* Avg Wait */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6 text-purple-500"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/icons/avg-wait.png"
+                    alt="Avg Wait"
+                    width={20}
+                    height={20}
+                    className="w-4 h-4 flex-shrink-0 mr-1"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-600">Avg Wait</p>
+                    <p className="text-md font-semibold text-[#25323A]">
+                      {stats.avgWait}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Avg Wait</p>
-                <p className="text-2xl font-bold text-[#25323A]">
-                  {stats.avgWait}
-                </p>
               </div>
 
               {/* Today Total */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6 text-orange-500"
-                  >
-                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                  </svg>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/icons/total-today.png"
+                    alt="Today Total"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 flex-shrink-0 mt-1"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-600">Today Total</p>
+                    <p className="text-md font-semibold text-[#25323A]">
+                      {stats.todayTotal}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Today Total</p>
-                <p className="text-2xl font-bold text-[#25323A]">
-                  {stats.todayTotal}
-                </p>
               </div>
 
               {/* Total Patients */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6 text-gray-500"
-                  >
-                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                  </svg>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/icons/total-patients.png"
+                    alt="Total Patients"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 flex-shrink-0 mt-1"
+                  />
+                  <div>
+                    <p className="text-xs text-gray-600">Total Patients</p>
+                    <p className="text-md font-semibold text-[#25323A]">
+                      {stats.totalPatients}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Total Patients</p>
-                <p className="text-2xl font-bold text-[#25323A]">
-                  {stats.totalPatients}
-                </p>
               </div>
             </motion.div>
 
@@ -404,7 +401,7 @@ export default function AdminPortal() {
                   Quick Actions
                 </h2>
               </div>
-              <button className="w-full bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <button className="w-full text-sm bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-2 px-2 rounded-lg transition-colors flex items-center justify-center gap-2 hover:cursor-pointer">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
