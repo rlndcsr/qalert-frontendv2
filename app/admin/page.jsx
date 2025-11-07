@@ -103,11 +103,32 @@ export default function AdminPortal() {
     }
   };
 
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
+  const handleLogout = async () => {
+    if (typeof window === "undefined") return;
+
+    const adminToken = localStorage.getItem("adminToken");
+
+    try {
+      // Call the same logout API endpoint used by patient portal
+      if (adminToken) {
+        await fetch("http://qalert-backend.test/api/logout", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout API error:", error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Always clear local state regardless of API call success
       localStorage.removeItem("adminToken");
       setIsAuthenticated(false);
       setAdminUser(null);
+      toast.success("Logged out successfully.");
     }
   };
 
