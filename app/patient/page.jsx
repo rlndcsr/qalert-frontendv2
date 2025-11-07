@@ -134,6 +134,9 @@ export default function PatientPortal() {
 
       setIsCancelOpen(false);
       toast.success("Queue entry cancelled successfully");
+      // Immediately clear local state so the Join Queue card shows without waiting
+      setQueueEntry(null);
+      setQueuePosition(null);
       fetchUserQueue();
       fetchQueuePosition();
     } catch (error) {
@@ -311,9 +314,19 @@ export default function PatientPortal() {
       console.log("[fetchUserQueue] Entries for current user:", forUser);
 
       // Only show entries that match TODAY exactly (diff === 0)
+      // and whose status is allowed (waiting, called, completed)
+      const allowedStatuses = new Set([
+        "waiting",
+        "called",
+        "completed",
+        undefined,
+        null,
+        "",
+      ]);
       const todayEntries = forUser
         .filter((x) => x.entryDate && x.diff === 0)
-        .map((x) => x.q);
+        .map((x) => x.q)
+        .filter((q) => allowedStatuses.has(q?.queue_status));
 
       console.log(
         "[fetchUserQueue] Today's entries (diff === 0):",
