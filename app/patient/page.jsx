@@ -503,9 +503,9 @@ export default function PatientPortal() {
   }, [isLoading, isAuthenticated, user?.user_id, user?.id_number]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col">
       {/* Header */}
-      <header className="bg-white py-4 border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-md py-4 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
         <div className="w-full px-8">
           <div className="flex items-center justify-between select-none">
             <div className="flex items-center gap-3">
@@ -611,7 +611,7 @@ export default function PatientPortal() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full flex items-start justify-center px-8 py-16 overflow-y-auto min-h-0">
+      <main className="flex-1 w-full flex items-start justify-center px-8 py-16">
         <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
           {isLoading ? (
             // Loading state with skeletons
@@ -937,21 +937,69 @@ export default function PatientPortal() {
                   </motion.div>
                 ) : (
                   <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
                   >
-                    <h3 className="text-lg font-semibold text-[#25323A] mb-2">
+                    {/* Icon */}
+                    <div className="flex justify-center mb-6">
+                      <div className="w-20 h-20 bg-[#D4F4E6] rounded-full flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-10 h-10 text-[#4ad294]"
+                          aria-hidden="true"
+                        >
+                          <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-semibold text-[#25323A] mb-3">
                       Join the Queue
                     </h3>
-                    <p className="text-gray-600 mb-4">
-                      You're not currently in the queue. Click below to register
-                      for service.
+
+                    {/* Description */}
+                    <p className="text-gray-600 text-sm mb-6 max-w-md mx-auto">
+                      You're not currently in the queue. Register now to get
+                      your spot and receive real-time updates.
                     </p>
+
+                    {/* Steps */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                      <div className="bg-[#F0FDF4] rounded-lg p-4 border border-[#4ad294]/20">
+                        <div className="w-10 h-10 bg-[#4ad294] text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-semibold">
+                          1
+                        </div>
+                        <p className="text-xs font-medium text-[#25323A]">
+                          Click Join Queue
+                        </p>
+                      </div>
+                      <div className="bg-[#F0FDF4] rounded-lg p-4 border border-[#4ad294]/20">
+                        <div className="w-10 h-10 bg-[#4ad294] text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-semibold">
+                          2
+                        </div>
+                        <p className="text-xs font-medium text-[#25323A]">
+                          State your purpose
+                        </p>
+                      </div>
+                      <div className="bg-[#F0FDF4] rounded-lg p-4 border border-[#4ad294]/20">
+                        <div className="w-10 h-10 bg-[#4ad294] text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-semibold">
+                          3
+                        </div>
+                        <p className="text-xs font-medium text-[#25323A]">
+                          Get SMS updates
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Button */}
                     <button
                       type="button"
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-3 rounded-lg shadow-sm transition-colors cursor-pointer"
+                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-8 py-3.5 rounded-lg shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md font-medium"
                       onClick={() => {
                         setJoinReason("");
                         setIsJoinOpen(true);
@@ -964,9 +1012,9 @@ export default function PatientPortal() {
                         className="w-5 h-5"
                         aria-hidden="true"
                       >
-                        <path d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.75 20.25A7.5 7.5 0 0111.25 12h1.5a7.5 7.5 0 017.5 7.5v.75a.75.75 0 01-.75.75h-15a.75.75 0 01-.75-.75v-.75z" />
+                        <path d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z" />
                       </svg>
-                      <span className="font-medium">Join Queue Now</span>
+                      <span>Join Queue Now</span>
                     </button>
                   </motion.div>
                 )}

@@ -70,7 +70,7 @@ export default function Home() {
 
         {/* Slogan */}
         <motion.h2
-          className="text-4xl md:text-5xl font-bold text-[#25323A] text-center mb-6 leading-tight"
+          className="text-4xl md:text-5xl font-bold text-[#25323A] text-center mb-2 leading-tight"
           variants={itemVariants}
         >
           Skip the Wait,
