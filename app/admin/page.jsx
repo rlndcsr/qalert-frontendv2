@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { SyncLoader } from "react-spinners";
 
 export default function AdminPortal() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function AdminPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminUser, setAdminUser] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Check for adminToken on mount
   useEffect(() => {
@@ -104,9 +106,14 @@ export default function AdminPortal() {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
     if (typeof window === "undefined") return;
 
     const adminToken = localStorage.getItem("adminToken");
+
+    setIsLoggingOut(true);
+    // brief delay so the spinner is visible
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
       // Call the same logout API endpoint used by patient portal
@@ -129,6 +136,7 @@ export default function AdminPortal() {
       setIsAuthenticated(false);
       setAdminUser(null);
       toast.success("Logged out successfully.");
+      setIsLoggingOut(false);
     }
   };
 
@@ -671,6 +679,11 @@ export default function AdminPortal() {
           </div>
         )}
       </main>
+      {isLoggingOut && (
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
+          <SyncLoader size={10} color="#00968a" speedMultiplier={0.9} />
+        </div>
+      )}
     </div>
   );
 }
