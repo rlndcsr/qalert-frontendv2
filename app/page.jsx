@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,26 @@ import MainHeader from "../components/ui/mainheader";
 
 export default function Home() {
   const router = useRouter();
+
+  // Check if user is authenticated and redirect to patient page
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("userData");
+
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        // If user data is valid, redirect to patient page
+        if (parsedUser && parsedUser.id) {
+          router.push("/patient");
+        }
+      } catch (error) {
+        // If user data is invalid, clear it
+        localStorage.removeItem("token");
+        localStorage.removeItem("userData");
+      }
+    }
+  }, [router]);
 
   // Animation variants
   const containerVariants = {
