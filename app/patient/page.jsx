@@ -894,7 +894,9 @@ export default function PatientPortal() {
                           <p className="text-sm font-semibold text-[#25323A] mt-1">
                             {!queueEntry.queue_status ||
                             queueEntry.queue_status === "waiting"
-                              ? `#${queuePosition}`
+                              ? queuePosition !== null
+                                ? `#${queuePosition}`
+                                : ""
                               : "—"}
                           </p>
                         </div>
