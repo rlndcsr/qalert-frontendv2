@@ -716,7 +716,7 @@ export default function AdminPortal() {
                     ) : (
                       todayQueues
                         .sort((a, b) => a.queue_number - b.queue_number)
-                        .map((queue) => {
+                        .map((queue, index) => {
                           const patient = userMap[queue.user_id] || {};
                           const statusLower = queue.queue_status.toLowerCase();
 
@@ -747,7 +747,7 @@ export default function AdminPortal() {
                             statusLower === "serving" ||
                             statusLower === "called"
                               ? "Now"
-                              : `~${queue.queue_number * 5}m`;
+                              : `~${(index + 1) * 5}m`;
 
                           return (
                             <tr
@@ -755,7 +755,7 @@ export default function AdminPortal() {
                               className="hover:bg-gray-50"
                             >
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
-                                {queue.queue_number}
+                                {index + 1}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
