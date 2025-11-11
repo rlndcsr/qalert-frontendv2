@@ -231,6 +231,11 @@ export default function AdminPortal() {
   };
 
   // Calculate statistics from today's queue
+  // Today total should count all queues for today, regardless of status
+  const allTodayQueues = useMemo(() => {
+    return queues.filter((queue) => queue.date === todayDate);
+  }, [queues, todayDate]);
+
   const stats = useMemo(() => {
     const activeQueue = todayQueues.filter(
       (q) => !["completed", "cancelled"].includes(q.queue_status.toLowerCase())
@@ -238,12 +243,12 @@ export default function AdminPortal() {
     const completed = todayQueues.filter(
       (q) => q.queue_status.toLowerCase() === "completed"
     ).length;
-    const todayTotal = todayQueues.length;
+    const todayTotal = allTodayQueues.length;
     const totalPatients = new Set(todayQueues.map((q) => q.user_id)).size;
     const avgWait = todayTotal > 0 ? "~15m" : "—";
 
     return { activeQueue, completed, avgWait, todayTotal, totalPatients };
-  }, [todayQueues]);
+  }, [todayQueues, allTodayQueues]);
 
   if (isLoading) {
     return (
