@@ -93,9 +93,13 @@ export default function AdminPortal() {
     return `${year}-${month}-${day}`;
   }, []);
 
-  // Filter queues for today only
+  // Filter queues for today only and exclude cancelled queues
   const todayQueues = useMemo(() => {
-    return queues.filter((queue) => queue.date === todayDate);
+    return queues.filter(
+      (queue) =>
+        queue.date === todayDate &&
+        queue.queue_status.toLowerCase() !== "cancelled"
+    );
   }, [queues, todayDate]);
 
   // Create a user lookup map
@@ -467,9 +471,13 @@ export default function AdminPortal() {
                   />
                   <div>
                     <p className="text-xs text-gray-600">Active Queue</p>
-                    <p className="text-md font-semibold text-[#25323A]">
-                      {stats.activeQueue}
-                    </p>
+                    {isFetchingData ? (
+                      <div className="h-5 w-8 bg-gray-200 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-md font-semibold text-[#25323A]">
+                        {stats.activeQueue}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -486,9 +494,13 @@ export default function AdminPortal() {
                   />
                   <div>
                     <p className="text-xs text-gray-600">Completed</p>
-                    <p className="text-md font-semibold text-[#25323A]">
-                      {stats.completed}
-                    </p>
+                    {isFetchingData ? (
+                      <div className="h-5 w-8 bg-gray-200 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-md font-semibold text-[#25323A]">
+                        {stats.completed}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -505,9 +517,13 @@ export default function AdminPortal() {
                   />
                   <div>
                     <p className="text-xs text-gray-600">Avg Wait</p>
-                    <p className="text-md font-semibold text-[#25323A]">
-                      {stats.avgWait}
-                    </p>
+                    {isFetchingData ? (
+                      <div className="h-5 w-12 bg-gray-200 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-md font-semibold text-[#25323A]">
+                        {stats.avgWait}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -524,9 +540,13 @@ export default function AdminPortal() {
                   />
                   <div>
                     <p className="text-xs text-gray-600">Today Total</p>
-                    <p className="text-md font-semibold text-[#25323A]">
-                      {stats.todayTotal}
-                    </p>
+                    {isFetchingData ? (
+                      <div className="h-5 w-8 bg-gray-200 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-md font-semibold text-[#25323A]">
+                        {stats.todayTotal}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -543,9 +563,13 @@ export default function AdminPortal() {
                   />
                   <div>
                     <p className="text-xs text-gray-600">Total Patients</p>
-                    <p className="text-md font-semibold text-[#25323A]">
-                      {stats.totalPatients}
-                    </p>
+                    {isFetchingData ? (
+                      <div className="h-5 w-8 bg-gray-200 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-md font-semibold text-[#25323A]">
+                        {stats.totalPatients}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -647,17 +671,39 @@ export default function AdminPortal() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {isFetchingData ? (
-                      <tr>
-                        <td
-                          colSpan={7}
-                          className="px-6 py-8 text-center text-sm text-gray-500"
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#00968a]"></div>
-                            <span>Loading queue data...</span>
-                          </div>
-                        </td>
-                      </tr>
+                      <>
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <tr key={i} className="animate-pulse">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="h-4 w-8 bg-gray-200 rounded"></div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="space-y-2">
+                                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                                <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="h-4 w-28 bg-gray-200 rounded"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="h-4 w-12 bg-gray-200 rounded"></div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <div className="h-7 w-16 bg-gray-200 rounded-md"></div>
+                                <div className="h-7 w-16 bg-gray-200 rounded-md"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
                     ) : todayQueues.length === 0 ? (
                       <tr>
                         <td
