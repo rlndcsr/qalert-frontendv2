@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { SyncLoader } from "react-spinners";
+
+const API_BASE_URL = "http://qalert-backend.test/api";
 
 export default function AdminPortal() {
   const router = useRouter();
@@ -16,6 +18,11 @@ export default function AdminPortal() {
   const [isLoading, setIsLoading] = useState(true);
   const [adminUser, setAdminUser] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Queue data state
+  const [queues, setQueues] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [isFetchingData, setIsFetchingData] = useState(false);
 
   // Check for adminToken on mount
   useEffect(() => {
@@ -36,6 +43,85 @@ export default function AdminPortal() {
 
     checkAuth();
   }, []);
+
+  // Fetch queues and users when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchData = async () => {
+      const token = localStorage.getItem("adminToken");
+      if (!token) return;
+
+      setIsFetchingData(true);
+      try {
+        const headers = {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [queuesResponse, usersResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/queues`, { headers }),
+          fetch(`${API_BASE_URL}/users`, { headers }),
+        ]);
+
+        if (!queuesResponse.ok || !usersResponse.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const queuesData = await queuesResponse.json();
+        const usersData = await usersResponse.json();
+
+        setQueues(queuesData);
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load queue data");
+      } finally {
+        setIsFetchingData(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated]);
+
+  // Get today's date in YYYY-MM-DD format
+  const todayDate = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  // Filter queues for today only
+  const todayQueues = useMemo(() => {
+    return queues.filter((queue) => queue.date === todayDate);
+  }, [queues, todayDate]);
+
+  // Create a user lookup map
+  const userMap = useMemo(() => {
+    const map = {};
+    users.forEach((user) => {
+      map[user.user_id] = user;
+    });
+    return map;
+  }, [users]);
+
+  // Action handlers
+  const handleCallPatient = (queue) => {
+    console.log("Call patient:", queue);
+    toast.info(`Calling patient at queue #${queue.queue_number}`);
+  };
+
+  const handleCompletePatient = (queue) => {
+    console.log("Complete patient:", queue);
+    toast.success(`Completed queue #${queue.queue_number}`);
+  };
+
+  const handleCancelQueue = (queue) => {
+    console.log("Cancel queue:", queue);
+    toast("Queue cancelled", { description: `Queue #${queue.queue_number}` });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -140,57 +226,20 @@ export default function AdminPortal() {
     }
   };
 
-  // Mock queue data - will be replaced with API calls later
-  const mockQueueData = [
-    {
-      position: 1,
-      name: "Pedro Garcia",
-      id: "2020-00709",
-      contact: "+639191234567",
-      purpose: "Medical Consultation",
-      status: "serving",
-      waitTime: "Now",
-      hasActions: true,
-    },
-    {
-      position: 2,
-      name: "Ana Reyes",
-      id: "2021-00234",
-      contact: "+639201234567",
-      purpose: "Medical Certificate",
-      status: "ready",
-      waitTime: "~5m",
-      hasActions: true,
-    },
-    {
-      position: 3,
-      name: "Carlos Lopez",
-      id: "2022-00111",
-      contact: "+639211234567",
-      purpose: "Follow-up Checkup",
-      status: "waiting",
-      waitTime: "~20m",
-      hasActions: false,
-    },
-    {
-      position: 4,
-      name: "Sofia Martinez",
-      id: "2022-00222",
-      contact: "+639221234567",
-      purpose: "First Aid",
-      status: "waiting",
-      waitTime: "~25m",
-      hasActions: false,
-    },
-  ];
+  // Calculate statistics from today's queue
+  const stats = useMemo(() => {
+    const activeQueue = todayQueues.filter(
+      (q) => !["completed", "cancelled"].includes(q.queue_status.toLowerCase())
+    ).length;
+    const completed = todayQueues.filter(
+      (q) => q.queue_status.toLowerCase() === "completed"
+    ).length;
+    const todayTotal = todayQueues.length;
+    const totalPatients = new Set(todayQueues.map((q) => q.user_id)).size;
+    const avgWait = todayTotal > 0 ? "~15m" : "—";
 
-  const stats = {
-    activeQueue: 4,
-    completed: 0,
-    avgWait: "15m",
-    todayTotal: 4,
-    totalPatients: 2,
-  };
+    return { activeQueue, completed, avgWait, todayTotal, totalPatients };
+  }, [todayQueues]);
 
   if (isLoading) {
     return (
@@ -527,7 +576,20 @@ export default function AdminPortal() {
                   Quick Actions
                 </h2>
               </div>
-              <button className="w-full text-sm bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-2 px-2 rounded-lg transition-colors flex items-center justify-center gap-2 hover:cursor-pointer">
+              <button
+                onClick={() => {
+                  const nextWaiting = todayQueues
+                    .filter((q) => q.queue_status.toLowerCase() === "waiting")
+                    .sort((a, b) => a.queue_number - b.queue_number)[0];
+
+                  if (nextWaiting) {
+                    handleCallPatient(nextWaiting);
+                  } else {
+                    toast.info("No waiting patients in queue");
+                  }
+                }}
+                className="w-full text-sm bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-2 px-2 rounded-lg transition-colors flex items-center justify-center gap-2 hover:cursor-pointer"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -570,7 +632,7 @@ export default function AdminPortal() {
                         Contact
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Purpose
+                        Reason
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                         Status
@@ -584,94 +646,149 @@ export default function AdminPortal() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {mockQueueData.map((patient, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
-                          {patient.position}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <p className="text-sm font-medium text-[#25323A]">
-                              {patient.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {patient.id}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1 text-sm text-gray-700">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-4 h-4 text-gray-400"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{patient.contact}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {patient.purpose}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                              patient.status === "serving"
-                                ? "bg-blue-100 text-blue-700"
-                                : patient.status === "ready"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {patient.status === "serving"
-                              ? "Serving"
-                              : patient.status === "ready"
-                              ? "Ready"
-                              : "Waiting"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {patient.waitTime}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {patient.hasActions && (
-                              <>
-                                {patient.status === "serving" ? (
-                                  <button className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors">
-                                    Complete
-                                  </button>
-                                ) : (
-                                  <button className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors">
-                                    Start
-                                  </button>
-                                )}
-                              </>
-                            )}
-                            <button className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                className="w-5 h-5 text-gray-600"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
+                    {isFetchingData ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-6 py-8 text-center text-sm text-gray-500"
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#00968a]"></div>
+                            <span>Loading queue data...</span>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : todayQueues.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-6 py-8 text-center text-sm text-gray-500"
+                        >
+                          No queue entries for today ({todayDate})
+                        </td>
+                      </tr>
+                    ) : (
+                      todayQueues
+                        .sort((a, b) => a.queue_number - b.queue_number)
+                        .map((queue) => {
+                          const patient = userMap[queue.user_id] || {};
+                          const statusLower = queue.queue_status.toLowerCase();
+
+                          // Determine status badge color
+                          let statusClass = "bg-gray-100 text-gray-700";
+                          let statusLabel = queue.queue_status;
+
+                          if (statusLower === "waiting") {
+                            statusClass = "bg-yellow-100 text-yellow-700";
+                            statusLabel = "Waiting";
+                          } else if (
+                            statusLower === "called" ||
+                            statusLower === "serving"
+                          ) {
+                            statusClass = "bg-blue-100 text-blue-700";
+                            statusLabel =
+                              statusLower === "called" ? "Called" : "Serving";
+                          } else if (statusLower === "completed") {
+                            statusClass = "bg-green-100 text-green-700";
+                            statusLabel = "Completed";
+                          } else if (statusLower === "cancelled") {
+                            statusClass = "bg-red-100 text-red-700";
+                            statusLabel = "Cancelled";
+                          }
+
+                          // Calculate wait time (static for now)
+                          const waitTime =
+                            statusLower === "serving" ||
+                            statusLower === "called"
+                              ? "Now"
+                              : `~${queue.queue_number * 5}m`;
+
+                          return (
+                            <tr
+                              key={queue.queue_entry_id}
+                              className="hover:bg-gray-50"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
+                                {queue.queue_number}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <p className="text-sm font-medium text-[#25323A]">
+                                    {patient.name || "Unknown Patient"}
+                                  </p>
+                                  {patient.id_number && (
+                                    <p className="text-xs text-gray-500">
+                                      {patient.id_number}
+                                    </p>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-1 text-sm text-gray-700">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-4 h-4 text-gray-400"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  <span>{patient.phone_number || "N/A"}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
+                                {queue.reason || "—"}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${statusClass}`}
+                                >
+                                  {statusLabel}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                {waitTime}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <div className="flex items-center gap-2">
+                                  {statusLower === "waiting" && (
+                                    <button
+                                      onClick={() => handleCallPatient(queue)}
+                                      className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors"
+                                    >
+                                      Call
+                                    </button>
+                                  )}
+                                  {(statusLower === "called" ||
+                                    statusLower === "serving") && (
+                                    <button
+                                      onClick={() =>
+                                        handleCompletePatient(queue)
+                                      }
+                                      className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors"
+                                    >
+                                      Complete
+                                    </button>
+                                  )}
+                                  {statusLower !== "cancelled" &&
+                                    statusLower !== "completed" && (
+                                      <button
+                                        onClick={() => handleCancelQueue(queue)}
+                                        className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                    )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
                   </tbody>
                 </table>
               </div>
