@@ -25,7 +25,7 @@ export default function MainHeader() {
           <div className="max-w-6xl mx-auto px-6 md:px-8 flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
+              className="h-4 w-4 mt-1"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

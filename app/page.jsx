@@ -6,9 +6,11 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import TopBar from "../components/ui/topbar";
 import MainHeader from "../components/ui/mainheader";
+import { useSystemStatus } from "./hooks/useSystemStatus";
 
 export default function Home() {
   const router = useRouter();
+  const { isOnline, isLoading: isSystemLoading } = useSystemStatus();
 
   // Check if user is authenticated and redirect to patient page
   useEffect(() => {
@@ -147,12 +149,17 @@ export default function Home() {
               Register, join queue, and track your position in real-time
             </p>
             <motion.button
-              className="w-full bg-[#4ad294] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#3bb882] transition-colors text-sm hover:cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/patient")}
+              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+                isOnline
+                  ? "bg-[#4ad294] text-white hover:bg-[#3bb882] hover:cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              whileHover={isOnline ? { scale: 1.02 } : {}}
+              whileTap={isOnline ? { scale: 0.98 } : {}}
+              onClick={() => isOnline && router.push("/patient")}
+              disabled={!isOnline}
             >
-              Enter as Patient
+              {isOnline ? "Enter as Patient" : "System Offline"}
             </motion.button>
           </motion.div>
 
@@ -188,12 +195,17 @@ export default function Home() {
               Manage patient queues and track clinic operations
             </p>
             <motion.button
-              className="w-full bg-[#00968a] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#007a6e] transition-colors text-sm hover:cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/admin")}
+              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+                isOnline
+                  ? "bg-[#00968a] text-white hover:bg-[#007a6e] hover:cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              whileHover={isOnline ? { scale: 1.02 } : {}}
+              whileTap={isOnline ? { scale: 0.98 } : {}}
+              onClick={() => isOnline && router.push("/admin")}
+              disabled={!isOnline}
             >
-              Staff Login
+              {isOnline ? "Staff Login" : "System Offline"}
             </motion.button>
           </motion.div>
 
@@ -229,12 +241,17 @@ export default function Home() {
               Public display for clinic waiting room
             </p>
             <motion.button
-              className="mt-6 w-full bg-[#9611f8] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#7e0dd4] transition-colors text-sm hover:cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => window.open("/queues", "_blank")}
+              className={`mt-6 w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+                isOnline
+                  ? "bg-[#9611f8] text-white hover:bg-[#7e0dd4] hover:cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              whileHover={isOnline ? { scale: 1.02 } : {}}
+              whileTap={isOnline ? { scale: 0.98 } : {}}
+              onClick={() => isOnline && window.open("/queues", "_blank")}
+              disabled={!isOnline}
             >
-              View Display
+              {isOnline ? "View Display" : "System Offline"}
             </motion.button>
           </motion.div>
         </motion.div>
