@@ -106,14 +106,12 @@ export default function PatientPortal() {
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
-    router.push("/");
     setIsLoggingOut(true);
-    // brief delay so the spinner is visible
+    // Show spinner for a brief moment
     await new Promise((resolve) => setTimeout(resolve, 500));
     logout();
     setIsLoggingOut(false);
   };
-
   const handleCancelQueue = async () => {
     console.log("Attempting to cancel queue entry:", queueEntry);
     if (!queueEntry?.queue_entry_id || isCancelling) {
