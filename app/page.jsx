@@ -232,6 +232,7 @@ export default function Home() {
               className="mt-6 w-full bg-[#9611f8] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#7e0dd4] transition-colors text-sm hover:cursor-pointer"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => window.open("/queues", "_blank")}
             >
               View Display
             </motion.button>
