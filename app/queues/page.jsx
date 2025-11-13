@@ -2,7 +2,17 @@
 
 import { useState, useEffect, useMemo } from "react";
 
+import { useRouter } from "next/navigation";
+import { useSystemStatus } from "../hooks/useSystemStatus";
+
 export default function QueueDisplay() {
+  const router = useRouter();
+  const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
+  useEffect(() => {
+    if (!isStatusLoading && !isOnline) {
+      router.replace("/");
+    }
+  }, [isStatusLoading, isOnline, router]);
   // State for client-side time to avoid hydration mismatch
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");

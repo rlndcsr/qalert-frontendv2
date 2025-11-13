@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
+import { useSystemStatus } from "../hooks/useSystemStatus";
 import { SyncLoader } from "react-spinners";
 import {
   Dialog,
@@ -32,8 +33,14 @@ const getTodayDateString = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-export default function PatientPortal() {
+export default function PatientPage() {
   const router = useRouter();
+  const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
+  useEffect(() => {
+    if (!isStatusLoading && !isOnline) {
+      router.replace("/");
+    }
+  }, [isStatusLoading, isOnline, router]);
   const [activeTab, setActiveTab] = useState("login");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
@@ -112,6 +119,7 @@ export default function PatientPortal() {
     logout();
     setIsLoggingOut(false);
   };
+
   const handleCancelQueue = async () => {
     console.log("Attempting to cancel queue entry:", queueEntry);
     if (!queueEntry?.queue_entry_id || isCancelling) {
