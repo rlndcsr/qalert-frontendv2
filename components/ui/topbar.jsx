@@ -14,30 +14,11 @@ export default function TopBar() {
       <div className="max-w-6xl mx-auto px-6 md:px-8 py-2 flex items-center justify-between">
         {/* Left: clinic name */}
         <div className="flex items-center gap-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 text-white"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 21s8-4.5 8-10a8 8 0 10-16 0c0 5.5 8 10 8 10z"
-            />
-          </svg>
-          <span className="font-medium">CSU-UCHW Clinic</span>
+          <span className="font-medium">CSU-UCHW</span>
         </div>
 
         {/* Center: hours (small on mobile) */}
-        <div className="hidden sm:flex items-center gap-6 text-xs md:text-sm">
+        <div className="hidden sm:flex items-center gap-6 text-xs md:text-sm absolute left-1/2 -translate-x-1/2">
           <div className="flex items-center gap-2 opacity-95">
             <svg
               xmlns="http://www.w3.org/2000/svg"

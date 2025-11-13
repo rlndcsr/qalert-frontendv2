@@ -26,7 +26,7 @@ export default function MainHeader() {
           <div className="max-w-6xl mx-auto px-6 md:px-8 flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 mt-1"
+              className="hidden sm:inline h-5 w-5 sm:h-6 sm:w-6 mt-1"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -79,12 +79,12 @@ export default function MainHeader() {
               </button>
             )}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
               <Image
-                src="/images/qalert-icon.png"
+                src="/images/csuuchw-nobg.png"
                 alt="QAlert Logo"
                 width={40}
                 height={40}
@@ -92,10 +92,15 @@ export default function MainHeader() {
               />
             </motion.div>
 
-            <div>
+            <motion.div
+              className="pb-1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <h1 className="text-lg font-bold text-[#25323A]">QAlert</h1>
-              <p className="text-xs text-[#6C757D]">Digital Queue System</p>
-            </div>
+              <p className="text-xs text-[#6C757D]">Digital Queueing System</p>
+            </motion.div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -136,25 +141,25 @@ export default function MainHeader() {
             )}
 
             {/* <button
-            onClick={() => router.push("/patient")}
-            className="inline-flex items-center gap-2 border border-[#e6f7f0] bg-white text-[#007b6b] px-4 py-2 rounded-md hover:bg-[#f3fff8]"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
+              onClick={() => router.push("/patient")}
+              className="inline-flex items-center gap-2 border border-[#e6f7f0] bg-white text-[#007b6b] px-4 py-2 rounded-md hover:bg-[#f3fff8]"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 5h12M9 3v2m-6 4h6m-6 4h6m-6 4h6"
-              />
-            </svg>
-            <span className="text-sm font-medium">Contact Us</span>
-          </button> */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 5h12M9 3v2m-6 4h6m-6 4h6m-6 4h6"
+                />
+              </svg>
+              <span className="text-sm font-medium">Contact Us</span>
+            </button> */}
           </div>
         </div>
       </motion.header>
