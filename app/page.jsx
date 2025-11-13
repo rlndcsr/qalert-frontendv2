@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import TopBar from "../components/ui/topbar";
 import MainHeader from "../components/ui/mainheader";
 import { useSystemStatus } from "./hooks/useSystemStatus";
@@ -156,7 +157,15 @@ export default function Home() {
               }`}
               whileHover={isOnline ? { scale: 1.02 } : {}}
               whileTap={isOnline ? { scale: 0.98 } : {}}
-              onClick={() => isOnline && router.push("/patient")}
+              onClick={() => {
+                if (isOnline) {
+                  router.push("/patient");
+                } else {
+                  toast.error(
+                    "System is currently offline. Please try again later."
+                  );
+                }
+              }}
               disabled={!isOnline}
             >
               {isOnline ? "Enter as Patient" : "System Offline"}
@@ -195,17 +204,12 @@ export default function Home() {
               Manage patient queues and track clinic operations
             </p>
             <motion.button
-              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
-                isOnline
-                  ? "bg-[#00968a] text-white hover:bg-[#007a6e] hover:cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              whileHover={isOnline ? { scale: 1.02 } : {}}
-              whileTap={isOnline ? { scale: 0.98 } : {}}
-              onClick={() => isOnline && router.push("/admin")}
-              disabled={!isOnline}
+              className="w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm bg-[#00968a] text-white hover:bg-[#007a6e] hover:cursor-pointer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/admin")}
             >
-              {isOnline ? "Staff Login" : "System Offline"}
+              Staff Login
             </motion.button>
           </motion.div>
 

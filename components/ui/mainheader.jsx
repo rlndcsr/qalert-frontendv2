@@ -38,8 +38,9 @@ export default function MainHeader() {
               />
             </svg>
             <span className="font-medium">
-              System is currently offline for maintenance. Some features may be
-              unavailable. We apologize for the inconvenience.
+              Clinic services are currently unavailable. Please contact the
+              University Center for Health and Wellness at (085) 123-4567 for
+              assistance.
             </span>
           </div>
         </motion.div>
