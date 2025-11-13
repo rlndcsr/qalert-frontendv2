@@ -269,21 +269,23 @@ export default function AdminPortal() {
           <div className="flex items-center justify-between select-none">
             {/* Left group: back button + portal icon + title */}
             <div className="flex items-center gap-3">
-              <motion.button
-                onClick={() => router.push("/")}
-                aria-label="Back to home"
-                className="p-1 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Image
-                  src="/icons/back.png"
-                  alt="Back"
-                  width={28}
-                  height={28}
-                />
-              </motion.button>
+              {!isAuthenticated && (
+                <motion.button
+                  onClick={() => router.push("/")}
+                  aria-label="Back to home"
+                  className="p-1 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Image
+                    src="/icons/back.png"
+                    alt="Back"
+                    width={28}
+                    height={28}
+                  />
+                </motion.button>
+              )}
               <motion.div
                 className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center"
                 initial={{ opacity: 0, y: -6, scale: 0.98 }}
