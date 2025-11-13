@@ -3,12 +3,13 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../app/hooks/useAuth";
 import { useSystemStatus } from "../../app/hooks/useSystemStatus";
 
 export default function MainHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const { isOnline, isLoading } = useSystemStatus();
 
@@ -47,15 +48,15 @@ export default function MainHeader() {
       )}
 
       <motion.header
-        className="bg-white py-4 border-b shadow-sm"
+        className="bg-white py-2 border-b shadow-sm"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="max-w-6xl mx-auto px-6 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4 -ml-2">
-            {/* Back icon only when NOT authenticated */}
-            {!isAuthenticated && (
+          <div className="flex items-center gap-3 -ml-2">
+            {/* Back icon only when NOT authenticated AND not on home page */}
+            {!isAuthenticated && pathname !== "/" && (
               <button
                 onClick={() => router.back()}
                 className="inline-flex items-center mr-2"
@@ -85,15 +86,15 @@ export default function MainHeader() {
               <Image
                 src="/images/qalert-icon.png"
                 alt="QAlert Logo"
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 priority
               />
             </motion.div>
 
             <div>
-              <h1 className="text-xl font-bold text-[#25323A]">QAlert</h1>
-              <p className="text-sm text-[#6C757D]">Digital Queue System</p>
+              <h1 className="text-lg font-bold text-[#25323A]">QAlert</h1>
+              <p className="text-xs text-[#6C757D]">Digital Queue System</p>
             </div>
           </div>
 
@@ -101,34 +102,34 @@ export default function MainHeader() {
             {/* System Status pill - dynamic based on system status */}
             {isLoading ? (
               /* Skeleton loader while fetching status */
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-gray-200 bg-gray-50">
-                <div className="relative flex items-center justify-center w-4 h-4">
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-300 animate-pulse"></span>
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-gray-200 bg-gray-50">
+                <div className="relative flex items-center justify-center w-3 h-3">
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gray-300 animate-pulse"></span>
                 </div>
-                <div className="hidden md:block h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                <div className="hidden md:block h-2.5 w-20 bg-gray-200 rounded animate-pulse"></div>
               </div>
             ) : (
               <div
-                className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-full border ${
                   isOnline
                     ? "border-green-300 bg-green-50 text-green-700"
                     : "border-red-300 bg-red-50 text-red-700"
                 }`}
               >
                 <div
-                  className="relative flex items-center justify-center w-4 h-4"
+                  className="relative flex items-center justify-center w-3 h-3"
                   aria-hidden
                 >
                   {isOnline ? (
                     <>
-                      <span className="absolute inline-flex h-3 w-3 rounded-full bg-green-300 opacity-60 animate-ping"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                      <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-green-300 opacity-60 animate-ping"></span>
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
                     </>
                   ) : (
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
                   )}
                 </div>
-                <span className="hidden md:inline text-xs pb-1">
+                <span className="hidden md:inline text-xs">
                   {isOnline ? "System Online" : "System Offline"}
                 </span>
               </div>
