@@ -227,27 +227,27 @@ export default function Home() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <motion.div
-              className="w-10 h-10 bg-white border-2 border-[#c8a2f0] rounded-md flex items-center justify-center mb-3"
+              className="w-10 h-10 bg-white border-2 border-[#374D6C] rounded-md flex items-center justify-center mb-3"
               whileHover={{ rotate: 5, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400 }}
             >
               <Image
-                src="/icons/computer.png"
+                src="/icons/window-mac.png"
                 alt="Computer Icon"
-                width={20}
-                height={20}
+                width={24}
+                height={24}
               />
             </motion.div>
             <h3 className="text-xl font-semibold text-[#25323A] mb-4">
               Queue Display
             </h3>
             <p className="text-[#6C757D] mb-6">
-              Public display for clinic waiting room
+              Real-time live queue display for monitoring queue status
             </p>
             <motion.button
-              className={`mt-6 w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
                 isOnline
-                  ? "bg-[#9611f8] text-white hover:bg-[#7e0dd4] hover:cursor-pointer"
+                  ? "bg-[#374D6C] text-white hover:bg-[#2a3a52] hover:cursor-pointer"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
               whileHover={isOnline ? { scale: 1.02 } : {}}
