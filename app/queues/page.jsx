@@ -131,7 +131,7 @@ export default function QueueDisplay() {
         <div className="col-span-1 md:col-span-5 flex flex-col gap-3 md:gap-4 min-h-0">
           {/* Now Serving */}
           <div
-            className="rounded-2xl shadow-xl p-3 md:p-4 flex flex-col justify-center items-center relative overflow-hidden"
+            className="rounded-2xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden"
             style={{
               background:
                 "linear-gradient(to bottom right, #374D6C, #4A6280, #374D6C)",
@@ -142,20 +142,20 @@ export default function QueueDisplay() {
               <div className="absolute bottom-10 right-10 w-24 h-24 bg-white rounded-full"></div>
             </div>
             <div className="relative z-10 text-center">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-full mb-2">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full mb-3">
                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                <span className="text-white text-[9px] md:text-[10px] font-medium tracking-wide uppercase">
+                <span className="text-white text-[10px] md:text-xs font-medium tracking-wide uppercase">
                   Now Serving
                 </span>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 border border-white/20">
-                <div className="text-[32px] md:text-[44px] font-black text-white leading-none mb-1.5">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
+                <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
                   #{nowServing.number}
                 </div>
-                <div className="text-base md:text-lg font-bold text-white mb-0.5">
+                <div className="text-lg md:text-xl font-bold text-white mb-1.5">
                   {nowServing.name}
                 </div>
-                <div className="text-[10px] md:text-xs text-white/90">
+                <div className="text-xs md:text-sm text-white/90">
                   {nowServing.id_number}
                 </div>
               </div>
@@ -234,8 +234,12 @@ export default function QueueDisplay() {
               </h2>
             </div>
             <div
-              className="px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-semibold text-[10px] md:text-xs text-white"
-              style={{ backgroundColor: "#374D6C" }}
+              className="px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
+              style={{
+                borderColor: "#374D6C",
+                color: "#374D6C",
+                backgroundColor: "#E8EDF2",
+              }}
             >
               {waiting.length} waiting
             </div>
@@ -252,8 +256,12 @@ export default function QueueDisplay() {
               >
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <div
-                    className="text-white rounded-xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-md"
-                    style={{ backgroundColor: "#374D6C" }}
+                    className="rounded-xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
+                    style={{
+                      backgroundColor: "#E8EDF2",
+                      borderColor: "#374D6C",
+                      color: "#374D6C",
+                    }}
                   >
                     <span className="text-base md:text-lg font-black">
                       #{w.number}
