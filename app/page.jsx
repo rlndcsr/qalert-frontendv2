@@ -114,26 +114,43 @@ export default function Home() {
         </motion.p>
 
         {/* Feature Cards */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full"
-          variants={containerVariants}
-        >
+        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
           {/* Patient Portal Card */}
           <motion.div
-            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#a8e6c3] transition-colors duration-300"
-            variants={itemVariants}
-            whileHover={{
-              y: -8,
-              scale: 1.02,
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+              isOnline
+                ? "border-gray-200 hover:border-[#a8e6c3]"
+                : "border-gray-300 opacity-50 cursor-not-allowed"
+            }`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={
+              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+            }
+            transition={{
+              duration: 0.6,
+              delay: !isSystemLoading ? 0 : 0,
+              ease: "easeOut",
             }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={
+              isOnline
+                ? {
+                    y: -8,
+                    scale: 1.02,
+                    boxShadow:
+                      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                    transition: { type: "spring", stiffness: 300, damping: 20 },
+                  }
+                : {}
+            }
+            whileTap={isOnline ? { scale: 0.98 } : {}}
           >
             <motion.div
-              className="w-10 h-10 bg-white border-2 border-[#a8e6c3] rounded-md flex items-center justify-center mb-3"
-              whileHover={{ rotate: 5, scale: 1.1 }}
+              className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
+                isOnline
+                  ? "border-2 border-[#a8e6c3]"
+                  : "border-2 border-gray-300"
+              }`}
+              whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
               transition={{ type: "spring", stiffness: 400 }}
             >
               <Image
@@ -141,6 +158,7 @@ export default function Home() {
                 alt="Users Icon"
                 width={20}
                 height={20}
+                className={isOnline ? "" : "grayscale opacity-50"}
               />
             </motion.div>
             <h3 className="text-xl font-semibold text-[#25323A] mb-4">
@@ -175,15 +193,23 @@ export default function Home() {
           {/* Staff Dashboard Card */}
           <motion.div
             className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#80cbc4] transition-colors duration-300"
-            variants={itemVariants}
+            initial={{ opacity: 0, y: 30 }}
+            animate={
+              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+            }
+            transition={{
+              duration: 0.6,
+              delay: !isSystemLoading ? 0.2 : 0,
+              ease: "easeOut",
+            }}
             whileHover={{
               y: -8,
               scale: 1.02,
               boxShadow:
                 "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              transition: { type: "spring", stiffness: 300, damping: 20 },
             }}
             whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <motion.div
               className="w-10 h-10 bg-white border-2 border-[#80cbc4] rounded-md flex items-center justify-center mb-3"
@@ -215,20 +241,40 @@ export default function Home() {
 
           {/* Queue Display Card */}
           <motion.div
-            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#c8a2f0] transition-colors duration-300"
-            variants={itemVariants}
-            whileHover={{
-              y: -8,
-              scale: 1.02,
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+              isOnline
+                ? "border-gray-200 hover:border-[#c8a2f0]"
+                : "border-gray-300 opacity-50 cursor-not-allowed"
+            }`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={
+              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+            }
+            transition={{
+              duration: 0.6,
+              delay: !isSystemLoading ? 0.4 : 0,
+              ease: "easeOut",
             }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={
+              isOnline
+                ? {
+                    y: -8,
+                    scale: 1.02,
+                    boxShadow:
+                      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                    transition: { type: "spring", stiffness: 300, damping: 20 },
+                  }
+                : {}
+            }
+            whileTap={isOnline ? { scale: 0.98 } : {}}
           >
             <motion.div
-              className="w-10 h-10 bg-white border-2 border-[#374D6C] rounded-md flex items-center justify-center mb-3"
-              whileHover={{ rotate: 5, scale: 1.1 }}
+              className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
+                isOnline
+                  ? "border-2 border-[#374D6C]"
+                  : "border-2 border-gray-300"
+              }`}
+              whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
               transition={{ type: "spring", stiffness: 400 }}
             >
               <Image
@@ -236,6 +282,7 @@ export default function Home() {
                 alt="Computer Icon"
                 width={24}
                 height={24}
+                className={isOnline ? "" : "grayscale opacity-50"}
               />
             </motion.div>
             <h3 className="text-xl font-semibold text-[#25323A] mb-4">
