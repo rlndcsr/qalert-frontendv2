@@ -907,7 +907,20 @@ export default function PatientPage() {
 
                     {/* Avatar image - positioned near bottom-right inside card */}
                     <Image
-                      src="/images/male-avatar.png"
+                      src={(() => {
+                        const g = (
+                          user?.gender ||
+                          user?.sex ||
+                          user?.profile?.gender ||
+                          ""
+                        )
+                          .toString()
+                          .toLowerCase();
+                        if (g.startsWith("f"))
+                          return "/images/female-avatar.png";
+                        if (g.startsWith("m")) return "/images/male-avatar.png";
+                        return "/images/male-avatar.png";
+                      })()}
                       alt="Patient avatar"
                       width={170}
                       height={170}
