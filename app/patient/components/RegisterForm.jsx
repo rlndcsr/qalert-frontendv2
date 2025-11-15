@@ -13,6 +13,7 @@ export default function RegisterForm({ onSubmit }) {
     universityId: "",
     passwordRegister: "",
     confirmPassword: "",
+    gender: "",
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +46,7 @@ export default function RegisterForm({ onSubmit }) {
           universityId: "",
           passwordRegister: "",
           confirmPassword: "",
+          gender: "",
         });
       } else {
         // Registration failed - error toast already shown by useAuth hook
@@ -112,6 +114,44 @@ export default function RegisterForm({ onSubmit }) {
           <p className="text-sm text-gray-500 mt-1">
             Format: 09XXXXXXXXX (11 digits)
           </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-[#25323A] mb-2">
+            Gender <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Male", value: "male" },
+              { label: "Female", value: "female" },
+              { label: "Other", value: "other" },
+            ].map((opt) => (
+              <label
+                key={opt.value}
+                className={`group cursor-pointer flex flex-col items-center justify-center rounded-md border px-2 py-3 text-xs font-medium transition-all select-none
+                  ${
+                    formData.gender === opt.value
+                      ? "border-[#4ad294] bg-[#F0FDF4] text-[#25323A] shadow-sm"
+                      : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
+                  }`}
+              >
+                <input
+                  type="radio"
+                  name="gender"
+                  value={opt.value}
+                  checked={formData.gender === opt.value}
+                  onChange={handleInputChange}
+                  className="sr-only"
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+          {formData.gender === "" && (
+            <p className="text-xs text-gray-500 mt-1">
+              Please select your gender.
+            </p>
+          )}
         </div>
 
         <div>

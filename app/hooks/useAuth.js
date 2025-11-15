@@ -107,6 +107,7 @@ export function useAuth() {
           id_number: formData.universityId || null,
           password: formData.passwordRegister,
           password_confirmation: formData.confirmPassword,
+          gender: formData.gender || null,
         }),
       });
 
