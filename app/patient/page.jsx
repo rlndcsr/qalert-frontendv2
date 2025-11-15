@@ -909,9 +909,9 @@ export default function PatientPage() {
                     <Image
                       src="/images/male-avatar.png"
                       alt="Patient avatar"
-                      width={140}
-                      height={140}
-                      className="hidden md:block absolute right-6 -bottom-2 h-32 w-auto object-contain pointer-events-none select-none drop-shadow-sm"
+                      width={170}
+                      height={170}
+                      className="hidden md:block absolute right-5 bottom-0 h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm"
                       quality={100}
                       priority
                     />
