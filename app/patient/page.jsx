@@ -615,8 +615,7 @@ export default function PatientPage() {
                     delay: 0.08,
                   }}
                   onClick={() => {
-                    // TODO: Navigate to queue display page
-                    toast.info("Queue display coming soon!");
+                    window.open("/queues", "_blank");
                   }}
                 >
                   <svg
