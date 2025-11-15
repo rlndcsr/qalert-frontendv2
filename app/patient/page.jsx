@@ -339,10 +339,11 @@ export default function PatientPage() {
       console.log("[fetchUserQueue] Entries for current user:", forUser);
 
       // Only show entries that match TODAY exactly (diff === 0)
-      // and whose status is allowed (waiting, called, completed)
+      // and whose status is allowed (waiting, called, now_serving, completed)
       const allowedStatuses = new Set([
         "waiting",
         "called",
+        "now_serving",
         "completed",
         undefined,
         null,
@@ -1015,29 +1016,14 @@ export default function PatientPage() {
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex items-start gap-3">
                         <div className="mt-1 w-8 h-8 bg-[#4ad294]/10 rounded-md border border-[#4ad294]/30 flex items-center justify-center">
-                          <Image
-                            src={(() => {
-                              const g = (
-                                user?.gender ||
-                                user?.sex ||
-                                user?.profile?.gender ||
-                                ""
-                              )
-                                .toString()
-                                .toLowerCase();
-                              if (g.startsWith("f"))
-                                return "/images/female-avatar.png";
-                              if (g.startsWith("m"))
-                                return "/images/male-avatar.png";
-                              return "/images/male-avatar.png";
-                            })()}
-                            alt="Patient avatar"
-                            width={190}
-                            height={190}
-                            className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm z-0"
-                            quality={100}
-                            priority
-                          />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-5 h-5 text-[#4ad294]"
+                          >
+                            <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+                          </svg>
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-[#25323A] flex items-center gap-1">
@@ -1050,16 +1036,22 @@ export default function PatientPage() {
                       </div>
                       <span
                         className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                          queueEntry.queue_status === "called"
+                          queueEntry.queue_status === "now_serving"
+                            ? "bg-green-100 text-green-700"
+                            : queueEntry.queue_status === "called"
                             ? "bg-blue-100 text-blue-700"
                             : queueEntry.queue_status === "completed"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-white text-gray-700 border border-gray-300"
                             : queueEntry.queue_status === "cancelled"
                             ? "bg-red-100 text-red-700"
                             : "bg-amber-100 text-amber-700"
                         }`}
                       >
-                        {queueEntry.queue_status || "waiting"}
+                        {queueEntry.queue_status === "now_serving"
+                          ? "now serving"
+                          : queueEntry.queue_status === "called"
+                          ? "called"
+                          : queueEntry.queue_status || "waiting"}
                       </span>
                     </div>
 
