@@ -87,6 +87,10 @@ export default function QueueDisplay() {
     }
 
     // Filter by status and sort by queue number
+    const nowServingEntries = queueEntries
+      .filter((entry) => entry.queue_status === "now_serving")
+      .sort((a, b) => a.queue_number - b.queue_number);
+
     const calledEntries = queueEntries
       .filter((entry) => entry.queue_status === "called")
       .sort((a, b) => a.queue_number - b.queue_number);
@@ -95,23 +99,25 @@ export default function QueueDisplay() {
       .filter((entry) => entry.queue_status === "waiting")
       .sort((a, b) => a.queue_number - b.queue_number);
 
-    // Now serving: first "called" entry
-    const nowServingEntry = calledEntries[0];
+    // Now serving: first "now_serving" entry, fallback to first "called" entry
+    const nowServingEntry = nowServingEntries[0] || calledEntries[0];
     const nowServingData = nowServingEntry
       ? {
           number: nowServingEntry.queue_number,
           name: users[nowServingEntry.user_id]?.name || "Unknown",
-          id_number: users[nowServingEntry.user_id]?.id_number || "No ID",
+          id_number: users[nowServingEntry.user_id]?.id_number || "",
         }
       : null;
 
-    // Ready: second "called" entry
-    const readyEntry = calledEntries[1];
+    // Ready: second "called" entry (or first if now_serving took the first one)
+    const readyEntry = nowServingEntries[0]
+      ? calledEntries[0]
+      : calledEntries[1];
     const readyData = readyEntry
       ? {
           number: readyEntry.queue_number,
           name: users[readyEntry.user_id]?.name || "Unknown",
-          id_number: users[readyEntry.user_id]?.id_number || "No ID",
+          id_number: users[readyEntry.user_id]?.id_number || "",
         }
       : null;
 
@@ -119,12 +125,13 @@ export default function QueueDisplay() {
     const waitingData = waitingEntries.map((entry, index) => ({
       number: entry.queue_number,
       name: users[entry.user_id]?.name || "Unknown",
-      id_number: users[entry.user_id]?.id_number || "No ID",
+      id_number: users[entry.user_id]?.id_number || "",
       wait: `~${(index + 1) * 15}m`, // Estimated wait time
     }));
 
-    // Total in queue (called + waiting)
-    const total = calledEntries.length + waitingEntries.length;
+    // Total in queue (now_serving + called + waiting)
+    const total =
+      nowServingEntries.length + calledEntries.length + waitingEntries.length;
 
     return {
       nowServing: nowServingData,
@@ -452,9 +459,7 @@ export default function QueueDisplay() {
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500 py-4">
-                No one waiting
-              </div>
+              <div className="text-center text-gray-500 py-4"></div>
             )}
           </div>
 
