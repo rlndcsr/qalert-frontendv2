@@ -1,8 +1,9 @@
 "use client";
 
+import React from "react";
 import { useEffect } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import TopBar from "../components/ui/topbar";
@@ -12,6 +13,7 @@ import { useSystemStatus } from "./hooks/useSystemStatus";
 export default function Home() {
   const router = useRouter();
   const { isOnline, isLoading: isSystemLoading } = useSystemStatus();
+  const [showCards, setShowCards] = React.useState(false);
 
   // Check if user is authenticated and redirect to patient page
   useEffect(() => {
@@ -39,8 +41,8 @@ export default function Home() {
     visible: {
       opacity: 1,
       transition: {
-        duration: 0.6,
-        staggerChildren: 0.2,
+        duration: 0.3,
+        staggerChildren: 0.1,
       },
     },
   };
@@ -51,7 +53,7 @@ export default function Home() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.3,
         ease: "easeOut",
       },
     },
@@ -63,7 +65,7 @@ export default function Home() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.8,
+        duration: 0.4,
         ease: "easeOut",
       },
     },
@@ -96,6 +98,7 @@ export default function Home() {
         <motion.h2
           className="text-4xl md:text-5xl font-bold text-[#25323A] text-center mb-3 leading-tight"
           variants={itemVariants}
+          onAnimationComplete={() => setShowCards(true)}
         >
           Skip the Wait,
           <br />
@@ -114,198 +117,210 @@ export default function Home() {
         </motion.p>
 
         {/* Feature Cards */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
-          {/* Patient Portal Card */}
-          <motion.div
-            className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
-              isOnline
-                ? "border-gray-200 hover:border-[#a8e6c3]"
-                : "border-gray-300 opacity-50 cursor-not-allowed"
-            }`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={
-              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
-            }
-            transition={{
-              duration: 0.6,
-              delay: !isSystemLoading ? 0 : 0,
-              ease: "easeOut",
-            }}
-            whileHover={
-              isOnline
-                ? {
-                    y: -8,
-                    scale: 1.02,
-                    boxShadow:
-                      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                    transition: { type: "spring", stiffness: 300, damping: 20 },
-                  }
-                : {}
-            }
-            whileTap={isOnline ? { scale: 0.98 } : {}}
-          >
+        <AnimatePresence>
+          {showCards && (
             <motion.div
-              className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
-                isOnline
-                  ? "border-2 border-[#a8e6c3]"
-                  : "border-2 border-gray-300"
-              }`}
-              whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
-              transition={{ type: "spring", stiffness: 400 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <Image
-                src="/icons/users.png"
-                alt="Users Icon"
-                width={20}
-                height={20}
-                className={isOnline ? "" : "grayscale opacity-50"}
-              />
-            </motion.div>
-            <h3 className="text-xl font-semibold text-[#25323A] mb-4">
-              Patient Portal
-            </h3>
-            <p className="text-[#6C757D] mb-6">
-              Register, join queue, and track your position in real-time
-            </p>
-            <motion.button
-              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
-                isOnline
-                  ? "bg-[#4ad294] text-white hover:bg-[#3bb882] hover:cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              whileHover={isOnline ? { scale: 1.02 } : {}}
-              whileTap={isOnline ? { scale: 0.98 } : {}}
-              onClick={() => {
-                if (isOnline) {
-                  router.push("/patient");
-                } else {
-                  toast.error(
-                    "System is currently offline. Please try again later."
-                  );
+              {/* Patient Portal Card */}
+              <motion.div
+                className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+                  isOnline
+                    ? "border-gray-200 hover:border-[#a8e6c3]"
+                    : "border-gray-300 opacity-50 cursor-not-allowed"
+                }`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  ease: "easeInOut",
+                  delay: 0,
+                }}
+                whileHover={
+                  isOnline
+                    ? {
+                        y: -8,
+                        scale: 1.02,
+                        boxShadow:
+                          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                        },
+                      }
+                    : {}
                 }
-              }}
-              disabled={!isOnline}
-            >
-              {isOnline ? "Enter as Patient" : "System Offline"}
-            </motion.button>
-          </motion.div>
+                whileTap={isOnline ? { scale: 0.98 } : {}}
+              >
+                <motion.div
+                  className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
+                    isOnline
+                      ? "border-2 border-[#a8e6c3]"
+                      : "border-2 border-gray-300"
+                  }`}
+                  whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Image
+                    src="/icons/users.png"
+                    alt="Users Icon"
+                    width={20}
+                    height={20}
+                    className={isOnline ? "" : "grayscale opacity-50"}
+                  />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-[#25323A] mb-4">
+                  Patient Portal
+                </h3>
+                <p className="text-[#6C757D] mb-6">
+                  Register, join queue, and track your position in real-time
+                </p>
+                <motion.button
+                  className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+                    isOnline
+                      ? "bg-[#4ad294] text-white hover:bg-[#3bb882] hover:cursor-pointer"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                  whileHover={isOnline ? { scale: 1.02 } : {}}
+                  whileTap={isOnline ? { scale: 0.98 } : {}}
+                  onClick={() => {
+                    if (isOnline) {
+                      router.push("/patient");
+                    } else {
+                      toast.error(
+                        "System is currently offline. Please try again later."
+                      );
+                    }
+                  }}
+                  disabled={!isOnline}
+                >
+                  {isOnline ? "Enter as Patient" : "System Offline"}
+                </motion.button>
+              </motion.div>
 
-          {/* Staff Dashboard Card */}
-          <motion.div
-            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#80cbc4] transition-colors duration-300"
-            initial={{ opacity: 0, y: 30 }}
-            animate={
-              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
-            }
-            transition={{
-              duration: 0.6,
-              delay: !isSystemLoading ? 0.2 : 0,
-              ease: "easeOut",
-            }}
-            whileHover={{
-              y: -8,
-              scale: 1.02,
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-              transition: { type: "spring", stiffness: 300, damping: 20 },
-            }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <motion.div
-              className="w-10 h-10 bg-white border-2 border-[#80cbc4] rounded-md flex items-center justify-center mb-3"
-              whileHover={{ rotate: 5, scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Image
-                src="/icons/staff-dashboard.png"
-                alt="Staff Dashboard Icon"
-                width={20}
-                height={20}
-              />
-            </motion.div>
-            <h3 className="text-xl font-semibold text-[#25323A] mb-4">
-              Staff Dashboard
-            </h3>
-            <p className="text-[#6C757D] mb-6">
-              Manage patient queues and track clinic operations
-            </p>
-            <motion.button
-              className="w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm bg-[#00968a] text-white hover:bg-[#007a6e] hover:cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/admin")}
-            >
-              Staff Login
-            </motion.button>
-          </motion.div>
+              {/* Staff Dashboard Card */}
+              <motion.div
+                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#80cbc4] transition-colors duration-300"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  ease: "easeInOut",
+                  delay: 0.18,
+                }}
+                whileHover={{
+                  y: -8,
+                  scale: 1.02,
+                  boxShadow:
+                    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                  transition: { type: "spring", stiffness: 300, damping: 20 },
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <motion.div
+                  className="w-10 h-10 bg-white border-2 border-[#80cbc4] rounded-md flex items-center justify-center mb-3"
+                  whileHover={{ rotate: 5, scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Image
+                    src="/icons/staff-dashboard.png"
+                    alt="Staff Dashboard Icon"
+                    width={20}
+                    height={20}
+                  />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-[#25323A] mb-4">
+                  Staff Dashboard
+                </h3>
+                <p className="text-[#6C757D] mb-6">
+                  Manage patient queues and track clinic operations
+                </p>
+                <motion.button
+                  className="w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm bg-[#00968a] text-white hover:bg-[#007a6e] hover:cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push("/admin")}
+                >
+                  Staff Login
+                </motion.button>
+              </motion.div>
 
-          {/* Queue Display Card */}
-          <motion.div
-            className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
-              isOnline
-                ? "border-gray-200 hover:border-[#c8a2f0]"
-                : "border-gray-300 opacity-50 cursor-not-allowed"
-            }`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={
-              !isSystemLoading ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
-            }
-            transition={{
-              duration: 0.6,
-              delay: !isSystemLoading ? 0.4 : 0,
-              ease: "easeOut",
-            }}
-            whileHover={
-              isOnline
-                ? {
-                    y: -8,
-                    scale: 1.02,
-                    boxShadow:
-                      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                    transition: { type: "spring", stiffness: 300, damping: 20 },
-                  }
-                : {}
-            }
-            whileTap={isOnline ? { scale: 0.98 } : {}}
-          >
-            <motion.div
-              className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
-                isOnline
-                  ? "border-2 border-[#374D6C]"
-                  : "border-2 border-gray-300"
-              }`}
-              whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Image
-                src="/icons/window-mac.png"
-                alt="Computer Icon"
-                width={24}
-                height={24}
-                className={isOnline ? "" : "grayscale opacity-50"}
-              />
+              {/* Queue Display Card */}
+              <motion.div
+                className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+                  isOnline
+                    ? "border-gray-200 hover:border-[#c8a2f0]"
+                    : "border-gray-300 opacity-50 cursor-not-allowed"
+                }`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  ease: "easeInOut",
+                  delay: 0.36,
+                }}
+                whileHover={
+                  isOnline
+                    ? {
+                        y: -8,
+                        scale: 1.02,
+                        boxShadow:
+                          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                        },
+                      }
+                    : {}
+                }
+                whileTap={isOnline ? { scale: 0.98 } : {}}
+              >
+                <motion.div
+                  className={`w-10 h-10 bg-white rounded-md flex items-center justify-center mb-3 ${
+                    isOnline
+                      ? "border-2 border-[#374D6C]"
+                      : "border-2 border-gray-300"
+                  }`}
+                  whileHover={isOnline ? { rotate: 5, scale: 1.1 } : {}}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Image
+                    src="/icons/window-mac.png"
+                    alt="Computer Icon"
+                    width={24}
+                    height={24}
+                    className={isOnline ? "" : "grayscale opacity-50"}
+                  />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-[#25323A] mb-4">
+                  Queue Display
+                </h3>
+                <p className="text-[#6C757D] mb-6">
+                  Real-time live queue display for monitoring queue status
+                </p>
+                <motion.button
+                  className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
+                    isOnline
+                      ? "bg-[#374D6C] text-white hover:bg-[#2a3a52] hover:cursor-pointer"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                  whileHover={isOnline ? { scale: 1.02 } : {}}
+                  whileTap={isOnline ? { scale: 0.98 } : {}}
+                  onClick={() => isOnline && window.open("/queues", "_blank")}
+                  disabled={!isOnline}
+                >
+                  {isOnline ? "View Display" : "System Offline"}
+                </motion.button>
+              </motion.div>
             </motion.div>
-            <h3 className="text-xl font-semibold text-[#25323A] mb-4">
-              Queue Display
-            </h3>
-            <p className="text-[#6C757D] mb-6">
-              Real-time live queue display for monitoring queue status
-            </p>
-            <motion.button
-              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors text-sm ${
-                isOnline
-                  ? "bg-[#374D6C] text-white hover:bg-[#2a3a52] hover:cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              whileHover={isOnline ? { scale: 1.02 } : {}}
-              whileTap={isOnline ? { scale: 0.98 } : {}}
-              onClick={() => isOnline && window.open("/queues", "_blank")}
-              disabled={!isOnline}
-            >
-              {isOnline ? "View Display" : "System Offline"}
-            </motion.button>
-          </motion.div>
-        </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Key Features Section */}
         <motion.section
