@@ -18,36 +18,121 @@ export default function QueueDisplay() {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
 
-  // Static mock data for the UI
-  const nowServing = useMemo(
-    () => ({ number: 1, name: "Pedro Garcia", id_number: "2020-00789" }),
-    []
-  );
+  // State for queue data
+  const [queueEntries, setQueueEntries] = useState([]);
+  const [users, setUsers] = useState({});
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const ready = useMemo(
-    () => ({ number: 2, name: "Ana Reyes", id_number: "2021-00234" }),
-    []
-  );
+  // Fetch queue entries and users
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch queues and users in parallel
+        const [queuesResponse, usersResponse] = await Promise.all([
+          fetch("http://qalert-backend.test/api/queues", {
+            headers: { Accept: "application/json" },
+          }),
+          fetch("http://qalert-backend.test/api/users", {
+            headers: { Accept: "application/json" },
+          }),
+        ]);
 
-  const waiting = useMemo(
-    () => [
-      {
-        number: 3,
-        name: "Carlos Lopez",
-        id_number: "2022-00111",
-        wait: "~20m",
-      },
-      {
-        number: 4,
-        name: "Sofia Martinez",
-        id_number: "2022-00222",
-        wait: "~35m",
-      },
-    ],
-    []
-  );
+        if (queuesResponse.ok && usersResponse.ok) {
+          const queuesData = await queuesResponse.json();
+          const usersData = await usersResponse.json();
 
-  const totalInQueue = 4; // Total count
+          console.log("All queue entries:", queuesData);
+
+          // Create a user map for quick lookup
+          const userMap = {};
+          usersData.forEach((user) => {
+            userMap[user.user_id] = user;
+          });
+
+          // Filter queue entries for today only
+          const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format in local timezone
+          console.log("Today's date:", today);
+          const todayQueues = queuesData.filter(
+            (entry) => entry.date === today
+          );
+          console.log("Today's queue entries:", todayQueues);
+
+          setQueueEntries(todayQueues);
+          setUsers(userMap);
+        } else {
+          console.error("Failed to fetch data");
+        }
+      } catch (error) {
+        console.error("Error fetching queue data:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchData();
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Process queue data
+  const { nowServing, ready, waiting, totalInQueue } = useMemo(() => {
+    if (isLoadingData || queueEntries.length === 0) {
+      return {
+        nowServing: null,
+        ready: null,
+        waiting: [],
+        totalInQueue: 0,
+      };
+    }
+
+    // Filter by status and sort by queue number
+    const calledEntries = queueEntries
+      .filter((entry) => entry.queue_status === "called")
+      .sort((a, b) => a.queue_number - b.queue_number);
+
+    const waitingEntries = queueEntries
+      .filter((entry) => entry.queue_status === "waiting")
+      .sort((a, b) => a.queue_number - b.queue_number);
+
+    // Now serving: first "called" entry
+    const nowServingEntry = calledEntries[0];
+    const nowServingData = nowServingEntry
+      ? {
+          number: nowServingEntry.queue_number,
+          name: users[nowServingEntry.user_id]?.name || "Unknown",
+          id_number: users[nowServingEntry.user_id]?.id_number || "No ID",
+        }
+      : null;
+
+    // Ready: second "called" entry
+    const readyEntry = calledEntries[1];
+    const readyData = readyEntry
+      ? {
+          number: readyEntry.queue_number,
+          name: users[readyEntry.user_id]?.name || "Unknown",
+          id_number: users[readyEntry.user_id]?.id_number || "No ID",
+        }
+      : null;
+
+    // Waiting: all "waiting" entries
+    const waitingData = waitingEntries.map((entry, index) => ({
+      number: entry.queue_number,
+      name: users[entry.user_id]?.name || "Unknown",
+      id_number: users[entry.user_id]?.id_number || "No ID",
+      wait: `~${(index + 1) * 15}m`, // Estimated wait time
+    }));
+
+    // Total in queue (called + waiting)
+    const total = calledEntries.length + waitingEntries.length;
+
+    return {
+      nowServing: nowServingData,
+      ready: readyData,
+      waiting: waitingData,
+      totalInQueue: total,
+    };
+  }, [queueEntries, users, isLoadingData]);
 
   // Update time only on client side after mount
   useEffect(() => {
@@ -107,20 +192,33 @@ export default function QueueDisplay() {
             <p className="text-[10px] md:text-xs text-gray-500 font-medium">
               Total
             </p>
-            <p
-              className="text-lg md:text-xl font-bold"
-              style={{ color: "#374D6C" }}
-            >
-              {totalInQueue}
-            </p>
+            {isLoadingData ? (
+              <div className="h-[28px] md:h-[32px] w-8 bg-slate-200 rounded animate-pulse"></div>
+            ) : (
+              <p
+                className="text-lg md:text-xl font-bold"
+                style={{ color: "#374D6C" }}
+              >
+                {totalInQueue}
+              </p>
+            )}
           </div>
           <div className="ml-2 md:ml-3 text-right">
-            <p className="text-xs md:text-sm font-semibold text-gray-700">
-              {currentTime}
-            </p>
-            <p className="text-[10px] md:text-xs text-gray-500">
-              {currentDate}
-            </p>
+            {isLoadingData ? (
+              <div className="animate-pulse space-y-1">
+                <div className="h-[16px] md:h-[20px] w-12 bg-slate-200 rounded ml-auto"></div>
+                <div className="h-[12px] md:h-[14px] w-16 bg-slate-200 rounded ml-auto"></div>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs md:text-sm font-semibold text-gray-700">
+                  {currentTime}
+                </p>
+                <p className="text-[10px] md:text-xs text-gray-500">
+                  {currentDate}
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -149,15 +247,29 @@ export default function QueueDisplay() {
                 </span>
               </div>
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
-                <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
-                  #{nowServing.number}
-                </div>
-                <div className="text-lg md:text-xl font-bold text-white mb-1.5">
-                  {nowServing.name}
-                </div>
-                <div className="text-xs md:text-sm text-white/90">
-                  {nowServing.id_number}
-                </div>
+                {isLoadingData ? (
+                  <div className="animate-pulse">
+                    <div className="h-[36px] md:h-[48px] bg-white/20 rounded w-16 mx-auto mb-2.5"></div>
+                    <div className="h-[28px] md:h-[32px] bg-white/20 rounded w-32 mx-auto mb-1.5"></div>
+                    <div className="h-[16px] md:h-[20px] bg-white/20 rounded w-20 mx-auto"></div>
+                  </div>
+                ) : nowServing ? (
+                  <>
+                    <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
+                      #{nowServing.number}
+                    </div>
+                    <div className="text-lg md:text-xl font-bold text-white mb-1.5">
+                      {nowServing.name}
+                    </div>
+                    <div className="text-xs md:text-sm text-white/90">
+                      {nowServing.id_number}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-white/80 text-base md:text-lg">
+                    To Be Called
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -191,21 +303,35 @@ export default function QueueDisplay() {
                 <p className="text-white text-xs md:text-sm font-bold mb-0.5">
                   Please Proceed
                 </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-base md:text-lg font-black">
-                      #{ready.number}
-                    </p>
+                {isLoadingData ? (
+                  <div className="flex items-center justify-between animate-pulse">
+                    <div className="h-[20px] md:h-[28px] bg-white/20 rounded w-10"></div>
+                    <div className="space-y-1">
+                      <div className="h-[14px] md:h-[16px] bg-white/20 rounded w-20"></div>
+                      <div className="h-[12px] md:h-[14px] bg-white/20 rounded w-16"></div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-white text-xs md:text-sm font-semibold">
-                      {ready.name}
-                    </p>
-                    <p className="text-white/80 text-[10px] md:text-xs">
-                      {ready.id_number}
-                    </p>
+                ) : ready ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white text-base md:text-lg font-black">
+                        #{ready.number}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white text-xs md:text-sm font-semibold">
+                        {ready.name}
+                      </p>
+                      <p className="text-white/80 text-[10px] md:text-xs">
+                        {ready.id_number}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <p className="text-white/80 text-xs md:text-sm">
+                    Next in Queue
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -233,70 +359,103 @@ export default function QueueDisplay() {
                 Waiting Queue
               </h2>
             </div>
-            <div
-              className="px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
-              style={{
-                borderColor: "#374D6C",
-                color: "#374D6C",
-                backgroundColor: "#E8EDF2",
-              }}
-            >
-              {waiting.length} waiting
-            </div>
+            {isLoadingData ? (
+              <div className="h-[20px] md:h-[24px] w-16 bg-slate-200 rounded-full animate-pulse"></div>
+            ) : (
+              <div
+                className="px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
+                style={{
+                  borderColor: "#374D6C",
+                  color: "#374D6C",
+                  backgroundColor: "#E8EDF2",
+                }}
+              >
+                {`${waiting.length} waiting`}
+              </div>
+            )}
           </div>
 
           <div className="flex-1 p-2.5 md:p-3 columns-1 md:columns-2 gap-x-2.5 md:gap-x-3 overflow-y-auto min-h-0">
-            {waiting.map((w, index) => (
-              <div
-                key={w.number}
-                className="rounded-xl p-2.5 md:p-3 border border-slate-200 hover:shadow-md transition-all break-inside-avoid mb-2.5 md:mb-3"
-                style={{
-                  background: "linear-gradient(to right, #F1F5F9, transparent)",
-                }}
-              >
-                <div className="flex items-center gap-2.5 md:gap-3">
+            {isLoadingData ? (
+              <div className="space-y-2.5 md:space-y-3">
+                {[1, 2, 3, 4].map((i) => (
                   <div
-                    className="rounded-xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
+                    key={i}
+                    className="rounded-xl p-2.5 md:p-3 border border-slate-200 animate-pulse break-inside-avoid"
                     style={{
-                      backgroundColor: "#E8EDF2",
-                      borderColor: "#374D6C",
-                      color: "#374D6C",
+                      background:
+                        "linear-gradient(to right, #F1F5F9, transparent)",
                     }}
                   >
-                    <span className="text-base md:text-lg font-black">
-                      #{w.number}
-                    </span>
+                    <div className="flex items-center gap-2.5 md:gap-3">
+                      <div className="rounded-xl w-10 h-10 md:w-12 md:h-12 bg-slate-300"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-slate-300 rounded w-3/4"></div>
+                        <div className="h-2 bg-slate-300 rounded w-1/2"></div>
+                      </div>
+                      <div className="w-10 h-2 bg-slate-300 rounded"></div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
-                      {w.name}
-                    </p>
-                    <p className="text-[10px] md:text-xs text-gray-500">
-                      {w.id_number}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="w-3 h-3 md:w-3.5 md:h-3.5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="text-[10px] md:text-xs font-medium">
-                        {w.wait}
+                ))}
+              </div>
+            ) : waiting.length > 0 ? (
+              waiting.map((w, index) => (
+                <div
+                  key={w.number}
+                  className="rounded-xl p-2.5 md:p-3 border border-slate-200 hover:shadow-md transition-all break-inside-avoid mb-2.5 md:mb-3"
+                  style={{
+                    background:
+                      "linear-gradient(to right, #F1F5F9, transparent)",
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 md:gap-3">
+                    <div
+                      className="rounded-xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
+                      style={{
+                        backgroundColor: "#E8EDF2",
+                        borderColor: "#374D6C",
+                        color: "#374D6C",
+                      }}
+                    >
+                      <span className="text-base md:text-lg font-black">
+                        #{w.number}
                       </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
+                        {w.name}
+                      </p>
+                      <p className="text-[10px] md:text-xs text-gray-500">
+                        {w.id_number}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-3 h-3 md:w-3.5 md:h-3.5"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-[10px] md:text-xs font-medium">
+                          {w.wait}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No one waiting
               </div>
-            ))}
+            )}
           </div>
 
           {/* Bottom Info Section */}
