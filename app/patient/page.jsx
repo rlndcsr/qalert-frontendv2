@@ -905,17 +905,16 @@ export default function PatientPage() {
                       />
                     </div>
 
-                    {/* Medical/Clean icon - top right with circular background */}
-                    <div className="hidden md:flex absolute top-8 right-8 w-28 h-28 bg-white/15 rounded-full border-2 border-white/30 items-center justify-center backdrop-blur-sm">
-                      <Image
-                        src="/icons/sparkles.png"
-                        alt=""
-                        width={112}
-                        height={112}
-                        className="w-14 h-14"
-                        quality={100}
-                      />
-                    </div>
+                    {/* Avatar image - positioned near bottom-right inside card */}
+                    <Image
+                      src="/images/male-avatar.png"
+                      alt="Patient avatar"
+                      width={140}
+                      height={140}
+                      className="hidden md:block absolute right-6 -bottom-2 h-32 w-auto object-contain pointer-events-none select-none drop-shadow-sm"
+                      quality={100}
+                      priority
+                    />
 
                     {/* Content */}
                     <div className="relative z-10 pl-0">
