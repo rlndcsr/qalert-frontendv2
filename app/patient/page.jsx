@@ -922,15 +922,15 @@ export default function PatientPage() {
                         return "/images/male-avatar.png";
                       })()}
                       alt="Patient avatar"
-                      width={170}
-                      height={170}
-                      className="hidden md:block absolute right-5 bottom-0 h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm"
+                      width={190}
+                      height={190}
+                      className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm z-0"
                       quality={100}
                       priority
                     />
 
                     {/* Content */}
-                    <div className="relative z-10 pl-0">
+                    <div className="relative z-10 pl-0 pr-24 sm:pr-28 md:pr-40">
                       <h2 className="text-sm font-normal ml-16 text-white/90">
                         Welcome back,
                       </h2>
@@ -1016,20 +1016,29 @@ export default function PatientPage() {
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex items-start gap-3">
                         <div className="mt-1 w-8 h-8 bg-[#4ad294]/10 rounded-md border border-[#4ad294]/30 flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            className="w-5 h-5 text-[#4ad294]"
-                          >
-                            <path
-                              d="M4 7h16M4 12h10M4 17h7"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+                          <Image
+                            src={(() => {
+                              const g = (
+                                user?.gender ||
+                                user?.sex ||
+                                user?.profile?.gender ||
+                                ""
+                              )
+                                .toString()
+                                .toLowerCase();
+                              if (g.startsWith("f"))
+                                return "/images/female-avatar.png";
+                              if (g.startsWith("m"))
+                                return "/images/male-avatar.png";
+                              return "/images/male-avatar.png";
+                            })()}
+                            alt="Patient avatar"
+                            width={190}
+                            height={190}
+                            className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm z-0"
+                            quality={100}
+                            priority
+                          />
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-[#25323A] flex items-center gap-1">
