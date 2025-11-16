@@ -273,9 +273,7 @@ export default function QueueDisplay() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-white/80 text-base md:text-lg">
-                    To Be Called
-                  </div>
+                  <div className="text-white/80 text-base md:text-lg"></div>
                 )}
               </div>
             </div>
@@ -459,7 +457,11 @@ export default function QueueDisplay() {
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500 py-4"></div>
+              <div className="text-left text-gray-500 p-2">
+                <p className="text-sm md:text-base font-medium">
+                  No one's in the queue right now.
+                </p>
+              </div>
             )}
           </div>
 
