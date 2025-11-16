@@ -605,7 +605,7 @@ export default function PatientPage() {
               )}
               <motion.div
                 key={`users-${isAuthenticated ? "auth" : "guest"}`}
-                className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center"
+                className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden"
                 initial={{ opacity: 0, y: -6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{
@@ -615,10 +615,11 @@ export default function PatientPage() {
                 }}
               >
                 <Image
-                  src="/icons/users.png"
-                  alt="Patient Portal"
-                  width={20}
-                  height={20}
+                  src="/images/csuuchw-nobg.png"
+                  alt="CSU-UCHW Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-contain"
                 />
               </motion.div>
               <motion.h1

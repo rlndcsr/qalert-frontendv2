@@ -287,7 +287,7 @@ export default function AdminPortal() {
                 </motion.button>
               )}
               <motion.div
-                className="w-8 h-8 bg-white border-2 border-[#4ad294] rounded-md flex items-center justify-center"
+                className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden"
                 initial={{ opacity: 0, y: -6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{
@@ -297,11 +297,11 @@ export default function AdminPortal() {
                 }}
               >
                 <Image
-                  src="/icons/staff-dashboard-feature.png"
-                  alt="Staff Portal"
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
+                  src="/images/csuuchw-nobg.png"
+                  alt="CSU-UCHW Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-contain"
                 />
               </motion.div>
               <motion.h1
