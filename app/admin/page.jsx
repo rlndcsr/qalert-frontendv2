@@ -264,9 +264,9 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-teal-50 font-sans flex flex-col overflow-x-hidden">
       {/* Header (aligned & styled consistently with PatientPortal) */}
-      <header className="bg-white/80 backdrop-blur-md py-4 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
-        <div className="w-full px-8">
-          <div className="flex items-center justify-between select-none">
+      <header className="bg-white/80 backdrop-blur-md h-16 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
+        <div className="w-full px-8 h-full">
+          <div className="flex items-center justify-between select-none h-full">
             {/* Left group: back button + portal icon + title */}
             <div className="flex items-center gap-3">
               {!isAuthenticated && (
