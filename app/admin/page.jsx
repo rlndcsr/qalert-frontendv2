@@ -741,8 +741,12 @@ export default function AdminPortal() {
                             statusClass = "bg-blue-100 text-blue-700";
                             statusLabel =
                               statusLower === "called" ? "Called" : "Serving";
-                          } else if (statusLower === "completed") {
+                          } else if (statusLower === "now_serving") {
                             statusClass = "bg-green-100 text-green-700";
+                            statusLabel = "now serving";
+                          } else if (statusLower === "completed") {
+                            statusClass =
+                              "bg-white text-gray-700 border border-gray-300";
                             statusLabel = "Completed";
                           } else if (statusLower === "cancelled") {
                             statusClass = "bg-red-100 text-red-700";
