@@ -461,7 +461,7 @@ export default function AdminPortal() {
           <div className="max-w-7xl mx-auto">
             {/* Statistics Cards */}
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6"
+              className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -488,7 +488,6 @@ export default function AdminPortal() {
                   </div>
                 </div>
               </div>
-
               {/* Completed */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center gap-2">
@@ -511,7 +510,6 @@ export default function AdminPortal() {
                   </div>
                 </div>
               </div>
-
               {/* Avg Wait */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center gap-2">
@@ -534,7 +532,6 @@ export default function AdminPortal() {
                   </div>
                 </div>
               </div>
-
               {/* Today Total */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center gap-2">
@@ -552,29 +549,6 @@ export default function AdminPortal() {
                     ) : (
                       <p className="text-md font-semibold text-[#25323A]">
                         {stats.todayTotal}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Total Patients */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-2">
-                  <Image
-                    src="/icons/total-patients.png"
-                    alt="Total Patients"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 flex-shrink-0 mt-1"
-                  />
-                  <div>
-                    <p className="text-xs text-gray-600">Total Patients</p>
-                    {isFetchingData ? (
-                      <div className="h-5 w-8 bg-gray-200 rounded animate-pulse mt-1"></div>
-                    ) : (
-                      <p className="text-md font-semibold text-[#25323A]">
-                        {stats.totalPatients}
                       </p>
                     )}
                   </div>
