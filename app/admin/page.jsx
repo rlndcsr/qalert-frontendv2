@@ -690,7 +690,13 @@ export default function AdminPortal() {
                           colSpan={7}
                           className="px-6 py-8 text-center text-sm text-gray-500"
                         >
-                          No queue entries for today ({todayDate})
+                          No queue entries for today (
+                          {new Date(todayDate).toLocaleDateString("en-US", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "numeric",
+                          })}
+                          )
                         </td>
                       </tr>
                     ) : (
