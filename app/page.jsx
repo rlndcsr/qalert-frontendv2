@@ -128,7 +128,7 @@ export default function Home() {
             >
               {/* Patient Portal Card */}
               <motion.div
-                className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+                className={`bg-white rounded-lg shadow-lg border p-6 transition-[box-shadow,border-color] duration-200 ${
                   isOnline
                     ? "border-gray-200 hover:border-[#a8e6c3]"
                     : "border-gray-300 opacity-50 cursor-not-allowed"
@@ -148,9 +148,9 @@ export default function Home() {
                         boxShadow:
                           "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                         transition: {
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 20,
+                          type: "tween",
+                          ease: "easeOut",
+                          duration: 0.18,
                         },
                       }
                     : {}
@@ -205,7 +205,7 @@ export default function Home() {
 
               {/* Staff Dashboard Card */}
               <motion.div
-                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#80cbc4] transition-all duration-300"
+                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:border-[#80cbc4] transition-[box-shadow,border-color] duration-200"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -218,7 +218,11 @@ export default function Home() {
                   scale: 1.02,
                   boxShadow:
                     "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                  transition: { type: "spring", stiffness: 300, damping: 20 },
+                  transition: {
+                    type: "tween",
+                    ease: "easeOut",
+                    duration: 0.18,
+                  },
                 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -252,7 +256,7 @@ export default function Home() {
 
               {/* Queue Display Card */}
               <motion.div
-                className={`bg-white rounded-lg shadow-lg border p-6 transition-all duration-300 ${
+                className={`bg-white rounded-lg shadow-lg border p-6 transition-[box-shadow,border-color] duration-200 ${
                   isOnline
                     ? "border-gray-200 hover:border-[#c8a2f0]"
                     : "border-gray-300 opacity-50 cursor-not-allowed"
@@ -272,9 +276,9 @@ export default function Home() {
                         boxShadow:
                           "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                         transition: {
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 20,
+                          type: "tween",
+                          ease: "easeOut",
+                          duration: 0.18,
                         },
                       }
                     : {}
