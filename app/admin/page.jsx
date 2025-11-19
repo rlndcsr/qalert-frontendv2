@@ -15,7 +15,6 @@ export default function AdminPortal() {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [adminUser, setAdminUser] = useState(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -41,7 +40,6 @@ export default function AdminPortal() {
           }
         }
       }
-      setIsLoading(false);
     };
 
     checkAuth();
@@ -159,9 +157,11 @@ export default function AdminPortal() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
+        toast.error(
           data?.message || "Login failed. Please check your credentials."
         );
+        setIsLoggingIn(false);
+        return;
       }
 
       // Store admin token in localStorage (API returns "adminToken" field)
@@ -192,11 +192,13 @@ export default function AdminPortal() {
 
         toast.success("Login successful! Welcome back.");
       } else {
-        throw new Error("No token received from server.");
+        toast.error("No token received from server.");
+        setIsLoggingIn(false);
+        return;
       }
     } catch (error) {
-      toast.error(error.message || "An error occurred during login.");
       console.error("Admin login error:", error);
+      toast.error("An error occurred during login. Please try again.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -257,17 +259,6 @@ export default function AdminPortal() {
 
     return { activeQueue, completed, avgWait, todayTotal, totalPatients };
   }, [todayQueues, allTodayQueues]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-white to-teal-50 font-sans flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00968a] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-teal-50 font-sans flex flex-col overflow-x-hidden">
