@@ -460,13 +460,13 @@ export default function AdminPortal() {
           <div className="max-w-7xl mx-auto">
             {/* Statistics Cards */}
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               {/* Active Queue */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-2">
                   <Image
                     src="/icons/active-queue.png"
@@ -488,7 +488,7 @@ export default function AdminPortal() {
                 </div>
               </div>
               {/* Completed */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-2">
                   <Image
                     src="/icons/completed.png"
@@ -510,7 +510,7 @@ export default function AdminPortal() {
                 </div>
               </div>
               {/* Avg Wait */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-2">
                   <Image
                     src="/icons/avg-wait.png"
@@ -532,7 +532,7 @@ export default function AdminPortal() {
                 </div>
               </div>
               {/* Today Total */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-2">
                   <Image
                     src="/icons/total-today.png"
