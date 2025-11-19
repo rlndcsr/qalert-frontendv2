@@ -29,13 +29,16 @@ export default function AdminPortal() {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         const token = localStorage.getItem("adminToken");
+        const storedUser = localStorage.getItem("adminUser");
         if (token) {
           setIsAuthenticated(true);
-          // Mock admin user data - will be replaced with actual API call later
-          setAdminUser({
-            name: "Nurse Admin",
-            role: "Nurse",
-          });
+          if (storedUser) {
+            try {
+              setAdminUser(JSON.parse(storedUser));
+            } catch (error) {
+              console.error("Error parsing stored user data:", error);
+            }
+          }
         }
       }
       setIsLoading(false);
@@ -168,19 +171,23 @@ export default function AdminPortal() {
 
         // Store admin user info if provided by API
         if (data?.user) {
-          setAdminUser({
+          const userData = {
             name: data.user.name,
             role: data.user.role,
             email: data.user.email_address,
             phone: data.user.phone_number,
             userId: data.user.user_id,
-          });
+          };
+          setAdminUser(userData);
+          localStorage.setItem("adminUser", JSON.stringify(userData));
         } else {
           // Fallback if API doesn't return user data
-          setAdminUser({
+          const fallbackData = {
             name: "Admin User",
             role: "Staff",
-          });
+          };
+          setAdminUser(fallbackData);
+          localStorage.setItem("adminUser", JSON.stringify(fallbackData));
         }
 
         toast.success("Login successful! Welcome back.");
@@ -223,6 +230,7 @@ export default function AdminPortal() {
     } finally {
       // Always clear local state regardless of API call success
       localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
       setIsAuthenticated(false);
       setAdminUser(null);
       toast.success("Logged out successfully.");
