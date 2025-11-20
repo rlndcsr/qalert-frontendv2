@@ -1010,7 +1010,7 @@ export default function PatientPage() {
                       alt="Patient avatar"
                       width={190}
                       height={190}
-                      className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-auto object-contain pointer-events-none select-none drop-shadow-sm z-0"
+                      className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-24 sm:w-28 md:w-36 lg:w-40 object-cover pointer-events-none select-none drop-shadow-sm z-0"
                       quality={100}
                       priority
                     />
