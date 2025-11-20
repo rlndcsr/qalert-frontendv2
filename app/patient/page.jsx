@@ -33,6 +33,55 @@ const getTodayDateString = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+const getOrdinalPosition = (num) => {
+  if (!num || num < 1) return "";
+  const ordinals = [
+    "",
+    "First",
+    "Second",
+    "Third",
+    "Fourth",
+    "Fifth",
+    "Sixth",
+    "Seventh",
+    "Eighth",
+    "Ninth",
+    "Tenth",
+    "Eleventh",
+    "Twelfth",
+    "Thirteenth",
+    "Fourteenth",
+    "Fifteenth",
+    "Sixteenth",
+    "Seventeenth",
+    "Eighteenth",
+    "Nineteenth",
+    "Twentieth",
+    "Twenty-first",
+    "Twenty-second",
+    "Twenty-third",
+    "Twenty-fourth",
+    "Twenty-fifth",
+    "Twenty-sixth",
+    "Twenty-seventh",
+    "Twenty-eighth",
+    "Twenty-ninth",
+    "Thirtieth",
+  ];
+
+  if (num <= 30) {
+    return ordinals[num];
+  }
+
+  // For numbers above 30, use numeric format with suffix
+  const j = num % 10;
+  const k = num % 100;
+  if (j === 1 && k !== 11) return num + "st";
+  if (j === 2 && k !== 12) return num + "nd";
+  if (j === 3 && k !== 13) return num + "rd";
+  return num + "th";
+};
+
 export default function PatientPage() {
   const router = useRouter();
   const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
@@ -1093,7 +1142,30 @@ export default function PatientPage() {
                     </div>
 
                     {/* Metrics Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" />
+                            <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
+                            Queue Number
+                          </p>
+                          <p className="text-xs font-semibold text-[#25323A] mt-1">
+                            {queueEntry.queue_number
+                              ? String(queueEntry.queue_number).padStart(3, "0")
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
                       <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
                         <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
                           <svg
@@ -1115,7 +1187,7 @@ export default function PatientPage() {
                               : !queueEntry.queue_status ||
                                 queueEntry.queue_status === "waiting"
                               ? queuePosition !== null
-                                ? `#${queuePosition}`
+                                ? getOrdinalPosition(queuePosition)
                                 : ""
                               : "—"}
                           </p>
