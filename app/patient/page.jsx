@@ -1602,7 +1602,7 @@ export default function PatientPage() {
                             </svg>
                           </span>
                           <span className="text-sm">
-                            Monitor the queue dashboard for real-time queue
+                            Monitor the queue display screen for real-time queue
                             updates
                           </span>
                         </li>
