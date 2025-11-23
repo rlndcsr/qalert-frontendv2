@@ -906,7 +906,8 @@ export default function AdminPortal() {
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <p className="text-sm font-semibold text-[#25323A]">
-                                  {userMap[calledPatient.user_id]?.name || "Unknown Patient"}
+                                  {userMap[calledPatient.user_id]?.name ||
+                                    "Unknown Patient"}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
                                   Queue #{calledPatient.queue_number}
@@ -933,7 +934,8 @@ export default function AdminPortal() {
                                 />
                               </svg>
                               <span className="text-xs text-gray-600">
-                                {userMap[calledPatient.user_id]?.phone_number || "N/A"}
+                                {userMap[calledPatient.user_id]?.phone_number ||
+                                  "N/A"}
                               </span>
                             </div>
                           </div>
@@ -948,7 +950,10 @@ export default function AdminPortal() {
                                 const newStatus = e.target.value;
                                 if (newStatus === "now_serving") {
                                   toast.success("Patient is now being served");
-                                  setCalledPatient({ ...calledPatient, queue_status: "now_serving" });
+                                  setCalledPatient({
+                                    ...calledPatient,
+                                    queue_status: "now_serving",
+                                  });
                                 } else if (newStatus === "completed") {
                                   toast.success("Patient service completed");
                                   setCalledPatient(null);
@@ -1208,17 +1213,6 @@ export default function AdminPortal() {
                                               Complete
                                             </button>
                                           )}
-                                          {statusLower !== "cancelled" &&
-                                            statusLower !== "completed" && (
-                                              <button
-                                                onClick={() =>
-                                                  handleCancelQueue(queue)
-                                                }
-                                                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors"
-                                              >
-                                                Cancel
-                                              </button>
-                                            )}
                                         </div>
                                       </td>
                                     </tr>
