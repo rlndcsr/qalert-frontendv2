@@ -1027,12 +1027,21 @@ export default function AdminPortal() {
                                 </td>
                               </tr>
                             ) : (
-                              todayQueues
-                                .sort((a, b) => a.queue_number - b.queue_number)
-                                .map((queue, index) => {
+                              (() => {
+                                const sorted = todayQueues.sort(
+                                  (a, b) => a.queue_number - b.queue_number
+                                );
+                                const firstWaitingId = sorted.find(
+                                  (q) =>
+                                    q.queue_status.toLowerCase() === "waiting"
+                                )?.queue_entry_id;
+
+                                return sorted.map((queue, index) => {
                                   const patient = userMap[queue.user_id] || {};
                                   const statusLower =
                                     queue.queue_status.toLowerCase();
+                                  const isFirstWaiting =
+                                    queue.queue_entry_id === firstWaitingId;
 
                                   // Determine status badge color
                                   let statusClass = "bg-gray-100 text-gray-700";
@@ -1124,16 +1133,17 @@ export default function AdminPortal() {
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <div className="flex items-center gap-2">
-                                          {statusLower === "waiting" && (
-                                            <button
-                                              onClick={() =>
-                                                handleCallPatient(queue)
-                                              }
-                                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors"
-                                            >
-                                              Call
-                                            </button>
-                                          )}
+                                          {statusLower === "waiting" &&
+                                            isFirstWaiting && (
+                                              <button
+                                                onClick={() =>
+                                                  handleCallPatient(queue)
+                                                }
+                                                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors"
+                                              >
+                                                Call
+                                              </button>
+                                            )}
                                           {(statusLower === "called" ||
                                             statusLower === "serving") && (
                                             <button
@@ -1160,7 +1170,8 @@ export default function AdminPortal() {
                                       </td>
                                     </tr>
                                   );
-                                })
+                                });
+                              })()
                             )}
                           </tbody>
                         </table>
