@@ -1602,7 +1602,8 @@ export default function PatientPage() {
                             </svg>
                           </span>
                           <span className="text-sm">
-                            Monitor this dashboard for real-time queue updates
+                            Monitor the queue dashboard for real-time queue
+                            updates
                           </span>
                         </li>
                         <li className="flex items-center gap-3">
