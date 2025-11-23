@@ -175,22 +175,35 @@ export default function AdminPortal() {
     toast("Queue cancelled", { description: `Queue #${queue.queue_number}` });
   };
 
-  const handleToggleSystemStatus = () => {
+  const handleToggleSystemStatus = async () => {
     if (isTogglingStatus) return;
 
     setIsTogglingStatus(true);
     const newStatus = !systemStatus;
 
-    // Simulate a brief delay for UX
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/system-status`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_online: newStatus ? 1 : 0 }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update system status");
+
       setSystemStatus(newStatus);
       toast.success(
         newStatus
           ? "System is now online. Patients can register and join the queue."
           : "System is now offline. New registrations are temporarily disabled."
       );
+    } catch (error) {
+      toast.error("Failed to update system status");
+    } finally {
       setIsTogglingStatus(false);
-    }, 300);
+    }
   };
 
   const handleLogin = async (e) => {
