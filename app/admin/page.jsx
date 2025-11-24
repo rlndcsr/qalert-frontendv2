@@ -144,13 +144,15 @@ export default function AdminPortal() {
     return `${year}-${month}-${day}`;
   }, []);
 
-  // Filter queues for today only and exclude cancelled and called queues
+  // Filter queues for today only and exclude cancelled, called, now_serving, and completed queues
   const todayQueues = useMemo(() => {
     return queues.filter(
       (queue) =>
         queue.date === todayDate &&
         queue.queue_status.toLowerCase() !== "cancelled" &&
-        queue.queue_status.toLowerCase() !== "called"
+        queue.queue_status.toLowerCase() !== "called" &&
+        queue.queue_status.toLowerCase() !== "now_serving" &&
+        queue.queue_status.toLowerCase() !== "completed"
     );
   }, [queues, todayDate]);
 
@@ -162,6 +164,21 @@ export default function AdminPortal() {
     });
     return map;
   }, [users]);
+
+  // Restore called/now_serving patient from queue data on refresh
+  useEffect(() => {
+    if (queues.length > 0 && !calledPatient) {
+      const calledOrServing = queues.find(
+        (queue) =>
+          queue.date === todayDate &&
+          (queue.queue_status.toLowerCase() === "called" ||
+            queue.queue_status.toLowerCase() === "now_serving")
+      );
+      if (calledOrServing) {
+        setCalledPatient(calledOrServing);
+      }
+    }
+  }, [queues, todayDate, calledPatient]);
 
   // Action handlers
   const handleCallPatient = async (queue) => {
@@ -942,7 +959,13 @@ export default function AdminPortal() {
                       {calledPatient ? (
                         <div className="flex gap-4">
                           {/* Patient Info - wider */}
-                          <div className="flex-1 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div
+                            className={`flex-1 p-4 rounded-lg ${
+                              calledPatient.queue_status === "now_serving"
+                                ? "bg-green-50 border border-green-200"
+                                : "bg-blue-50 border border-blue-200"
+                            }`}
+                          >
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <p className="text-sm font-semibold text-[#25323A]">
@@ -953,8 +976,16 @@ export default function AdminPortal() {
                                   Queue #{calledPatient.queue_number}
                                 </p>
                               </div>
-                              <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                                Called
+                              <span
+                                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                                  calledPatient.queue_status === "now_serving"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {calledPatient.queue_status === "now_serving"
+                                  ? "Now Serving"
+                                  : "Called"}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 mb-3">
@@ -983,30 +1014,88 @@ export default function AdminPortal() {
                           {/* Update Status - smaller fixed width */}
                           <div className="w-56 flex flex-col shrink-0">
                             <label className="block text-sm font-medium text-[#25323A] mb-2">
-                              Update Status
+                              Status
                             </label>
                             <select
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm h-fit bg-white"
-                              defaultValue=""
-                              onChange={(e) => {
+                              value=""
+                              onChange={async (e) => {
                                 const newStatus = e.target.value;
-                                if (newStatus === "now_serving") {
-                                  toast.success("Patient is now being served");
-                                  setCalledPatient({
-                                    ...calledPatient,
-                                    queue_status: "now_serving",
-                                  });
-                                } else if (newStatus === "completed") {
-                                  toast.success("Patient service completed");
-                                  setCalledPatient(null);
+                                if (!newStatus) return;
+
+                                const token =
+                                  localStorage.getItem("adminToken");
+                                if (!token) {
+                                  toast.error("Authentication required");
+                                  e.target.value = "";
+                                  return;
                                 }
+
+                                try {
+                                  const response = await fetch(
+                                    `${API_BASE_URL}/queues/status/${calledPatient.queue_entry_id}`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        Accept: "application/json",
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${token}`,
+                                      },
+                                      body: JSON.stringify({
+                                        queue_status: newStatus,
+                                      }),
+                                    }
+                                  );
+
+                                  if (!response.ok) {
+                                    throw new Error(
+                                      "Failed to update queue status"
+                                    );
+                                  }
+
+                                  // Update local state
+                                  setQueues((prevQueues) =>
+                                    prevQueues.map((q) =>
+                                      q.queue_entry_id ===
+                                      calledPatient.queue_entry_id
+                                        ? { ...q, queue_status: newStatus }
+                                        : q
+                                    )
+                                  );
+
+                                  if (newStatus === "now_serving") {
+                                    toast.success(
+                                      "Patient is now being served"
+                                    );
+                                    setCalledPatient({
+                                      ...calledPatient,
+                                      queue_status: "now_serving",
+                                    });
+                                  } else if (newStatus === "completed") {
+                                    toast.success("Patient service completed");
+                                    setCalledPatient(null);
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Error updating status:",
+                                    error
+                                  );
+                                  toast.error(
+                                    "Failed to update patient status"
+                                  );
+                                }
+
                                 e.target.value = "";
                               }}
                             >
                               <option value="" disabled>
-                                Select action
+                                {calledPatient.queue_status === "now_serving"
+                                  ? "Now Serving"
+                                  : "Called"}
                               </option>
-                              <option value="now_serving">Now Serving</option>
+                              {calledPatient.queue_status !== "now_serving" && (
+                                <option value="now_serving">Now Serving</option>
+                              )}
                               <option value="completed">Completed</option>
                             </select>
                           </div>
