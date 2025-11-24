@@ -672,159 +672,59 @@ export default function AdminPortal() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Tabs Navigation */}
+              {/* Tabs + System Toggle Row */}
               <motion.div
-                className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-1.5 inline-flex gap-1"
+                className="flex items-center justify-between mb-6 gap-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <button
-                  onClick={() => setActiveTab("queue-management")}
-                  className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
-                    activeTab === "queue-management"
-                      ? "bg-[#00968a] text-white shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  Queue Management
-                </button>
-                <button
-                  onClick={() => setActiveTab("analytics")}
-                  className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
-                    activeTab === "analytics"
-                      ? "bg-[#00968a] text-white shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  Analytics & Reports
-                </button>
-              </motion.div>
-
-              {/* System Status Section */}
-              <motion.div
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className={`w-6 h-6 ${
-                        systemStatus ? "text-green-600" : "text-gray-400"
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 inline-flex gap-1">
+                  <button
+                    onClick={() => setActiveTab("queue-management")}
+                    className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
+                      activeTab === "queue-management"
+                        ? "bg-[#00968a] text-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    Queue Management
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("analytics")}
+                    className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
+                      activeTab === "analytics"
+                        ? "bg-[#00968a] text-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    Analytics & Reports
+                  </button>
+                </div>
+                {/* Compact System Status Toggle */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      systemStatus ? "bg-green-500" : "bg-gray-400"
+                    }`}
+                  ></div>
+                  <span className="text-xs font-medium text-[#25323A]">
+                    {systemStatus ? "Online" : "Offline"}
+                  </span>
+                  <button
+                    onClick={handleToggleSystemStatus}
+                    disabled={isTogglingStatus || isFetchingSystemStatus}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#00968a] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      systemStatus ? "bg-[#00968a]" : "bg-gray-300"
+                    }`}
+                    aria-label="Toggle system status"
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        systemStatus ? "translate-x-5" : "translate-x-0"
                       }`}
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-[#25323A] mb-1">
-                      System Status
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Control whether the queue system accepts new patients
-                    </p>
-
-                    <div
-                      className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-                        systemStatus
-                          ? "bg-white border-gray-200"
-                          : "bg-orange-50 border-orange-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                            systemStatus ? "bg-green-100" : "bg-gray-100"
-                          }`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className={`w-6 h-6 ${
-                              systemStatus ? "text-green-600" : "text-gray-400"
-                            }`}
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-[#25323A]">
-                              Queue System
-                            </p>
-                            <span
-                              className={`inline-flex px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                                systemStatus
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {systemStatus ? "ONLINE" : "OFFLINE"}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {systemStatus
-                              ? "New registrations are currently enabled"
-                              : "New registrations are temporarily disabled"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleToggleSystemStatus}
-                        disabled={isTogglingStatus || isFetchingSystemStatus}
-                        className={`relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#00968a] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          systemStatus ? "bg-[#00968a]" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            systemStatus ? "translate-x-6" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {!systemStatus && (
-                      <motion.div
-                        className="mt-4 flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <p className="text-sm text-orange-700">
-                          The system is offline. Patients cannot register or
-                          join the queue until you turn it back online.
-                        </p>
-                      </motion.div>
-                    )}
-                  </div>
+                    />
+                  </button>
                 </div>
               </motion.div>
 
