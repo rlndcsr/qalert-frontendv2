@@ -144,12 +144,13 @@ export default function AdminPortal() {
     return `${year}-${month}-${day}`;
   }, []);
 
-  // Filter queues for today only and exclude cancelled queues
+  // Filter queues for today only and exclude cancelled and called queues
   const todayQueues = useMemo(() => {
     return queues.filter(
       (queue) =>
         queue.date === todayDate &&
-        queue.queue_status.toLowerCase() !== "cancelled"
+        queue.queue_status.toLowerCase() !== "cancelled" &&
+        queue.queue_status.toLowerCase() !== "called"
     );
   }, [queues, todayDate]);
 
@@ -163,9 +164,47 @@ export default function AdminPortal() {
   }, [users]);
 
   // Action handlers
-  const handleCallPatient = (queue) => {
-    setCalledPatient(queue);
-    toast.info(`Calling patient at queue #${queue.queue_number}`);
+  const handleCallPatient = async (queue) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/status/${queue.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ queue_status: "called" }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update queue status");
+      }
+
+      // Update local state
+      setQueues((prevQueues) =>
+        prevQueues.map((q) =>
+          q.queue_entry_id === queue.queue_entry_id
+            ? { ...q, queue_status: "called" }
+            : q
+        )
+      );
+
+      // Set as called patient
+      setCalledPatient({ ...queue, queue_status: "called" });
+      toast.success(`Called patient at queue #${queue.queue_number}`);
+    } catch (error) {
+      console.error("Error calling patient:", error);
+      toast.error("Failed to call patient");
+    }
   };
 
   const handleCompletePatient = (queue) => {
@@ -901,8 +940,9 @@ export default function AdminPortal() {
                         </h2>
                       </div>
                       {calledPatient ? (
-                        <div className="space-y-4">
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex gap-4">
+                          {/* Patient Info - 3/4 width */}
+                          <div className="flex-[3] p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <p className="text-sm font-semibold text-[#25323A]">
@@ -939,12 +979,14 @@ export default function AdminPortal() {
                               </span>
                             </div>
                           </div>
-                          <div>
+
+                          {/* Update Status - 1/4 width */}
+                          <div className="flex-1 flex flex-col">
                             <label className="block text-sm font-medium text-[#25323A] mb-2">
                               Update Status
                             </label>
                             <select
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm h-fit bg-white"
                               defaultValue=""
                               onChange={(e) => {
                                 const newStatus = e.target.value;
