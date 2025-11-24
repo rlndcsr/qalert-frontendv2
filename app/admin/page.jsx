@@ -941,8 +941,8 @@ export default function AdminPortal() {
                       </div>
                       {calledPatient ? (
                         <div className="flex gap-4">
-                          {/* Patient Info - 3/4 width */}
-                          <div className="flex-[3] p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          {/* Patient Info - wider */}
+                          <div className="flex-1 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <p className="text-sm font-semibold text-[#25323A]">
@@ -980,8 +980,8 @@ export default function AdminPortal() {
                             </div>
                           </div>
 
-                          {/* Update Status - 1/4 width */}
-                          <div className="flex-1 flex flex-col">
+                          {/* Update Status - smaller fixed width */}
+                          <div className="w-56 flex flex-col shrink-0">
                             <label className="block text-sm font-medium text-[#25323A] mb-2">
                               Update Status
                             </label>
