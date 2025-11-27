@@ -925,7 +925,11 @@ export default function AdminPortal() {
                                     "Unknown Patient"}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Queue #{calledPatient.queue_number}
+                                  Queue #
+                                  {String(calledPatient.queue_number).padStart(
+                                    3,
+                                    "0"
+                                  )}
                                 </p>
                               </div>
                               <span
