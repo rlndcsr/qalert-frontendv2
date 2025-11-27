@@ -403,10 +403,14 @@ export default function AdminPortal() {
   }, [queues, todayDate]);
 
   const stats = useMemo(() => {
-    const activeQueue = todayQueues.filter(
-      (q) => !["completed", "cancelled"].includes(q.queue_status.toLowerCase())
+    // Count all queues for today with status: waiting, called, now_serving (not completed/cancelled)
+    const activeQueue = allTodayQueues.filter((q) =>
+      ["waiting", "called", "now_serving"].includes(
+        q.queue_status.toLowerCase()
+      )
     ).length;
-    const completed = todayQueues.filter(
+    // Count all queues for today with status 'completed'
+    const completed = allTodayQueues.filter(
       (q) => q.queue_status.toLowerCase() === "completed"
     ).length;
     const todayTotal = allTodayQueues.length;
