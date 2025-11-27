@@ -217,6 +217,28 @@ export default function AdminPortal() {
 
       // Set as called patient
       setCalledPatient({ ...queue, queue_status: "called" });
+      // Send SMS notification via Mocean API
+      try {
+        const patient = userMap[queue.user_id] || {};
+        const rawPhone = patient.phone_number || "";
+        const moceanTo = rawPhone.replace(/^0/, "63");
+
+        const text = `CSU-UCHW: You are now called for queue #${String(
+          queue.queue_number
+        ).padStart(3, "0")}. Please proceed to the clinic. Thank you.`;
+
+        await fetch("/api/sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: "QAlert", to: moceanTo, text }),
+        });
+
+        toast.success("SMS sent to patient");
+      } catch (smsError) {
+        console.error("SMS send error:", smsError);
+        toast.error("Failed to send SMS notification");
+      }
+
       toast.success(`Called patient at queue #${queue.queue_number}`);
     } catch (error) {
       console.error("Error calling patient:", error);
