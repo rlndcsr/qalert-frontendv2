@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SyncLoader } from "react-spinners";
-import AdminHeader from "./AdminHeader";
-import LoginForm from "./LoginForm";
-import StatisticsCards from "./StatisticsCards";
-import CalledPatientDisplay from "./CalledPatientDisplay";
-import QueueManagementTable from "./QueueManagementTable";
-import AnalyticsTab from "./AnalyticsTab";
+import AdminHeader from "./adminComponents/AdminHeader";
+import LoginForm from "./adminComponents/LoginForm";
+import StatisticsCards from "./adminComponents/StatisticsCards";
+import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
+import QueueManagementTable from "./adminComponents/QueueManagementTable";
+import AnalyticsTab from "./adminComponents/AnalyticsTab";
 
 const API_BASE_URL = "http://qalert-backend.test/api";
 
