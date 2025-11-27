@@ -23,6 +23,9 @@ export default function QueueDisplay() {
   const [users, setUsers] = useState({});
   const [isLoadingData, setIsLoadingData] = useState(true);
 
+  // Helper to format queue numbers as 3 digits (e.g., 002)
+  const formatQueueNumber = (n) => String(n).padStart(3, "0");
+
   // Fetch queue entries and users
   useEffect(() => {
     const fetchData = async () => {
@@ -261,7 +264,7 @@ export default function QueueDisplay() {
                 ) : nowServing ? (
                   <>
                     <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
-                      #{nowServing.number}
+                      #{formatQueueNumber(nowServing.number)}
                     </div>
                     <div className="text-lg md:text-xl font-bold text-white mb-1.5">
                       {nowServing.name}
@@ -318,7 +321,7 @@ export default function QueueDisplay() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white text-base md:text-lg font-black">
-                        #{ready.number}
+                        #{formatQueueNumber(ready.number)}
                       </p>
                     </div>
                     <div className="text-right">
@@ -421,7 +424,7 @@ export default function QueueDisplay() {
                       }}
                     >
                       <span className="text-base md:text-lg font-black">
-                        #{w.number}
+                        {formatQueueNumber(w.number)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
