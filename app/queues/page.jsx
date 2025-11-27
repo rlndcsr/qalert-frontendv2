@@ -264,7 +264,7 @@ export default function QueueDisplay() {
                 ) : nowServing ? (
                   <>
                     <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
-                      #{formatQueueNumber(nowServing.number)}
+                      {formatQueueNumber(nowServing.number)}
                     </div>
                     <div className="text-lg md:text-xl font-bold text-white mb-1.5">
                       {nowServing.name}
@@ -321,7 +321,7 @@ export default function QueueDisplay() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white text-base md:text-lg font-black">
-                        #{formatQueueNumber(ready.number)}
+                        {formatQueueNumber(ready.number)}
                       </p>
                     </div>
                     <div className="text-right">
