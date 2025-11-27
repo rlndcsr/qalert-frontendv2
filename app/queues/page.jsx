@@ -99,8 +99,8 @@ export default function QueueDisplay() {
       .filter((entry) => entry.queue_status === "waiting")
       .sort((a, b) => a.queue_number - b.queue_number);
 
-    // Now serving: first "now_serving" entry, fallback to first "called" entry
-    const nowServingEntry = nowServingEntries[0] || calledEntries[0];
+    // Now serving: first "now_serving" entry only
+    const nowServingEntry = nowServingEntries[0];
     const nowServingData = nowServingEntry
       ? {
           number: nowServingEntry.queue_number,
@@ -109,10 +109,8 @@ export default function QueueDisplay() {
         }
       : null;
 
-    // Ready: second "called" entry (or first if now_serving took the first one)
-    const readyEntry = nowServingEntries[0]
-      ? calledEntries[0]
-      : calledEntries[1];
+    // Ready (Please Proceed): first "called" entry
+    const readyEntry = calledEntries[0];
     const readyData = readyEntry
       ? {
           number: readyEntry.queue_number,
