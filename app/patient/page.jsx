@@ -1,95 +1,53 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
+import PatientHeader from "./patientComponents/PatientHeader";
+import WelcomeCard from "./patientComponents/WelcomeCard";
+import QueueStatusCard from "./patientComponents/QueueStatusCard";
+import JoinQueueCard from "./patientComponents/JoinQueueCard";
+import CompletedQueueCard from "./patientComponents/CompletedQueueCard";
+import WhatToDoNextCard from "./patientComponents/WhatToDoNextCard";
+import JoinQueueDialog from "./patientComponents/JoinQueueDialog";
+import CancelQueueDialog from "./patientComponents/CancelQueueDialog";
+import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
+import {
+  getTodayDateString,
+  getOrdinalPosition,
+  toYMD,
+  daysBetween,
+  getAuthToken,
+} from "./patientComponents/patientUtils";
 import { useAuth } from "../hooks/useAuth";
 import { useSystemStatus } from "../hooks/useSystemStatus";
 import { SyncLoader } from "react-spinners";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
 
-const getTodayDateString = () => {
-  // Use local YYYY-MM-DD (user's local date) so "today" matches what the
-  // user expects in their timezone. Server timestamps may be in UTC; we
-  // normalize dates using the local date part for comparisons below.
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const getOrdinalPosition = (num) => {
-  if (!num || num < 1) return "";
-  const ordinals = [
-    "",
-    "First",
-    "Second",
-    "Third",
-    "Fourth",
-    "Fifth",
-    "Sixth",
-    "Seventh",
-    "Eighth",
-    "Ninth",
-    "Tenth",
-    "Eleventh",
-    "Twelfth",
-    "Thirteenth",
-    "Fourteenth",
-    "Fifteenth",
-    "Sixteenth",
-    "Seventeenth",
-    "Eighteenth",
-    "Nineteenth",
-    "Twentieth",
-    "Twenty-first",
-    "Twenty-second",
-    "Twenty-third",
-    "Twenty-fourth",
-    "Twenty-fifth",
-    "Twenty-sixth",
-    "Twenty-seventh",
-    "Twenty-eighth",
-    "Twenty-ninth",
-    "Thirtieth",
-  ];
-
-  if (num <= 30) {
-    return ordinals[num];
-  }
-
-  // For numbers above 30, use numeric format with suffix
-  const j = num % 10;
-  const k = num % 100;
-  if (j === 1 && k !== 11) return num + "st";
-  if (j === 2 && k !== 12) return num + "nd";
-  if (j === 3 && k !== 13) return num + "rd";
-  return num + "th";
-};
-
 export default function PatientPage() {
   const router = useRouter();
   const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
+
   useEffect(() => {
     if (!isStatusLoading && !isOnline) {
       router.replace("/");
     }
   }, [isStatusLoading, isOnline, router]);
+
+  const {
+    isAuthenticated,
+    user,
+    isLoading,
+    isLoggingIn,
+    loginWithAPI,
+    logout,
+  } = useAuth();
+
   const [activeTab, setActiveTab] = useState("login");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
@@ -105,48 +63,14 @@ export default function PatientPage() {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [updatedReason, setUpdatedReason] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
-  const {
-    isAuthenticated,
-    user,
-    isLoading,
-    isLoggingIn,
-    loginWithAPI,
-    logout,
-  } = useAuth();
-
-  // Close user menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    if (isUserMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isUserMenuOpen]);
 
   const handleLogin = async (formData) => {
-    // Prevent multiple login attempts
-    if (isLoggingIn) {
-      return;
-    }
+    if (isLoggingIn) return;
 
     try {
       const result = await loginWithAPI(formData.login, formData.password);
-
       if (result.success) {
         toast.success("Login successful! Welcome back.");
-        // User is now authenticated, the useAuth hook will handle the state update
-      } else {
-        // Error toast is already shown in useAuth hook
       }
     } catch (error) {
       toast.error("An unexpected error occurred during login");
@@ -154,8 +78,6 @@ export default function PatientPage() {
   };
 
   const handleRegister = (formData) => {
-    // Registration is handled by the RegisterForm component
-    // After successful registration, switch to login tab
     setActiveTab("login");
     toast.success(
       "Registration successful! Please log in with your credentials."
@@ -165,21 +87,67 @@ export default function PatientPage() {
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
-    // Show spinner for a brief moment
     await new Promise((resolve) => setTimeout(resolve, 500));
     logout();
     setIsLoggingOut(false);
   };
 
-  const handleCancelQueue = async () => {
-    console.log("Attempting to cancel queue entry:", queueEntry);
-    if (!queueEntry?.queue_entry_id || isCancelling) {
-      console.error(
-        "No queue entry ID found or already cancelling:",
-        queueEntry
-      );
+  const handleJoinQueue = async () => {
+    const localDate = getTodayDateString();
+    if (!joinReason.trim()) {
+      toast.error("Please enter your purpose of visit.");
       return;
     }
+
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("You are not authenticated. Please log in again.");
+      return;
+    }
+
+    const userId = user?.id || user?.user_id || user?.uid;
+    if (!userId) {
+      toast.error("Unable to determine your user ID.");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const endpoint = `${API_BASE_URL}/queues`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          reason: joinReason.trim(),
+          date: localDate,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data?.message || "Failed to join the queue.";
+        throw new Error(message);
+      }
+
+      setIsJoinOpen(false);
+      setJoinReason("");
+      toast.success("You've joined the queue.");
+      fetchUserQueue();
+      fetchQueuePosition();
+    } catch (err) {
+      toast.error(err.message || "An error occurred while joining the queue.");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleCancelQueue = async () => {
+    if (!queueEntry?.queue_entry_id || isCancelling) return;
 
     const token = getAuthToken();
     if (!token) {
@@ -198,19 +166,14 @@ export default function PatientPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            queue_status: "cancelled",
-          }),
+          body: JSON.stringify({ queue_status: "cancelled" }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to cancel queue entry");
-      }
+      if (!response.ok) throw new Error("Failed to cancel queue entry");
 
       setIsCancelOpen(false);
       toast.success("Queue entry cancelled successfully");
-      // Immediately clear local state so the Join Queue card shows without waiting
       setQueueEntry(null);
       setQueuePosition(null);
       fetchUserQueue();
@@ -225,10 +188,7 @@ export default function PatientPage() {
   };
 
   const handleUpdateReason = async () => {
-    if (!queueEntry?.queue_entry_id || isUpdating) {
-      console.error("No queue entry ID found or already updating:", queueEntry);
-      return;
-    }
+    if (!queueEntry?.queue_entry_id || isUpdating) return;
 
     if (!updatedReason.trim()) {
       toast.error("Please enter a valid reason for your visit.");
@@ -252,9 +212,7 @@ export default function PatientPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            reason: updatedReason.trim(),
-          }),
+          body: JSON.stringify({ reason: updatedReason.trim() }),
         }
       );
 
@@ -273,53 +231,6 @@ export default function PatientPage() {
     } finally {
       setIsUpdating(false);
     }
-  };
-
-  const getAuthToken = () => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  };
-
-  // Normalize various date inputs to YYYY-MM-DD (returns null if not parseable)
-  const toYMD = (value) => {
-    if (!value) return null;
-    if (typeof value === "string") {
-      // Already in YYYY-MM-DD format
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-      // Try parsing ISO / datetime strings
-      const parsed = new Date(value);
-      if (!isNaN(parsed)) {
-        // Return the local date portion (YYYY-MM-DD) so comparisons use the
-        // user's local day instead of UTC date parts.
-        const yyyy = parsed.getFullYear();
-        const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-        const dd = String(parsed.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-      }
-    }
-    if (value instanceof Date && !isNaN(value)) {
-      const yyyy = value.getFullYear();
-      const mm = String(value.getMonth() + 1).padStart(2, "0");
-      const dd = String(value.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
-    }
-    return null;
-  };
-
-  // Convert YYYY-MM-DD string to a local Date at midnight
-  const ymdToLocalDate = (ymd) => {
-    if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
-    const [y, m, d] = ymd.split("-").map((v) => parseInt(v, 10));
-    return new Date(y, m - 1, d);
-  };
-
-  // Days difference: dateA - dateB (both YYYY-MM-DD strings) in full days
-  const daysBetween = (aYmd, bYmd) => {
-    const aDate = ymdToLocalDate(aYmd);
-    const bDate = ymdToLocalDate(bYmd);
-    if (!aDate || !bDate) return null;
-    const msPerDay = 24 * 60 * 60 * 1000;
-    return Math.round((aDate - bDate) / msPerDay);
   };
 
   const fetchUserQueue = async () => {
@@ -352,45 +263,17 @@ export default function PatientPage() {
         : data?.data || data?.queues || data?.items || [];
       const today = getTodayDateString();
 
-      console.log("[fetchUserQueue] Raw API response:", data);
-      console.log("[fetchUserQueue] Normalized list:", list);
-      console.log("[fetchUserQueue] Today's date:", today);
-      console.log("[fetchUserQueue] Current userId:", userId);
-
-      // First collect entries for this user and compute their date diffs vs today
       const forUser = list
         .filter((q) => {
           const qUserId = q?.user_id ?? q?.user?.id;
-          // Use == for loose equality to handle string vs number mismatch
-          const matches = qUserId == userId;
-          console.log(
-            "[fetchUserQueue] Checking queue entry:",
-            q,
-            "user_id:",
-            qUserId,
-            "userId:",
-            userId,
-            "matches:",
-            matches
-          );
-          return matches;
+          return qUserId == userId;
         })
         .map((q) => {
           const entryDate = toYMD(q?.date ?? q?.created_at);
           const diff = entryDate ? daysBetween(entryDate, today) : null;
-          console.log("[fetchUserQueue] Entry date computation:", {
-            rawDate: q?.date,
-            rawCreatedAt: q?.created_at,
-            normalizedDate: entryDate,
-            diff: diff,
-          });
           return { q, entryDate, diff };
         });
 
-      console.log("[fetchUserQueue] Entries for current user:", forUser);
-
-      // Only show entries that match TODAY exactly (diff === 0)
-      // and whose status is allowed
       const activeStatuses = new Set([
         "waiting",
         "called",
@@ -404,12 +287,6 @@ export default function PatientPage() {
         .filter((x) => x.entryDate && x.diff === 0)
         .map((x) => x.q);
 
-      console.log(
-        "[fetchUserQueue] Today's entries (diff === 0):",
-        todayEntries
-      );
-
-      // Separate active and completed entries
       const activeEntries = todayEntries.filter((q) =>
         activeStatuses.has(q?.queue_status)
       );
@@ -417,7 +294,6 @@ export default function PatientPage() {
         (q) => q?.queue_status === "completed"
       );
 
-      // Sort by most recent created_at first
       const sortedActive = activeEntries.sort((a, b) => {
         const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
         const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
@@ -431,36 +307,15 @@ export default function PatientPage() {
       });
 
       const selectedActive = sortedActive[0] || null;
-      const selectedCompleted = sortedCompleted[0] || null;
-
-      console.log("[fetchUserQueue] Final selection:", {
-        total: list.length,
-        forUserCount: forUser.length,
-        todayEntriesCount: todayEntries.length,
-        selectedActive: selectedActive,
-        selectedCompleted: selectedCompleted,
-      });
 
       if (selectedActive) {
-        console.log(
-          "[fetchUserQueue] ✅ Setting active queue entry:",
-          selectedActive
-        );
         setQueueEntry(selectedActive);
         setCompletedEntry(null);
         setCompletedEntries([]);
       } else {
-        console.log(
-          "[fetchUserQueue] ❌ No active queue entry found for today"
-        );
         setQueueEntry(null);
         setQueuePosition(null);
-        // Set completed entry if exists
         if (sortedCompleted && sortedCompleted.length > 0) {
-          console.log(
-            "[fetchUserQueue] ✅ Setting completed entries:",
-            sortedCompleted
-          );
           setCompletedEntry(sortedCompleted[0]);
           setCompletedEntries(sortedCompleted);
         } else {
@@ -503,14 +358,12 @@ export default function PatientPage() {
         : data?.data || data?.queues || data?.items || [];
       const today = getTodayDateString();
 
-      // For queue position we only want entries that are for today's local date
       const todays = list
         .filter((q) => {
           const entryDate = toYMD(q?.date ?? q?.created_at);
           if (!entryDate) return false;
           const diff = daysBetween(entryDate, today);
           const isToday = diff === 0;
-          // Only include entries that are in "waiting" status
           const isWaiting = !q?.queue_status || q.queue_status === "waiting";
           return isToday && isWaiting;
         })
@@ -533,93 +386,8 @@ export default function PatientPage() {
     }
   };
 
-  // TEMP: Debug function to print all queues raw
-  const debugFetchAllQueues = async () => {
-    const token = getAuthToken();
-    if (!token) return;
-    try {
-      const response = await fetch(`${API_BASE_URL}/queues`, {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "GET",
-      });
-      const data = await response
-        .json()
-        .catch(() => ({ error: "invalid json" }));
-      console.log("[queues][raw] status:", response.status, "data:", data);
-
-      // Also show filtered view for current user and today (debug only)
-      const list = Array.isArray(data) ? data : data?.data || [];
-      const today = getTodayDateString();
-      const filtered = list.filter((q) => {
-        const entryDate = toYMD(q?.date ?? q?.created_at);
-        const dateMatches = entryDate === today;
-        return dateMatches && (q?.user_id ?? q?.user?.id) === user?.user_id;
-      });
-      console.log(
-        "[queues][filtered] today:",
-        today,
-        "userId:",
-        user?.user_id,
-        filtered
-      );
-
-      // Also log the single matched entry (today) and any match across all returned queues
-      const matchedToday = filtered[0] || null;
-      const anyMatch =
-        list.find((q) => (q?.user_id ?? q?.user?.id) === user?.user_id) || null;
-
-      // Exact date match: only entries whose normalized date equals today's date
-      const matchedExactDate = list.find((q) => {
-        const entryDate = toYMD(q?.date ?? q?.created_at);
-        return (
-          entryDate === today && (q?.user_id ?? q?.user?.id) === user?.user_id
-        );
-      });
-
-      if (matchedToday) {
-        console.log(
-          "[queues][match][today] matched queue entry for current user:",
-          matchedToday
-        );
-      } else {
-        console.log(
-          "[queues][match][today] no matching queue entry found for current user for today"
-        );
-      }
-
-      if (anyMatch) {
-        console.log(
-          "[queues][match][any] matched queue entry (any date) for current user:",
-          anyMatch
-        );
-      } else {
-        console.log(
-          "[queues][match][any] no matching queue entry found for current user in returned list"
-        );
-      }
-
-      if (matchedExactDate) {
-        console.log(
-          "[queues][match][exactDate] matched queue entry where date === today for current user:",
-          matchedExactDate
-        );
-      } else {
-        console.log(
-          "[queues][match][exactDate] no matching queue entry found where date === today for current user"
-        );
-      }
-    } catch (err) {
-      console.log("[queues][raw] error:", err?.message || err);
-    }
-  };
-
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      // TEMP: print all queues as provided by the API
-      debugFetchAllQueues();
       fetchUserQueue();
       fetchQueuePosition();
     }
@@ -628,222 +396,16 @@ export default function PatientPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md h-16 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
-        <div className="w-full px-8 h-full">
-          <div className="flex items-center justify-between select-none h-full">
-            <div className="flex items-center gap-3">
-              {/* Only show back button when NOT authenticated */}
-              {!isAuthenticated && (
-                <motion.button
-                  key={`back-guest`}
-                  onClick={() => router.push("/")}
-                  aria-label="Back to home"
-                  className="p-1 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
-                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <Image
-                    src="/icons/back.png"
-                    alt="Back"
-                    width={28}
-                    height={28}
-                  />
-                </motion.button>
-              )}
-              <motion.div
-                key={`users-${isAuthenticated ? "auth" : "guest"}`}
-                className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden"
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.45,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.02,
-                }}
-              >
-                <Image
-                  src="/images/csuuchw-nobg.png"
-                  alt="CSU-UCHW Logo"
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-contain"
-                />
-              </motion.div>
-              <motion.h1
-                key={`title-${isAuthenticated ? "auth" : "guest"}`}
-                className="text-lg font-bold text-[#25323A]"
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.45,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.04,
-                }}
-              >
-                Patient Portal
-              </motion.h1>
-            </div>
+      <PatientHeader
+        isAuthenticated={isAuthenticated}
+        user={user}
+        isLoggingOut={isLoggingOut}
+        onLogout={handleLogout}
+      />
 
-            {isAuthenticated && user && (
-              <div className="flex items-center gap-3">
-                {/* Computer/Display Icon */}
-                <motion.button
-                  type="button"
-                  aria-label="View queue display"
-                  title="View queue display"
-                  className="p-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    duration: 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                    delay: 0.08,
-                  }}
-                  onClick={() => {
-                    window.open("/queues", "_blank");
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    className="w-5 h-5 text-gray-600"
-                    strokeWidth="2"
-                  >
-                    <rect
-                      x="2"
-                      y="3"
-                      width="20"
-                      height="14"
-                      rx="2"
-                      ry="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <line
-                      x1="8"
-                      y1="21"
-                      x2="16"
-                      y2="21"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <line
-                      x1="12"
-                      y1="17"
-                      x2="12"
-                      y2="21"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </motion.button>
-
-                {/* User Avatar Dropdown */}
-                <motion.div
-                  ref={userMenuRef}
-                  className="relative"
-                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    duration: 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                    delay: 0.16,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 pr-3 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                    aria-label="User menu"
-                  >
-                    <div className="w-8 h-8 bg-[#4ad294] rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                      {user?.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2) || "U"}
-                    </div>
-                    <div className="text-left hidden md:block">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user?.name || "User"}
-                      </p>
-                      <p className="text-xs text-gray-500">Patient</p>
-                    </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className={`w-4 h-4 text-gray-500 transition-transform ${
-                        isUserMenuOpen ? "rotate-180" : ""
-                      }`}
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  <AnimatePresence>
-                    {isUserMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
-                      >
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            handleLogout();
-                          }}
-                          disabled={isLoggingOut}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className="w-4 h-4 text-gray-500"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
-                              clipRule="evenodd"
-                            />
-                            <path
-                              fillRule="evenodd"
-                              d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          <span>
-                            {isLoggingOut ? "Logging out..." : "Logout"}
-                          </span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="flex-1 w-full flex items-start justify-center px-8 py-16">
         <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
           {isLoading ? (
-            // Loading state with skeletons
             <motion.div
               className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md text-center"
               initial={{ opacity: 0, y: 20 }}
@@ -851,16 +413,12 @@ export default function PatientPage() {
               transition={{ duration: 0.6 }}
             >
               <div className="flex flex-col gap-6">
-                {/* Skeleton for Welcome Card */}
                 <div className="animate-pulse bg-gray-100 rounded-xl h-32 w-full mb-2" />
-                {/* Skeleton for Queue Status/Join Card */}
                 <div className="animate-pulse bg-gray-100 rounded-xl h-40 w-full mb-2" />
-                {/* Skeleton for What to do next Card */}
                 <div className="animate-pulse bg-gray-100 rounded-xl h-32 w-full" />
               </div>
             </motion.div>
           ) : !isAuthenticated ? (
-            // Authentication Forms
             <motion.div
               className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md"
               initial={{ opacity: 0, y: 20 }}
@@ -868,7 +426,6 @@ export default function PatientPage() {
               transition={{ duration: 0.6 }}
               key="guest"
             >
-              {/* Tab Selector */}
               <div className="flex mb-8">
                 <button
                   onClick={() => setActiveTab("login")}
@@ -892,15 +449,8 @@ export default function PatientPage() {
                 </button>
               </div>
 
-              {/* Animated Forms */}
               <AnimatePresence mode="wait" initial={false}>
-                {isLoading ? (
-                  <div className="animate-pulse flex flex-col gap-4">
-                    <div className="bg-gray-100 h-10 w-full rounded" />
-                    <div className="bg-gray-100 h-10 w-full rounded" />
-                    <div className="bg-gray-100 h-10 w-full rounded" />
-                  </div>
-                ) : activeTab === "login" ? (
+                {activeTab === "login" ? (
                   <LoginForm onSubmit={handleLogin} isLoading={isLoggingIn} />
                 ) : (
                   <RegisterForm onSubmit={handleRegister} />
@@ -908,7 +458,6 @@ export default function PatientPage() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            // Patient Dashboard
             <motion.div
               className="w-full max-w-5xl -mt-4"
               initial={{ opacity: 0, y: 20 }}
@@ -917,998 +466,79 @@ export default function PatientPage() {
               key="authed"
             >
               <div className="space-y-6">
-                {/* Welcome Card */}
+                <WelcomeCard user={user} isLoading={isQueueLoading} />
+
                 {isQueueLoading ? (
-                  <motion.div
-                    className="bg-gradient-to-br from-[#4ad294] to-[#3bb882] rounded-2xl shadow-lg p-8 relative overflow-hidden"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  >
-                    {/* Skeleton UI for Welcome Card */}
-                    <div className="animate-pulse flex flex-col gap-4">
-                      <div className="h-7 w-1/2 bg-white/20 rounded mb-2" />
-                      <div className="h-5 w-1/3 bg-white/20 rounded mb-2" />
-                      <div className="h-5 w-1/4 bg-white/20 rounded mb-2" />
-                      <div className="h-5 w-1/3 bg-white/20 rounded" />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="bg-gradient-to-br from-[#4ad294] via-[#3ec085] to-[#2fa872] rounded-xl shadow-md p-6 relative overflow-hidden"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  >
-                    {/* Heart Rate icon - top left with circular background */}
-                    <div className="absolute top-6 left-6 w-12 h-12 bg-white/15 rounded-full border-2 border-white/40 flex items-center justify-center backdrop-blur-sm">
-                      <Image
-                        src="/icons/heart-rate.png"
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="w-6 h-6"
-                        quality={100}
-                      />
-                    </div>
-
-                    {/* Avatar image - positioned near bottom-right inside card */}
-                    <Image
-                      src={(() => {
-                        const g = (
-                          user?.gender ||
-                          user?.sex ||
-                          user?.profile?.gender ||
-                          ""
-                        )
-                          .toString()
-                          .toLowerCase();
-                        if (g.startsWith("f"))
-                          return "/images/female-avatar.png";
-                        if (g.startsWith("m")) return "/images/male-avatar.png";
-                        return "/images/male-avatar.png";
-                      })()}
-                      alt="Patient avatar"
-                      width={190}
-                      height={190}
-                      className="block absolute right-3 sm:right-4 md:right-5 bottom-0 h-24 sm:h-28 md:h-36 lg:h-40 w-24 sm:w-28 md:w-36 lg:w-40 object-cover pointer-events-none select-none drop-shadow-sm z-0"
-                      quality={100}
-                      priority
-                    />
-
-                    {/* Content */}
-                    <div className="relative z-10 pl-0 pr-24 sm:pr-28 md:pr-40">
-                      <h2 className="text-sm font-normal ml-16 text-white/90">
-                        Welcome back,
-                      </h2>
-                      <h3 className="text-lg font-semibold ml-16 text-white mb-8">
-                        {user?.name}
-                      </h3>
-
-                      {/* Email */}
-                      <div className="flex items-center gap-2 text-white mb-2">
-                        <Image
-                          src="/icons/mail.png"
-                          alt=""
-                          width={16}
-                          height={16}
-                          className="w-4 h-4 flex-shrink-0"
-                        />
-                        <span className="text-sm font-normal">
-                          {user?.email || user?.email_address}
-                        </span>
-                      </div>
-
-                      {/* Phone */}
-                      <div className="flex items-center gap-2 text-white mb-2">
-                        <Image
-                          src="/icons/telephone.png"
-                          alt=""
-                          width={16}
-                          height={16}
-                          className="w-4 h-4 flex-shrink-0"
-                        />
-                        <span className="text-xs font-normal">
-                          {user?.phone_number || user?.phone || "—"}
-                        </span>
-                      </div>
-
-                      {/* ID Number */}
-                      {user?.id_number && (
-                        <div className="flex items-center gap-2 text-white">
-                          <Image
-                            src="/icons/id.png"
-                            alt=""
-                            width={16}
-                            height={16}
-                            className="w-4 h-4 flex-shrink-0"
-                          />
-                          <span className="text-xs font-normal">
-                            {user.id_number}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Queue Status or Join Card */}
-                {isQueueLoading ? (
-                  <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
-                  >
-                    {/* Skeleton UI for queue status card */}
-                    <div className="animate-pulse flex flex-col gap-4">
-                      <div className="h-6 w-1/3 bg-gray-100 rounded" />
-                      <div className="h-4 w-1/4 bg-gray-100 rounded" />
-                      <div className="h-5 w-2/3 bg-gray-100 rounded" />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                        <div className="h-16 bg-gray-100 rounded" />
-                        <div className="h-16 bg-gray-100 rounded" />
-                      </div>
-                      <div className="h-4 w-1/2 bg-gray-100 rounded mt-4" />
-                    </div>
-                  </motion.div>
+                  <QueueStatusCard isLoading={true} />
                 ) : queueEntry ? (
-                  <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
-                  >
-                    {/* Header Row */}
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 w-8 h-8 bg-[#4ad294]/10 rounded-md border border-[#4ad294]/30 flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-5 h-5 text-[#4ad294]"
-                          >
-                            <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-[#25323A] flex items-center gap-1">
-                            <span>Your Queue Status</span>
-                          </h3>
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                            {queueEntry.reason}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                          queueEntry.queue_status === "now_serving"
-                            ? "bg-green-100 text-green-700"
-                            : queueEntry.queue_status === "called"
-                            ? "bg-blue-100 text-blue-700"
-                            : queueEntry.queue_status === "completed"
-                            ? "bg-white text-gray-700 border border-gray-300"
-                            : queueEntry.queue_status === "cancelled"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {queueEntry.queue_status === "now_serving"
-                          ? "now serving"
-                          : queueEntry.queue_status === "called"
-                          ? "called"
-                          : queueEntry.queue_status || "waiting"}
-                      </span>
-                    </div>
-
-                    {/* Metrics Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
-                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-4 h-4"
-                          >
-                            <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" />
-                            <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-                            Queue Number
-                          </p>
-                          <p className="text-xs font-semibold text-[#25323A] mt-1">
-                            {queueEntry.queue_number
-                              ? String(queueEntry.queue_number).padStart(3, "0")
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
-                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-4 h-4"
-                          >
-                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-                            Queue Position
-                          </p>
-                          <p className="text-xs font-semibold text-[#25323A] mt-1">
-                            {queueEntry.queue_status === "now_serving"
-                              ? "Now Serving"
-                              : !queueEntry.queue_status ||
-                                queueEntry.queue_status === "waiting"
-                              ? queuePosition !== null
-                                ? getOrdinalPosition(queuePosition)
-                                : ""
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
-                        <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-4 h-4"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM11.25 6a.75.75 0 011.5 0v5.19l3.03 3.03a.75.75 0 11-1.06 1.06l-3.22-3.22A.75.75 0 0111.25 11V6z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-                            Est. Wait Time
-                          </p>
-                          <p className="text-xs font-semibold text-[#25323A] mt-1">
-                            {queueEntry.queue_status === "now_serving"
-                              ? "Now Serving"
-                              : !queueEntry.queue_status ||
-                                queueEntry.queue_status === "waiting"
-                              ? queueEntry.estimated_time_wait ?? "Pending"
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Notifications Banner */}
-                    <div className="rounded-lg border border-[#4ad294]/20 bg-[#F0FDF4] p-4 mb-5 flex items-start gap-3">
-                      <div className="w-8 h-8 bg-white border border-[#4ad294]/30 rounded-full flex items-center justify-center">
-                        <Image
-                          src="/icons/bell.png"
-                          alt="Bell"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[#25323A] mb-1">
-                          SMS Notifications Active
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          You'll receive real-time updates via SMS at{" "}
-                          <span className="font-medium">
-                            {user?.phone_number || user?.phone || "your phone"}
-                          </span>
-                          . Stay on this page for live queue status.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Footer Row */}
-                    <div className="pt-3 border-t border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="text-xs text-gray-500 flex items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          className="w-4 h-4 text-gray-400"
-                        >
-                          <path
-                            d="M12 8v4l3 3"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <circle cx="12" cy="12" r="9" strokeWidth="1.3" />
-                        </svg>
-                        Registered at:{" "}
-                        {new Date(queueEntry.created_at).toLocaleString(
-                          "en-US",
-                          {
-                            month: "2-digit",
-                            day: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </div>
-                      {(!queueEntry.queue_status ||
-                        queueEntry.queue_status === "waiting") && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsUpdateOpen(true);
-                              setTimeout(() => {
-                                setUpdatedReason(queueEntry.reason);
-                                const textarea =
-                                  document.querySelector("textarea");
-                                if (textarea) {
-                                  textarea.selectionStart =
-                                    textarea.selectionEnd =
-                                      queueEntry.reason.length;
-                                }
-                              }, 100);
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors hover:cursor-pointer"
-                          >
-                            Update Reason
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCancelOpen(true);
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
-                          >
-                            Cancel Queue Entry
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+                  <QueueStatusCard
+                    queueEntry={queueEntry}
+                    queuePosition={queuePosition}
+                    user={user}
+                    getOrdinalPosition={getOrdinalPosition}
+                    onCancelClick={() => setIsCancelOpen(true)}
+                    onUpdateClick={() => {
+                      setIsUpdateOpen(true);
+                      setTimeout(() => {
+                        setUpdatedReason(queueEntry.reason);
+                      }, 100);
+                    }}
+                    isLoading={false}
+                  />
                 ) : (
-                  <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
-                  >
-                    {/* Icon */}
-                    <div className="flex justify-center mb-5">
-                      <div className="w-16 h-16 bg-[#D4F4E6] rounded-full flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-8 h-8 text-[#4ad294]"
-                          aria-hidden="true"
-                        >
-                          <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-lg font-semibold text-[#25323A] mb-2">
-                      Join the Queue
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-gray-600 text-sm mb-5 max-w-md mx-auto">
-                      You're not currently in the queue. Register now to get
-                      your spot and receive real-time updates.
-                    </p>
-
-                    {/* Steps */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 max-w-2xl mx-auto">
-                      <div className="bg-[#F0FDF4] rounded-lg p-2.5 border border-[#4ad294]/20">
-                        <div className="w-7 h-7 bg-[#D4F4E6] text-[#4ad294] rounded-full flex items-center justify-center mx-auto mb-1.5 text-xs font-semibold">
-                          1
-                        </div>
-                        <p className="text-[11px] font-medium text-[#25323A]">
-                          Click Join Queue
-                        </p>
-                      </div>
-                      <div className="bg-[#F0FDF4] rounded-lg p-2.5 border border-[#4ad294]/20">
-                        <div className="w-7 h-7 bg-[#D4F4E6] text-[#4ad294] rounded-full flex items-center justify-center mx-auto mb-1.5 text-xs font-semibold">
-                          2
-                        </div>
-                        <p className="text-[11px] font-medium text-[#25323A]">
-                          State your purpose
-                        </p>
-                      </div>
-                      <div className="bg-[#F0FDF4] rounded-lg p-2.5 border border-[#4ad294]/20">
-                        <div className="w-7 h-7 bg-[#D4F4E6] text-[#4ad294] rounded-full flex items-center justify-center mx-auto mb-1.5 text-xs font-semibold">
-                          3
-                        </div>
-                        <p className="text-[11px] font-medium text-[#25323A]">
-                          Get SMS updates
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Button */}
-                    <button
-                      type="button"
-                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#4ad294] hover:bg-[#3bb882] text-white px-6 py-2.5 rounded-md shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md text-sm font-medium"
-                      onClick={() => {
-                        setJoinReason("");
-                        setIsJoinOpen(true);
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="w-5 h-5"
-                        aria-hidden="true"
-                      >
-                        <path d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z" />
-                      </svg>
-                      <span>Join Queue Now</span>
-                    </button>
-                  </motion.div>
+                  <JoinQueueCard
+                    onJoinClick={() => {
+                      setJoinReason("");
+                      setIsJoinOpen(true);
+                    }}
+                  />
                 )}
 
-                {/* Completed Queue Summary - show all completed entries for today */}
-                {!isQueueLoading &&
-                  !queueEntry &&
-                  completedEntries &&
-                  completedEntries.length > 0 && (
-                    <motion.div
-                      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.5,
-                        ease: "easeOut",
-                        delay: 0.1,
-                      }}
-                    >
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 w-8 h-8 bg-green-50 rounded-md border border-green-200 flex items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-5 h-5 text-green-600"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-[#25323A]">
-                              Today's Completed Visits
-                            </h3>
-                            <p className="text-xs text-gray-600 mt-1">
-                              {completedEntries.length} completed{" "}
-                              {completedEntries.length === 1
-                                ? "entry"
-                                : "entries"}{" "}
-                              today
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white text-gray-700 border border-gray-300">
-                          completed
-                        </span>
-                      </div>
+                <CompletedQueueCard completedEntries={completedEntries} />
 
-                      {/* List of Completed Entries */}
-                      <div className="space-y-3">
-                        {completedEntries.map((ce) => (
-                          <div
-                            key={ce.queue_entry_id || ce.id || ce.created_at}
-                            className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <p className="text-sm font-medium text-[#25323A] line-clamp-2">
-                                {ce.reason || "—"}
-                              </p>
-                              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white text-gray-700 border border-gray-300">
-                                completed
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">
-                                  Queue Number
-                                </p>
-                                <p className="font-semibold text-gray-900">
-                                  #{ce.queue_number || "—"}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">
-                                  Completed At
-                                </p>
-                                <p className="font-semibold text-gray-900">
-                                  {ce.updated_at
-                                    ? new Date(
-                                        ce.updated_at
-                                      ).toLocaleTimeString("en-US", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })
-                                    : "—"}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Note */}
-                      <div className="mt-4 text-xs text-gray-600 bg-green-50 border border-green-200 rounded-lg p-3">
-                        <span className="font-medium text-green-700">
-                          ✓ Visit Complete
-                        </span>
-                        <p className="mt-1">
-                          Thank you for using our queueing system. Feel free to
-                          join the queue again if needed.
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                {/* What to do next? card - shows skeleton while loading; actual content when queueEntry exists */}
-                {isQueueLoading ? (
-                  <motion.div
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.06 }}
-                  >
-                    <div className="animate-pulse space-y-4">
-                      <div className="h-6 w-40 bg-gray-100 rounded" />
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 bg-gray-100 rounded-full" />
-                          <div className="h-4 w-64 bg-gray-100 rounded" />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 bg-gray-100 rounded-full" />
-                          <div className="h-4 w-72 bg-gray-100 rounded" />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 bg-gray-100 rounded-full" />
-                          <div className="h-4 w-56 bg-gray-100 rounded" />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  queueEntry && (
-                    <motion.div
-                      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.5,
-                        ease: "easeOut",
-                        delay: 0.06,
-                      }}
-                    >
-                      <h3 className="text-lg font-semibold text-[#25323A] mb-4">
-                        What to do next?
-                      </h3>
-                      <ul className="space-y-3">
-                        <li className="flex items-center gap-3">
-                          <span className="flex-none text-[#16a34a]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              className="w-5 h-5"
-                            >
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                strokeWidth="1.5"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                              <path
-                                d="M9 12.5l1.8 1.8L15 10"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                            </svg>
-                          </span>
-                          <span className="text-sm">
-                            Keep your phone nearby to receive SMS notifications
-                          </span>
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <span className="flex-none text-[#16a34a]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              className="w-5 h-5"
-                            >
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                strokeWidth="1.5"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                              <path
-                                d="M9 12.5l1.8 1.8L15 10"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                            </svg>
-                          </span>
-                          <span className="text-sm">
-                            Monitor the queue display screen for real-time queue
-                            updates
-                          </span>
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <span className="flex-none text-[#16a34a]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              className="w-5 h-5"
-                            >
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                strokeWidth="1.5"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                              <path
-                                d="M9 12.5l1.8 1.8L15 10"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-[#16a34a] stroke-current"
-                              />
-                            </svg>
-                          </span>
-                          <span className="text-sm">
-                            Proceed to the clinic immediately when notified
-                          </span>
-                        </li>
-                      </ul>
-                    </motion.div>
-                  )
-                )}
+                <WhatToDoNextCard
+                  queueEntry={queueEntry}
+                  isLoading={isQueueLoading}
+                />
               </div>
             </motion.div>
           )}
         </div>
       </main>
+
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
           <SyncLoader size={10} color="#4ad294" speedMultiplier={0.9} />
         </div>
       )}
 
-      {/* Join Queue Dialog */}
-      <AnimatePresence mode="wait" initial={false}>
-        {isJoinOpen && (
-          <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
-            <DialogContent
-              asChild
-              className="sm:max-w-xl p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="p-6">
-                  <DialogHeader className="mb-2">
-                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A]">
-                      Join the Queue
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-600">
-                      Please specify the purpose of your visit
-                    </DialogDescription>
-                  </DialogHeader>
+      <JoinQueueDialog
+        isOpen={isJoinOpen}
+        onClose={() => setIsJoinOpen(false)}
+        joinReason={joinReason}
+        setJoinReason={setJoinReason}
+        isJoining={isJoining}
+        onSubmit={handleJoinQueue}
+        user={user}
+      />
 
-                  <div className="mt-4">
-                    <label className="block text-[13px] font-medium text-[#25323A] mb-2">
-                      Purpose of Visit
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
-                      className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4ad294] focus:border-[#4ad294] text-[14px] p-3 placeholder:text-gray-400"
-                      value={joinReason}
-                      onChange={(e) => setJoinReason(e.target.value)}
-                    />
-                  </div>
+      <CancelQueueDialog
+        isOpen={isCancelOpen}
+        onClose={() => setIsCancelOpen(false)}
+        queueEntry={queueEntry}
+        queuePosition={queuePosition}
+        isCancelling={isCancelling}
+        onConfirm={handleCancelQueue}
+      />
 
-                  <div className="mt-4 flex items-start gap-3 rounded-md border border-[#4ad294]/30 bg-[#F0FDF4] p-3">
-                    <div className="w-8 h-8 bg-white border border-[#4ad294]/30 rounded-full flex items-center justify-center mt-[2px]">
-                      <Image
-                        src="/icons/bell.png"
-                        alt="Notifications"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <div className="text-sm">
-                      <p className="font-medium text-[#25323A]">
-                        SMS Notifications Enabled
-                      </p>
-                      <p className="text-gray-600">
-                        Updates will be sent to{" "}
-                        <span className="font-semibold">
-                          {user?.phone_number ||
-                            user?.phone ||
-                            "your phone number"}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <DialogFooter className="mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                      onClick={() => setIsJoinOpen(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-white bg-[#4ad294] hover:bg-[#3bb882] rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                      disabled={isJoining}
-                      onClick={async () => {
-                        const localDate = getTodayDateString();
-                        if (!joinReason.trim()) {
-                          toast.error("Please enter your purpose of visit.");
-                          return;
-                        }
-
-                        const token =
-                          typeof window !== "undefined"
-                            ? localStorage.getItem("token")
-                            : null;
-                        if (!token) {
-                          toast.error(
-                            "You are not authenticated. Please log in again."
-                          );
-                          return;
-                        }
-
-                        const userId = user?.id || user?.user_id || user?.uid;
-                        if (!userId) {
-                          toast.error("Unable to determine your user ID.");
-                          return;
-                        }
-
-                        setIsJoining(true);
-                        try {
-                          const endpoint = `${API_BASE_URL}/queues`;
-                          const response = await fetch(endpoint, {
-                            method: "POST",
-                            headers: {
-                              Accept: "application/json",
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              user_id: userId,
-                              reason: joinReason.trim(),
-                              date: localDate,
-                            }),
-                          });
-
-                          const data = await response.json().catch(() => ({}));
-                          if (!response.ok) {
-                            const message =
-                              data?.message || "Failed to join the queue.";
-                            throw new Error(message);
-                          }
-
-                          setIsJoinOpen(false);
-                          setJoinReason("");
-                          toast.success("You've joined the queue.");
-                          fetchUserQueue();
-                          fetchQueuePosition();
-                        } catch (err) {
-                          toast.error(
-                            err.message ||
-                              "An error occurred while joining the queue."
-                          );
-                        } finally {
-                          setIsJoining(false);
-                        }
-                      }}
-                    >
-                      {isJoining ? "Joining..." : "Join Queue"}
-                    </button>
-                  </DialogFooter>
-                </div>
-              </motion.div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
-
-      {/* Cancel Queue Dialog */}
-      <AnimatePresence mode="wait" initial={false}>
-        {isCancelOpen && (
-          <Dialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
-            <DialogContent
-              asChild
-              className="sm:max-w-lg p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="p-6">
-                  <DialogHeader className="mb-2">
-                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A] flex items-center gap-2">
-                      <span className="inline-flex w-5 h-5 rounded-full bg-red-100 items-center justify-center">
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="w-3.5 h-3.5 text-red-600"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 2.25a9.75 9.75 0 1 0 0 19.5 9.75 9.75 0 0 0 0-19.5Zm3.53 12.72a.75.75 0 1 1-1.06 1.06L12 13.56l-2.47 2.47a.75.75 0 0 1-1.06-1.06L10.44 12 7.97 9.53a.75.75 0 1 1 1.06-1.06L12 10.44l2.47-2.47a.75.75 0 1 1 1.06 1.06L13.56 12l2.47 2.47Z" />
-                        </svg>
-                      </span>
-                      Cancel Queue Entry?
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-600">
-                      Are you sure you want to cancel your queue entry?
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  {/* Summary Panel */}
-                  <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                      <div className="flex items-center justify-between sm:justify-start sm:gap-2">
-                        <span className="text-gray-500">Position:</span>
-                        <span className="font-medium">
-                          {queuePosition ? `#${queuePosition}` : "—"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between sm:justify-start sm:gap-2">
-                        <span className="text-gray-500">Wait Time:</span>
-                        <span className="font-medium">
-                          {queueEntry?.estimated_time_wait ?? "Pending"}
-                        </span>
-                      </div>
-                      <div className="sm:col-span-2 flex items-start gap-2">
-                        <span className="text-gray-500">Purpose:</span>
-                        <span className="font-medium break-words">
-                          {queueEntry?.reason || "—"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Note */}
-                  <div className="mt-4 text-xs rounded-md border border-amber-200 bg-amber-50 text-amber-800 p-3">
-                    <span className="font-medium">Note:</span> You'll need to
-                    rejoin the queue if you change your mind, and you may lose
-                    your current position.
-                  </div>
-
-                  <DialogFooter className="mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                      onClick={() => setIsCancelOpen(false)}
-                      disabled={isCancelling}
-                    >
-                      Keep My Spot
-                    </button>
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                      onClick={handleCancelQueue}
-                      disabled={isCancelling}
-                    >
-                      {isCancelling ? "Cancelling..." : "Yes, Cancel Entry"}
-                    </button>
-                  </DialogFooter>
-                </div>
-              </motion.div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
-
-      {/* Update Reason Dialog */}
-      <AnimatePresence mode="wait" initial={false}>
-        {isUpdateOpen && (
-          <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
-            <DialogContent
-              asChild
-              className="sm:max-w-lg p-0 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="p-6">
-                  <DialogHeader className="mb-2">
-                    <DialogTitle className="text-[18px] md:text-[20px] text-[#25323A]">
-                      Update Queue Reason
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-600">
-                      Please update the purpose of your visit below
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="mt-4">
-                    <label className="block text-[13px] font-medium text-[#25323A] mb-2">
-                      Purpose of Visit
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
-                      className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-300 text-[14px] p-3 placeholder:text-gray-400"
-                      value={updatedReason}
-                      onChange={(e) => setUpdatedReason(e.target.value)}
-                    />
-                  </div>
-
-                  <DialogFooter className="mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                      onClick={() => setIsUpdateOpen(false)}
-                      disabled={isUpdating}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                      onClick={handleUpdateReason}
-                      disabled={isUpdating}
-                    >
-                      {isUpdating ? "Updating..." : "Update Reason"}
-                    </button>
-                  </DialogFooter>
-                </div>
-              </motion.div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
+      <UpdateReasonDialog
+        isOpen={isUpdateOpen}
+        onClose={() => setIsUpdateOpen(false)}
+        updatedReason={updatedReason}
+        setUpdatedReason={setUpdatedReason}
+        isUpdating={isUpdating}
+        onSubmit={handleUpdateReason}
+      />
     </div>
   );
 }
