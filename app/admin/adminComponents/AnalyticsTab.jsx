@@ -1,8 +1,104 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 export default function AnalyticsTab({ stats }) {
+  // Static demo datasets (replace with real data later)
+  const hourlyQueueData = [
+    { hour: "08:00", size: 2, served: 1 },
+    { hour: "09:00", size: 5, served: 3 },
+    { hour: "10:00", size: 8, served: 5 },
+    { hour: "11:00", size: 11, served: 7 },
+    { hour: "12:00", size: 9, served: 8 },
+    { hour: "13:00", size: 7, served: 9 },
+    { hour: "14:00", size: 6, served: 10 },
+    { hour: "15:00", size: 4, served: 11 },
+  ];
+
+  const reasonDistribution = [
+    { reason: "Consultation", value: 40 },
+    { reason: "Follow-up", value: 25 },
+    { reason: "Lab Results", value: 15 },
+    { reason: "Prescription", value: 12 },
+    { reason: "Other", value: 8 },
+  ];
+
+  const statusMix = [
+    { name: "Waiting", value: stats.activeQueue || 10 },
+    { name: "Completed", value: stats.completed || 5 },
+    { name: "Cancelled", value: 2 },
+    { name: "Called", value: 1 },
+  ];
+
+  const COLORS = ["#00968a", "#2563eb", "#9333ea", "#f59e0b", "#ef4444"]; // reused palette
+
+  // Derived static KPI examples
+  const kpis = [
+    {
+      label: "Throughput (Served/Hr)",
+      value: "11/hr",
+      sub: "Peak last hour",
+      bg: "from-teal-50 to-teal-100",
+      border: "border-teal-200",
+      text: "text-teal-700",
+    },
+    {
+      label: "Peak Queue Size",
+      value: Math.max(...hourlyQueueData.map((d) => d.size)),
+      sub: "Late morning spike",
+      bg: "from-indigo-50 to-indigo-100",
+      border: "border-indigo-200",
+      text: "text-indigo-700",
+    },
+    {
+      label: "Est. Abandon Rate",
+      value: "7%",
+      sub: "Goal < 10%",
+      bg: "from-rose-50 to-rose-100",
+      border: "border-rose-200",
+      text: "text-rose-700",
+    },
+    {
+      label: "Avg Wait (Static)",
+      value: stats.avgWait || "—",
+      sub: "Target < 20m",
+      bg: "from-amber-50 to-amber-100",
+      border: "border-amber-200",
+      text: "text-amber-700",
+    },
+    {
+      label: "Patients Today",
+      value: stats.todayTotal || 0,
+      sub: `${stats.completed || 0} completed`,
+      bg: "from-blue-50 to-blue-100",
+      border: "border-blue-200",
+      text: "text-blue-700",
+    },
+    {
+      label: "Currently Waiting",
+      value: stats.activeQueue || 0,
+      sub: "Live queue size",
+      bg: "from-purple-50 to-purple-100",
+      border: "border-purple-200",
+      text: "text-purple-700",
+    },
+  ];
+
   return (
     <motion.div
       key="analytics"
@@ -10,159 +106,152 @@ export default function AnalyticsTab({ stats }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-8"
     >
-      {/* Analytics Overview */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6 text-[#00968a]"
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        {kpis.map((kpi, idx) => (
+          <div
+            key={kpi.label + idx}
+            className={`p-4 rounded-lg border ${kpi.border} bg-gradient-to-br ${kpi.bg} shadow-sm flex flex-col`}
           >
-            <path d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z" />
-          </svg>
-          <h2 className="text-xl font-semibold text-[#25323A]">
-            Analytics Overview
-          </h2>
+            <p className={`text-xs font-medium mb-1 ${kpi.text}`}>
+              {kpi.label}
+            </p>
+            <p className={`text-2xl font-bold tracking-tight ${kpi.text}`}>
+              {kpi.value}
+            </p>
+            <p className="text-[11px] text-gray-600 mt-2">{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Line Chart */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col">
+          <h3 className="text-sm font-semibold text-[#25323A] mb-2 flex items-center gap-2">
+            <span>Queue Size vs Served (Hourly)</span>
+          </h3>
+          <div className="flex-1 min-h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={hourlyQueueData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip
+                  cursor={{ stroke: "#00968a", strokeWidth: 1 }}
+                  contentStyle={{ fontSize: 12 }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="size"
+                  stroke="#00968a"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  name="Queue Size"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="served"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  name="Served"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        <p className="text-sm text-gray-600 mb-6">
-          Track queue performance metrics and patient flow patterns
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-            <p className="text-xs font-medium text-blue-600 mb-1">
-              Total Patients (Today)
-            </p>
-            <p className="text-3xl font-bold text-blue-900">
-              {stats.todayTotal}
-            </p>
-            <p className="text-xs text-blue-600 mt-2">
-              {stats.completed} completed
-            </p>
+        {/* Bar Chart */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col">
+          <h3 className="text-sm font-semibold text-[#25323A] mb-2 flex items-center gap-2">
+            <span>Reasons for Visit</span>
+          </h3>
+          <div className="flex-1 min-h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={reasonDistribution}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="reason" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Bar dataKey="value" name="Count" radius={[4, 4, 0, 0]}>
+                  {reasonDistribution.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
+        </div>
 
-          <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
-            <p className="text-xs font-medium text-green-600 mb-1">
-              Average Wait Time
-            </p>
-            <p className="text-3xl font-bold text-green-900">{stats.avgWait}</p>
-            <p className="text-xs text-green-600 mt-2">Estimated</p>
-          </div>
-
-          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-            <p className="text-xs font-medium text-purple-600 mb-1">
-              Currently Waiting
-            </p>
-            <p className="text-3xl font-bold text-purple-900">
-              {stats.activeQueue}
-            </p>
-            <p className="text-xs text-purple-600 mt-2">In queue</p>
+        {/* Pie Chart */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col">
+          <h3 className="text-sm font-semibold text-[#25323A] mb-2 flex items-center gap-2">
+            <span>Status Distribution</span>
+          </h3>
+          <div className="flex-1 min-h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusMix}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  blendStroke
+                >
+                  {statusMix.map((entry, index) => (
+                    <Cell
+                      key={`slice-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Reports Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6 text-[#00968a]"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z"
-              clipRule="evenodd"
-            />
-            <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
-          </svg>
-          <h2 className="text-xl font-semibold text-[#25323A]">
-            Reports & Insights
-          </h2>
+      {/* Static Insight Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <h4 className="text-sm font-semibold text-[#25323A] mb-2">
+            Operational Insight
+          </h4>
+          <p className="text-xs text-gray-600 leading-relaxed">
+            Peak load observed between{" "}
+            <span className="font-medium">10:00–11:00</span>. Scheduling
+            additional staff during this window could reduce average wait time
+            below target threshold. Abandon rate is within acceptable range but
+            can improve with proactive status updates via SMS.
+          </p>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Comprehensive reports for queue management analysis
-        </p>
-
-        <div className="space-y-3">
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-[#00968a] hover:bg-gray-50 transition-all cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-[#25323A]">
-                  Daily Summary Report
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Overview of today's queue activity
-                </p>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 text-gray-400"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-[#00968a] hover:bg-gray-50 transition-all cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-[#25323A]">
-                  Weekly Performance
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  7-day queue trends and patterns
-                </p>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 text-gray-400"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-[#00968a] hover:bg-gray-50 transition-all cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-[#25323A]">
-                  Patient Statistics
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Detailed patient flow analytics
-                </p>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 text-gray-400"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+          <h4 className="text-sm font-semibold text-[#25323A] mb-2">
+            Recommendations
+          </h4>
+          <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
+            <li>Introduce real-time queue position notifications.</li>
+            <li>Flag &gt;20m wait cases for manual review.</li>
+            <li>Simplify cancellation flow to capture abandonment reason.</li>
+            <li>Track repeat visit reasons to drive service improvements.</li>
+          </ul>
         </div>
       </div>
     </motion.div>
