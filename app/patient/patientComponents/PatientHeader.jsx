@@ -146,6 +146,35 @@ export default function PatientHeader({ isAuthenticated, user, isLoggingOut, onL
                 </svg>
               </motion.button>
 
+              {/* Notification Icon */}
+              <motion.button
+                type="button"
+                aria-label="Notifications"
+                title="Notifications"
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer relative"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.12,
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="w-5 h-5 text-gray-600"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </motion.button>
+
               {/* User Avatar Dropdown */}
               <motion.div
                 ref={userMenuRef}
