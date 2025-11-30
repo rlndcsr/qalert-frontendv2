@@ -228,6 +228,199 @@ export default function AnalyticsTab({ stats }) {
         </div>
       </div>
 
+      {/* Heatmap: Queue Volume by Day + Hour */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <h3 className="text-sm font-semibold text-[#25323A] mb-3">
+          Queue Volume Heatmap (Day × Hour)
+        </h3>
+        {(() => {
+          // Static 7 days × 12 hours (08–19) heatmap values
+          const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          const hours = [
+            "08",
+            "09",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+          ];
+          // Generate a demo matrix with a mid-day peak on weekdays
+          const values = days.map((d, di) =>
+            hours.map((h, hi) => {
+              const base = di < 5 ? 4 : 2; // weekdays vs weekends
+              const peak = hi >= 2 && hi <= 4 ? 6 : 0; // 10–12 peak
+              const noise = [0, 1, 2][(di + hi) % 3];
+              return base + peak + noise; // 2–12 range
+            })
+          );
+
+          const maxVal = 12;
+          const colorScale = (v) => {
+            // teal scale from light to dark
+            const pct = Math.min(1, v / maxVal);
+            const start = [240, 253, 250]; // rgb(240,253,250) teal-50
+            const end = [0, 150, 138]; // brand teal
+            const mix = (a, b) => Math.round(a + (b - a) * pct);
+            const r = mix(start[0], end[0]);
+            const g = mix(start[1], end[1]);
+            const b = mix(start[2], end[2]);
+            return `rgb(${r}, ${g}, ${b})`;
+          };
+
+          return (
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                {/* Header row */}
+                <div
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: `80px repeat(${hours.length}, minmax(40px, 1fr))`,
+                  }}
+                >
+                  <div className="text-[11px] text-gray-500 py-1"></div>
+                  {hours.map((h) => (
+                    <div
+                      key={`h-${h}`}
+                      className="text-[11px] text-gray-500 py-1 text-center"
+                    >
+                      {h}:00
+                    </div>
+                  ))}
+                </div>
+                {/* Day rows */}
+                {days.map((day, di) => (
+                  <div
+                    key={`row-${day}`}
+                    className="grid items-center"
+                    style={{
+                      gridTemplateColumns: `80px repeat(${hours.length}, minmax(40px, 1fr))`,
+                    }}
+                  >
+                    <div className="text-xs text-[#25323A] py-1 pr-2 font-medium">
+                      {day}
+                    </div>
+                    {hours.map((h, hi) => {
+                      const val = values[di][hi];
+                      return (
+                        <div key={`cell-${day}-${h}`} className="p-1">
+                          <div
+                            className="h-7 rounded"
+                            title={`${day} ${h}:00 — Volume: ${val}`}
+                            style={{
+                              backgroundColor: colorScale(val),
+                              border: "1px solid #e5e7eb",
+                            }}
+                          ></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                {/* Legend */}
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-[11px] text-gray-500">Low</span>
+                  <div
+                    className="h-3 w-24 rounded"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, rgb(240,253,250), rgb(0,150,138))",
+                    }}
+                  ></div>
+                  <span className="text-[11px] text-gray-500">High</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* SLA Tracking */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <h3 className="text-sm font-semibold text-[#25323A] mb-2">
+          SLA Tracking
+        </h3>
+        <p className="text-xs text-gray-600 mb-3">
+          Example: 90% of tickets completed within 10 minutes.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Radial-like progress with CSS */}
+          <div className="flex items-center justify-center p-4">
+            <div className="relative w-32 h-32">
+              <svg
+                viewBox="0 0 36 36"
+                className="w-full h-full rotate-[-90deg]"
+              >
+                <path
+                  d="M18 2 a 16 16 0 0 1 0 32 a 16 16 0 0 1 0 -32"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="4"
+                />
+                {/* 90% arc */}
+                <path
+                  d="M18 2 a 16 16 0 0 1 0 32 a 16 16 0 0 1 0 -32"
+                  fill="none"
+                  stroke="#00968a"
+                  strokeWidth="4"
+                  strokeDasharray="90 100"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 rotate-[90deg] flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-xl font-bold text-[#25323A]">90%</p>
+                  <p className="text-[11px] text-gray-600">≤ 10 minutes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Distribution bar */}
+          <div className="md:col-span-2">
+            <p className="text-xs text-gray-600 mb-2">
+              Completion Time Distribution (static)
+            </p>
+            <div className="flex items-center gap-1 text-[11px] mb-1">
+              <span className="w-16 text-gray-500">0–5m</span>
+              <div
+                className="h-3 flex-1 rounded bg-teal-200"
+                style={{ width: "60%" }}
+              ></div>
+              <span className="text-gray-700">60%</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] mb-1">
+              <span className="w-16 text-gray-500">5–10m</span>
+              <div
+                className="h-3 flex-1 rounded bg-teal-300"
+                style={{ width: "30%" }}
+              ></div>
+              <span className="text-gray-700">30%</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] mb-1">
+              <span className="w-16 text-gray-500">10–20m</span>
+              <div
+                className="h-3 flex-1 rounded bg-amber-300"
+                style={{ width: "8%" }}
+              ></div>
+              <span className="text-gray-700">8%</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px]">
+              <span className="w-16 text-gray-500">20m+</span>
+              <div
+                className="h-3 flex-1 rounded bg-rose-300"
+                style={{ width: "2%" }}
+              ></div>
+              <span className="text-gray-700">2%</span>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Static Insight Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
