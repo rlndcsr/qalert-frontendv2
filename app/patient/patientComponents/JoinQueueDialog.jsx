@@ -10,16 +10,33 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function JoinQueueDialog({
   isOpen,
   onClose,
   joinReason,
   setJoinReason,
+  joinReasonCategory,
+  setJoinReasonCategory,
   isJoining,
   onSubmit,
   user,
 }) {
+  const reasonCategories = [
+    { id: 1, name: "Minor Illness" },
+    { id: 2, name: "Injury" },
+    { id: 3, name: "First Aid" },
+    { id: 4, name: "Health Assessment" },
+    { id: 5, name: "Counseling" },
+    { id: 6, name: "Emergency" },
+  ];
   return (
     <AnimatePresence mode="wait" initial={false}>
       {isOpen && (
@@ -43,6 +60,30 @@ export default function JoinQueueDialog({
                     Please specify the purpose of your visit
                   </DialogDescription>
                 </DialogHeader>
+
+                <div className="mt-4">
+                  <label className="block text-[13px] font-medium text-[#25323A] mb-2">
+                    Reason Category
+                  </label>
+                  <Select
+                    value={joinReasonCategory}
+                    onValueChange={setJoinReasonCategory}
+                  >
+                    <SelectTrigger className="w-full text-[14px]">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reasonCategories.map((category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="mt-4">
                   <label className="block text-[13px] font-medium text-[#25323A] mb-2">

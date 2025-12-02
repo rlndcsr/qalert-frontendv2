@@ -52,6 +52,7 @@ export default function PatientPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [joinReason, setJoinReason] = useState("");
+  const [joinReasonCategory, setJoinReasonCategory] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [queueEntry, setQueueEntry] = useState(null);
   const [completedEntry, setCompletedEntry] = useState(null);
@@ -99,6 +100,11 @@ export default function PatientPage() {
       return;
     }
 
+    if (!joinReasonCategory) {
+      toast.error("Please select a reason category.");
+      return;
+    }
+
     const token = getAuthToken();
     if (!token) {
       toast.error("You are not authenticated. Please log in again.");
@@ -124,6 +130,7 @@ export default function PatientPage() {
         body: JSON.stringify({
           user_id: userId,
           reason: joinReason.trim(),
+          reason_category_id: parseInt(joinReasonCategory),
           date: localDate,
         }),
       });
@@ -136,6 +143,7 @@ export default function PatientPage() {
 
       setIsJoinOpen(false);
       setJoinReason("");
+      setJoinReasonCategory("");
       toast.success("You've joined the queue.");
       fetchUserQueue();
       fetchQueuePosition();
@@ -489,6 +497,7 @@ export default function PatientPage() {
                   <JoinQueueCard
                     onJoinClick={() => {
                       setJoinReason("");
+                      setJoinReasonCategory("");
                       setIsJoinOpen(true);
                     }}
                   />
@@ -517,6 +526,8 @@ export default function PatientPage() {
         onClose={() => setIsJoinOpen(false)}
         joinReason={joinReason}
         setJoinReason={setJoinReason}
+        joinReasonCategory={joinReasonCategory}
+        setJoinReasonCategory={setJoinReasonCategory}
         isJoining={isJoining}
         onSubmit={handleJoinQueue}
         user={user}
