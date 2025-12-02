@@ -53,6 +53,8 @@ export default function PatientPage() {
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [joinReason, setJoinReason] = useState("");
   const [joinReasonCategory, setJoinReasonCategory] = useState("");
+  const [joinReasonError, setJoinReasonError] = useState("");
+  const [joinReasonCategoryError, setJoinReasonCategoryError] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [queueEntry, setQueueEntry] = useState(null);
   const [completedEntry, setCompletedEntry] = useState(null);
@@ -95,13 +97,25 @@ export default function PatientPage() {
 
   const handleJoinQueue = async () => {
     const localDate = getTodayDateString();
-    if (!joinReason.trim()) {
-      toast.error("Please enter your purpose of visit.");
-      return;
-    }
+
+    // Clear previous errors
+    setJoinReasonCategoryError("");
+    setJoinReasonError("");
+
+    // Validate fields
+    let hasError = false;
 
     if (!joinReasonCategory) {
-      toast.error("Please select a reason category.");
+      setJoinReasonCategoryError("Please select a purpose of visit.");
+      hasError = true;
+    }
+
+    if (!joinReason.trim()) {
+      setJoinReasonError("Please enter a description.");
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -137,18 +151,38 @@ export default function PatientPage() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const message = data?.message || "Failed to join the queue.";
-        throw new Error(message);
+        let message = data?.message || "Failed to join the queue.";
+        // Map database errors to field-specific error states
+        if (
+          message.toLowerCase().includes("invalid reason category") ||
+          message.toLowerCase().includes("reason_category")
+        ) {
+          setJoinReasonCategoryError("Invalid Purpose of Visit.");
+          return;
+        } else if (
+          message.toLowerCase().includes("reason") &&
+          !message.toLowerCase().includes("category")
+        ) {
+          setJoinReasonError(message);
+          return;
+        } else {
+          toast.error(message);
+          return;
+        }
       }
 
       setIsJoinOpen(false);
       setJoinReason("");
       setJoinReasonCategory("");
+      setJoinReasonError("");
+      setJoinReasonCategoryError("");
       toast.success("You've joined the queue.");
       fetchUserQueue();
       fetchQueuePosition();
     } catch (err) {
-      toast.error(err.message || "An error occurred while joining the queue.");
+      let errorMessage =
+        err.message || "An error occurred while joining the queue.";
+      toast.error(errorMessage);
     } finally {
       setIsJoining(false);
     }
@@ -498,6 +532,8 @@ export default function PatientPage() {
                     onJoinClick={() => {
                       setJoinReason("");
                       setJoinReasonCategory("");
+                      setJoinReasonError("");
+                      setJoinReasonCategoryError("");
                       setIsJoinOpen(true);
                     }}
                   />
@@ -528,6 +564,10 @@ export default function PatientPage() {
         setJoinReason={setJoinReason}
         joinReasonCategory={joinReasonCategory}
         setJoinReasonCategory={setJoinReasonCategory}
+        joinReasonError={joinReasonError}
+        setJoinReasonError={setJoinReasonError}
+        joinReasonCategoryError={joinReasonCategoryError}
+        setJoinReasonCategoryError={setJoinReasonCategoryError}
         isJoining={isJoining}
         onSubmit={handleJoinQueue}
         user={user}

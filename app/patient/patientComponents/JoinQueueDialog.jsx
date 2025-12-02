@@ -25,6 +25,10 @@ export default function JoinQueueDialog({
   setJoinReason,
   joinReasonCategory,
   setJoinReasonCategory,
+  joinReasonError,
+  setJoinReasonError,
+  joinReasonCategoryError,
+  setJoinReasonCategoryError,
   isJoining,
   onSubmit,
   user,
@@ -63,14 +67,17 @@ export default function JoinQueueDialog({
 
                 <div className="mt-4">
                   <label className="block text-[13px] font-medium text-[#25323A] mb-2">
-                    Reason Category
+                    Purpose of Visit
                   </label>
                   <Select
                     value={joinReasonCategory}
-                    onValueChange={setJoinReasonCategory}
+                    onValueChange={(value) => {
+                      setJoinReasonCategory(value);
+                      setJoinReasonCategoryError("");
+                    }}
                   >
-                    <SelectTrigger className="w-full text-[14px]">
-                      <SelectValue placeholder="Select a category" />
+                    <SelectTrigger className={`w-full text-[14px] ${joinReasonCategoryError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}>
+                      <SelectValue placeholder="Purpose" />
                     </SelectTrigger>
                     <SelectContent>
                       {reasonCategories.map((category) => (
@@ -83,19 +90,32 @@ export default function JoinQueueDialog({
                       ))}
                     </SelectContent>
                   </Select>
+                  {joinReasonCategoryError && (
+                    <p className="text-red-500 text-xs mt-1">{joinReasonCategoryError}</p>
+                  )}
                 </div>
 
                 <div className="mt-4">
                   <label className="block text-[13px] font-medium text-[#25323A] mb-2">
-                    Purpose of Visit
+                    Description
                   </label>
                   <textarea
                     rows={3}
                     placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
-                    className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4ad294] focus:border-[#4ad294] text-[14px] p-3 placeholder:text-gray-400"
+                    className={`w-full rounded-md border focus:outline-none focus:ring-2 text-[14px] p-3 placeholder:text-gray-400 ${
+                      joinReasonError
+                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-[#4ad294] focus:border-[#4ad294]'
+                    }`}
                     value={joinReason}
-                    onChange={(e) => setJoinReason(e.target.value)}
+                    onChange={(e) => {
+                      setJoinReason(e.target.value);
+                      setJoinReasonError("");
+                    }}
                   />
+                  {joinReasonError && (
+                    <p className="text-red-500 text-xs mt-1">{joinReasonError}</p>
+                  )}
                 </div>
 
                 <div className="mt-4 flex items-start gap-3 rounded-md border border-[#4ad294]/30 bg-[#F0FDF4] p-3">
