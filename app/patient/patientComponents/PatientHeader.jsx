@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function PatientHeader({ isAuthenticated, user, isLoggingOut, onLogout }) {
+export default function PatientHeader({
+  isAuthenticated,
+  user,
+  isLoggingOut,
+  onLogout,
+}) {
   const router = useRouter();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -147,7 +152,7 @@ export default function PatientHeader({ isAuthenticated, user, isLoggingOut, onL
               </motion.button>
 
               {/* Notification Icon */}
-              <motion.button
+              {/* <motion.button
                 type="button"
                 aria-label="Notifications"
                 title="Notifications"
@@ -173,7 +178,7 @@ export default function PatientHeader({ isAuthenticated, user, isLoggingOut, onL
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-              </motion.button>
+              </motion.button> */}
 
               {/* User Avatar Dropdown */}
               <motion.div
