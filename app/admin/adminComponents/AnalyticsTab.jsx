@@ -64,32 +64,58 @@ export default function AnalyticsTab({
     };
   }, [selectedMonthQueues]);
 
-  // Static demo datasets (replace with real data later)
-  const hourlyQueueData = [
-    { hour: "08:00", size: 2, served: 1 },
-    { hour: "09:00", size: 5, served: 3 },
-    { hour: "10:00", size: 8, served: 5 },
-    { hour: "11:00", size: 11, served: 7 },
-    { hour: "12:00", size: 9, served: 8 },
-    { hour: "13:00", size: 7, served: 9 },
-    { hour: "14:00", size: 6, served: 10 },
-    { hour: "15:00", size: 4, served: 11 },
-  ];
+  // Calculate hourly queue data from selected month queues
+  const hourlyQueueData = useMemo(() => {
+    // Create hourly buckets for 08:00 to 17:00
+    const hourlyMap = {};
+    for (let h = 8; h <= 17; h++) {
+      const hourLabel = `${String(h).padStart(2, "0")}:00`;
+      hourlyMap[hourLabel] = { hour: hourLabel, size: 0, served: 0 };
+    }
 
-  const reasonDistribution = [
-    { reason: "Consultation", value: 40 },
-    { reason: "Follow-up", value: 25 },
-    { reason: "Lab Results", value: 15 },
-    { reason: "Prescription", value: 12 },
-    { reason: "Other", value: 8 },
-  ];
+    // Aggregate queue data into hourly buckets
+    selectedMonthQueues.forEach((queue) => {
+      if (queue.created_at) {
+        // Extract hour from timestamp (format: "2025-10-01 HH:MM:SS")
+        const timeParts = queue.created_at.split(" ");
+        if (timeParts.length >= 2) {
+          const hourMin = timeParts[1].substring(0, 5); // Get "HH:MM"
+          const hour = hourMin.substring(0, 2); // Get "HH"
+          const hourLabel = `${hour}:00`;
 
-  const statusMix = [
-    { name: "Waiting", value: stats.activeQueue || 10 },
-    { name: "Completed", value: stats.completed || 5 },
-    { name: "Cancelled", value: 2 },
-    { name: "Called", value: 1 },
-  ];
+          if (hourlyMap[hourLabel]) {
+            hourlyMap[hourLabel].size += 1;
+            if (queue.queue_status === "completed") {
+              hourlyMap[hourLabel].served += 1;
+            }
+          }
+        }
+      }
+    });
+
+    return Object.values(hourlyMap);
+  }, [selectedMonthQueues]);
+
+  // Calculate reason distribution from selected month queues
+  const reasonDistribution = useMemo(() => {
+    const reasonCounts = {};
+    selectedMonthQueues.forEach((queue) => {
+      const reason = queue.reason || "Other";
+      reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+    });
+    return Object.entries(reasonCounts)
+      .map(([reason, value]) => ({ reason, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [selectedMonthQueues]);
+
+  // Calculate status mix from monthly stats
+  const statusMix = useMemo(
+    () => [
+      { name: "Completed", value: monthlyStats.completed },
+      { name: "Cancelled", value: monthlyStats.cancelled },
+    ],
+    [monthlyStats]
+  );
 
   const COLORS = ["#00968a", "#2563eb", "#9333ea", "#f59e0b", "#ef4444"]; // reused palette
 

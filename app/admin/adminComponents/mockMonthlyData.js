@@ -13,6 +13,8 @@ const reasons = [
 const october2025Queues = Array.from({ length: 89 }, (_, i) => {
   const day = Math.floor(i / 5) + 1; // Max 20 days (0-19)
   const queue_number = (i % 5) + 1;
+  const hour = String(8 + (i % 10)).padStart(2, "0"); // Hours 08-17
+  const minute = String(10 + (i % 50)).padStart(2, "0");
   return {
     queue_id: 1000 + i,
     user_id: 100 + i,
@@ -21,22 +23,16 @@ const october2025Queues = Array.from({ length: 89 }, (_, i) => {
     queue_status: i % 10 === 0 ? "cancelled" : "completed",
     reason: reasons[i % reasons.length],
     priority: i % 5 === 0 ? "high" : "normal",
-    created_at: `2025-10-${String(day).padStart(2, "0")}
-      ${String(8 + (i % 8)).padStart(2, "0")}:${String(10 + (i % 50)).padStart(
-      2,
-      "0"
-    )}:00`,
-    updated_at: `2025-10-${String(day).padStart(2, "0")}
-      ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(
-      2,
-      "0"
-    )}:00`,
+    created_at: `2025-10-${String(day).padStart(2, "0")} ${hour}:${minute}:00`,
+    updated_at: `2025-10-${String(day).padStart(2, "0")} ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(2, "0")}:00`,
   };
 });
 
 const november2025Queues = Array.from({ length: 83 }, (_, i) => {
   const day = Math.floor(i / 5) + 1; // Max 20 days (0-19)
   const queue_number = (i % 5) + 1;
+  const hour = String(8 + (i % 10)).padStart(2, "0"); // Hours 08-17
+  const minute = String(10 + (i % 50)).padStart(2, "0");
   return {
     queue_id: 2000 + i,
     user_id: 200 + i,
@@ -45,16 +41,8 @@ const november2025Queues = Array.from({ length: 83 }, (_, i) => {
     queue_status: i % 11 === 0 ? "cancelled" : "completed",
     reason: reasons[i % reasons.length],
     priority: i % 6 === 0 ? "high" : "normal",
-    created_at: `2025-11-${String(day).padStart(2, "0")}
-      ${String(8 + (i % 8)).padStart(2, "0")}:${String(10 + (i % 50)).padStart(
-      2,
-      "0"
-    )}:00`,
-    updated_at: `2025-11-${String(day).padStart(2, "0")}
-      ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(
-      2,
-      "0"
-    )}:00`,
+    created_at: `2025-11-${String(day).padStart(2, "0")} ${hour}:${minute}:00`,
+    updated_at: `2025-11-${String(day).padStart(2, "0")} ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(2, "0")}:00`,
   };
 });
 
