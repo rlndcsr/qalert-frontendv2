@@ -10,6 +10,8 @@ import StatisticsCards from "./adminComponents/StatisticsCards";
 import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
+import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
+import MonthSelector from "./adminComponents/MonthSelector";
 
 const API_BASE_URL = "http://qalert-backend.test/api";
 
@@ -39,6 +41,15 @@ export default function AdminPortal() {
 
   // Called patient state
   const [calledPatient, setCalledPatient] = useState(null);
+
+  // Month selector state for analytics
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(
+    String(currentDate.getMonth() + 1).padStart(2, "0")
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    String(currentDate.getFullYear())
+  );
 
   // Check for adminToken on mount
   useEffect(() => {
@@ -481,7 +492,20 @@ export default function AdminPortal() {
                     />
                   </motion.div>
                 ) : (
-                  <AnalyticsTab stats={stats} />
+                  <AnalyticsTab
+                    stats={stats}
+                    selectedMonth={selectedMonth}
+                    selectedYear={selectedYear}
+                    onMonthChange={setSelectedMonth}
+                    onYearChange={setSelectedYear}
+                    queues={
+                      selectedYear === "2025" &&
+                      (selectedMonth === "10" || selectedMonth === "11")
+                        ? mockMonthlyQueues[selectedMonth][selectedYear]
+                        : queues
+                    }
+                    todayDate={todayDate}
+                  />
                 )}
               </AnimatePresence>
             </motion.div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -16,8 +17,53 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import MonthSelector from "./MonthSelector";
 
-export default function AnalyticsTab({ stats }) {
+export default function AnalyticsTab({
+  stats,
+  selectedMonth,
+  selectedYear,
+  onMonthChange,
+  onYearChange,
+  queues,
+  todayDate,
+}) {
+  // Filter queues for the selected month
+  const selectedMonthQueues = useMemo(() => {
+    if (!queues || queues.length === 0) return [];
+
+    return queues.filter((queue) => {
+      if (!queue.date) return false;
+      const queueDate = new Date(queue.date);
+      const queueMonth = String(queueDate.getMonth() + 1).padStart(2, "0");
+      const queueYear = String(queueDate.getFullYear());
+      return queueMonth === selectedMonth && queueYear === selectedYear;
+    });
+  }, [queues, selectedMonth, selectedYear]);
+
+  // Calculate stats for selected month
+  const monthlyStats = useMemo(() => {
+    const totalQueues = selectedMonthQueues.length;
+    const completed = selectedMonthQueues.filter(
+      (q) => q.queue_status.toLowerCase() === "completed"
+    ).length;
+    const cancelled = selectedMonthQueues.filter(
+      (q) => q.queue_status.toLowerCase() === "cancelled"
+    ).length;
+    const activeInMonth = selectedMonthQueues.filter((q) =>
+      ["waiting", "called", "now_serving"].includes(
+        q.queue_status.toLowerCase()
+      )
+    ).length;
+
+    return {
+      total: totalQueues,
+      completed,
+      cancelled,
+      active: activeInMonth,
+    };
+  }, [selectedMonthQueues]);
+
   // Static demo datasets (replace with real data later)
   const hourlyQueueData = [
     { hour: "08:00", size: 2, served: 1 },
@@ -47,52 +93,87 @@ export default function AnalyticsTab({ stats }) {
 
   const COLORS = ["#00968a", "#2563eb", "#9333ea", "#f59e0b", "#ef4444"]; // reused palette
 
-  // Derived static KPI examples
+  // Calculate unique patients for the month
+  const uniquePatients = useMemo(() => {
+    return new Set(selectedMonthQueues.map((q) => q.user_id)).size;
+  }, [selectedMonthQueues]);
+
+  // Calculate average daily queues
+  const avgDailyQueues = useMemo(() => {
+    if (monthlyStats.total === 0) return 0;
+
+    // Group queues by date
+    const queuesByDate = {};
+    selectedMonthQueues.forEach((q) => {
+      if (q.date) {
+        queuesByDate[q.date] = (queuesByDate[q.date] || 0) + 1;
+      }
+    });
+
+    const daysWithQueues = Object.keys(queuesByDate).length;
+    return daysWithQueues > 0
+      ? (monthlyStats.total / daysWithQueues).toFixed(1)
+      : 0;
+  }, [selectedMonthQueues, monthlyStats.total]);
+
+  // Calculate active days
+  const activeDays = useMemo(() => {
+    const dates = new Set(selectedMonthQueues.map((q) => q.date));
+    return dates.size;
+  }, [selectedMonthQueues]);
+
+  // Monthly KPI cards
   const kpis = [
     {
-      label: "Throughput (Served/Hr)",
-      value: "11/hr",
-      sub: "Peak last hour",
+      label: "Total Queues (Month)",
+      value: monthlyStats.total,
+      sub: `${selectedMonth}/${selectedYear}`,
       bg: "from-teal-50 to-teal-100",
       border: "border-teal-200",
       text: "text-teal-700",
     },
     {
-      label: "Peak Queue Size",
-      value: Math.max(...hourlyQueueData.map((d) => d.size)),
-      sub: "Late morning spike",
+      label: "Completed (Month)",
+      value: monthlyStats.completed,
+      sub: `${(
+        (monthlyStats.completed / (monthlyStats.total || 1)) *
+        100
+      ).toFixed(0)}% completion rate`,
       bg: "from-indigo-50 to-indigo-100",
       border: "border-indigo-200",
       text: "text-indigo-700",
     },
     {
-      label: "Est. Abandon Rate",
-      value: "7%",
-      sub: "Goal < 10%",
+      label: "Cancelled (Month)",
+      value: monthlyStats.cancelled,
+      sub: `${(
+        (monthlyStats.cancelled / (monthlyStats.total || 1)) *
+        100
+      ).toFixed(0)}% cancellation rate`,
       bg: "from-rose-50 to-rose-100",
       border: "border-rose-200",
       text: "text-rose-700",
     },
     {
-      label: "Avg Wait (Static)",
-      value: stats.avgWait || "—",
-      sub: "Target < 20m",
+      label: "Unique Patients",
+      value: uniquePatients,
+      sub: "Different patients served",
       bg: "from-amber-50 to-amber-100",
       border: "border-amber-200",
       text: "text-amber-700",
     },
     {
-      label: "Patients Today",
-      value: stats.todayTotal || 0,
-      sub: `${stats.completed || 0} completed`,
+      label: "Avg Daily Queues",
+      value: avgDailyQueues,
+      sub: "Average per active day",
       bg: "from-blue-50 to-blue-100",
       border: "border-blue-200",
       text: "text-blue-700",
     },
     {
-      label: "Currently Waiting",
-      value: stats.activeQueue || 0,
-      sub: "Live queue size",
+      label: "Active Days",
+      value: activeDays,
+      sub: "Days with queue activity",
       bg: "from-purple-50 to-purple-100",
       border: "border-purple-200",
       text: "text-purple-700",
@@ -108,6 +189,16 @@ export default function AnalyticsTab({ stats }) {
       transition={{ duration: 0.3 }}
       className="space-y-8"
     >
+      {/* Month Selector */}
+      <div className="flex justify-between items-center">
+        <MonthSelector
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={onMonthChange}
+          onYearChange={onYearChange}
+        />
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
         {kpis.map((kpi, idx) => (
