@@ -133,6 +133,39 @@ export default function PatientPage() {
 
     setIsJoining(true);
     try {
+      // Fetch current queue to calculate wait time
+      const queueResponse = await fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        method: "GET",
+      });
+
+      let estimatedWaitTime = "10 mins";
+
+      if (queueResponse.ok) {
+        const queueData = await queueResponse.json();
+        const list = Array.isArray(queueData)
+          ? queueData
+          : queueData?.data || queueData?.queues || queueData?.items || [];
+        const today = getTodayDateString();
+
+        // Count today's waiting entries
+        const todaysWaitingCount = list.filter((q) => {
+          const entryDate = toYMD(q?.date ?? q?.created_at);
+          if (!entryDate) return false;
+          const diff = daysBetween(entryDate, today);
+          const isToday = diff === 0;
+          const isWaiting = !q?.queue_status || q.queue_status === "waiting";
+          return isToday && isWaiting;
+        }).length;
+
+        // Calculate wait time: (position + 1) * 10 minutes
+        const waitMinutes = (todaysWaitingCount + 1) * 10;
+        estimatedWaitTime = `${waitMinutes} mins`;
+      }
+
       const endpoint = `${API_BASE_URL}/queues`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -146,7 +179,7 @@ export default function PatientPage() {
           reason: joinReason.trim(),
           reason_category_id: parseInt(joinReasonCategory),
           date: localDate,
-          estimated_time_wait: "15 mins",
+          estimated_time_wait: estimatedWaitTime,
         }),
       });
 
