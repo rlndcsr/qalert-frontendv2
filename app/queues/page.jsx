@@ -127,7 +127,7 @@ export default function QueueDisplay() {
       number: entry.queue_number,
       name: users[entry.user_id]?.name || "Unknown",
       id_number: users[entry.user_id]?.id_number || "",
-      wait: `~${(index + 1) * 15}m`, // Estimated wait time
+      wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`, // Use stored value or fallback
     }));
 
     // Total in queue (now_serving + called + waiting)
