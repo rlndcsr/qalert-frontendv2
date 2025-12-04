@@ -76,7 +76,13 @@ export default function JoinQueueDialog({
                       setJoinReasonCategoryError("");
                     }}
                   >
-                    <SelectTrigger className={`w-full text-[14px] ${joinReasonCategoryError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}>
+                    <SelectTrigger
+                      className={`w-full text-[14px] ${
+                        joinReasonCategoryError
+                          ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                          : ""
+                      }`}
+                    >
                       <SelectValue placeholder="Purpose" />
                     </SelectTrigger>
                     <SelectContent>
@@ -91,7 +97,9 @@ export default function JoinQueueDialog({
                     </SelectContent>
                   </Select>
                   {joinReasonCategoryError && (
-                    <p className="text-red-500 text-xs mt-1">{joinReasonCategoryError}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {joinReasonCategoryError}
+                    </p>
                   )}
                 </div>
 
@@ -104,8 +112,8 @@ export default function JoinQueueDialog({
                     placeholder="e.g., Medical Consultation, Medical Certificate, Follow-up Checkup, First Aid"
                     className={`w-full rounded-md border focus:outline-none focus:ring-2 text-[14px] p-3 placeholder:text-gray-400 ${
                       joinReasonError
-                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-[#4ad294] focus:border-[#4ad294]'
+                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-[#4ad294] focus:border-[#4ad294]"
                     }`}
                     value={joinReason}
                     onChange={(e) => {
@@ -114,7 +122,9 @@ export default function JoinQueueDialog({
                     }}
                   />
                   {joinReasonError && (
-                    <p className="text-red-500 text-xs mt-1">{joinReasonError}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {joinReasonError}
+                    </p>
                   )}
                 </div>
 

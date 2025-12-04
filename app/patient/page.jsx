@@ -146,6 +146,7 @@ export default function PatientPage() {
           reason: joinReason.trim(),
           reason_category_id: parseInt(joinReasonCategory),
           date: localDate,
+          estimated_time_wait: "15 mins",
         }),
       });
 
