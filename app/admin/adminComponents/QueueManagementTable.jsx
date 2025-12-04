@@ -218,11 +218,11 @@ export default function QueueManagementTable({
                     statusLabel = "Cancelled";
                   }
 
-                  // Calculate wait time (static for now)
+                  // Calculate wait time using stored estimated_time_wait
                   const waitTime =
                     statusLower === "serving" || statusLower === "called"
                       ? "Now"
-                      : `~${(index + 1) * 5}m`;
+                      : queue.estimated_time_wait || `~${(index + 1) * 10}m`;
 
                   return (
                     <tr key={queue.queue_entry_id} className="hover:bg-gray-50">
