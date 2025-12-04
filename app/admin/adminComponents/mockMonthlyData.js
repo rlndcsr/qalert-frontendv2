@@ -1,4 +1,4 @@
-// Fixed mock queue data for October and November 2025 (around 100 entries per month)
+// Fixed mock queue data for October and November 2025 (weekdays only)
 // Only for months 10 and 11 (October and November)
 
 const reasons = [
@@ -10,39 +10,69 @@ const reasons = [
   "Emergency",
 ];
 
+// Helper function to get all weekdays in a month
+const getWeekdaysInMonth = (year, month) => {
+  const weekdays = [];
+  const date = new Date(year, month - 1, 1);
+  while (date.getMonth() === month - 1) {
+    const dayOfWeek = date.getDay();
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // Include only Monday (1) to Friday (5)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      weekdays.push(new Date(date));
+    }
+    date.setDate(date.getDate() + 1);
+  }
+  return weekdays;
+};
+
+// Generate October 2025 queues (weekdays only)
+const octoberWeekdays = getWeekdaysInMonth(2025, 10);
 const october2025Queues = Array.from({ length: 89 }, (_, i) => {
-  const day = Math.floor(i / 5) + 1; // Max 20 days (0-19)
-  const queue_number = (i % 5) + 1;
+  const weekdayIndex = i % octoberWeekdays.length;
+  const queueDate = octoberWeekdays[weekdayIndex];
+  const dateStr = `2025-10-${String(queueDate.getDate()).padStart(2, "0")}`;
+  const queue_number = Math.floor(i / octoberWeekdays.length) + 1;
   const hour = String(8 + (i % 10)).padStart(2, "0"); // Hours 08-17
   const minute = String(10 + (i % 50)).padStart(2, "0");
+
   return {
     queue_id: 1000 + i,
     user_id: 100 + i,
-    date: `2025-10-${String(day).padStart(2, "0")}`,
+    date: dateStr,
     queue_number,
     queue_status: i % 10 === 0 ? "cancelled" : "completed",
     reason: reasons[i % reasons.length],
     priority: i % 5 === 0 ? "high" : "normal",
-    created_at: `2025-10-${String(day).padStart(2, "0")} ${hour}:${minute}:00`,
-    updated_at: `2025-10-${String(day).padStart(2, "0")} ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(2, "0")}:00`,
+    created_at: `${dateStr} ${hour}:${minute}:00`,
+    updated_at: `${dateStr} ${String(9 + (i % 7)).padStart(2, "0")}:${String(
+      15 + (i % 40)
+    ).padStart(2, "0")}:00`,
   };
 });
 
+// Generate November 2025 queues (weekdays only)
+const novemberWeekdays = getWeekdaysInMonth(2025, 11);
 const november2025Queues = Array.from({ length: 83 }, (_, i) => {
-  const day = Math.floor(i / 5) + 1; // Max 20 days (0-19)
-  const queue_number = (i % 5) + 1;
+  const weekdayIndex = i % novemberWeekdays.length;
+  const queueDate = novemberWeekdays[weekdayIndex];
+  const dateStr = `2025-11-${String(queueDate.getDate()).padStart(2, "0")}`;
+  const queue_number = Math.floor(i / novemberWeekdays.length) + 1;
   const hour = String(8 + (i % 10)).padStart(2, "0"); // Hours 08-17
   const minute = String(10 + (i % 50)).padStart(2, "0");
+
   return {
     queue_id: 2000 + i,
     user_id: 200 + i,
-    date: `2025-11-${String(day).padStart(2, "0")}`,
+    date: dateStr,
     queue_number,
     queue_status: i % 11 === 0 ? "cancelled" : "completed",
     reason: reasons[i % reasons.length],
     priority: i % 6 === 0 ? "high" : "normal",
-    created_at: `2025-11-${String(day).padStart(2, "0")} ${hour}:${minute}:00`,
-    updated_at: `2025-11-${String(day).padStart(2, "0")} ${String(9 + (i % 7)).padStart(2, "0")}:${String(15 + (i % 40)).padStart(2, "0")}:00`,
+    created_at: `${dateStr} ${hour}:${minute}:00`,
+    updated_at: `${dateStr} ${String(9 + (i % 7)).padStart(2, "0")}:${String(
+      15 + (i % 40)
+    ).padStart(2, "0")}:00`,
   };
 });
 

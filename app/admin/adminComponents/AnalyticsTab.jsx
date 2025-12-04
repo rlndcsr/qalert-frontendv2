@@ -351,8 +351,8 @@ export default function AnalyticsTab({
           Queue Volume Heatmap (Day × Hour)
         </h3>
         {(() => {
-          // Static 7 days × 12 hours (08–19) heatmap values
-          const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          // Days of week (weekdays only) and hours
+          const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
           const hours = [
             "08",
             "09",
@@ -367,17 +367,44 @@ export default function AnalyticsTab({
             "18",
             "19",
           ];
-          // Generate a demo matrix with a mid-day peak on weekdays
-          const values = days.map((d, di) =>
-            hours.map((h, hi) => {
-              const base = di < 5 ? 4 : 2; // weekdays vs weekends
-              const peak = hi >= 2 && hi <= 4 ? 6 : 0; // 10–12 peak
-              const noise = [0, 1, 2][(di + hi) % 3];
-              return base + peak + noise; // 2–12 range
-            })
-          );
 
-          const maxVal = 12;
+          // Build dynamic matrix from selectedMonthQueues
+          const values = days.map((_, di) => hours.map((_, hi) => 0));
+
+          selectedMonthQueues.forEach((queue) => {
+            if (queue.created_at && queue.date) {
+              try {
+                // Parse date to get day of week (0=Sun, 1=Mon, ..., 6=Sat)
+                const queueDate = new Date(queue.date);
+                const dayOfWeek = queueDate.getDay();
+                // Convert to our days array index (0=Mon, ..., 4=Fri) - only weekdays
+                const dayIdx = dayOfWeek - 1;
+
+                // Extract hour from timestamp
+                const timeParts = queue.created_at.split(" ");
+                if (timeParts.length >= 2) {
+                  const hour = parseInt(timeParts[1].substring(0, 2), 10);
+                  const hourIdx = hour - 8; // 08:00 is index 0
+
+                  // Only count if within weekday range (Mon-Fri) and hour range (08-19)
+                  if (
+                    hourIdx >= 0 &&
+                    hourIdx < hours.length &&
+                    dayIdx >= 0 &&
+                    dayIdx < days.length
+                  ) {
+                    values[dayIdx][hourIdx] += 1;
+                  }
+                }
+              } catch (e) {
+                // Skip on parsing error
+              }
+            }
+          });
+
+          // Find max value for color scaling
+          const maxVal = Math.max(...values.flat().filter((v) => v > 0), 1);
+
           const colorScale = (v) => {
             // teal scale from light to dark
             const pct = Math.min(1, v / maxVal);
