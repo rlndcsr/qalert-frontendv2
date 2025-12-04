@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -28,6 +28,40 @@ export default function AnalyticsTab({
   queues,
   todayDate,
 }) {
+  // State for reason categories
+  const [reasonCategories, setReasonCategories] = useState([]);
+
+  // Fetch reason categories on component mount
+  useEffect(() => {
+    const fetchReasonCategories = async () => {
+      try {
+        const response = await fetch(
+          "http://qalert-backend.test/api/reason-categories"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setReasonCategories(data);
+        }
+      } catch (error) {
+        console.error("Error fetching reason categories:", error);
+      }
+    };
+    fetchReasonCategories();
+  }, []);
+
+  // Create a mapping of reason_category_id to category name
+  const categoryMap = useMemo(() => {
+    const map = {};
+    reasonCategories.forEach((cat) => {
+      // Try both 'id' and 'reason_category_id' as keys
+      map[cat.id] = cat.name;
+      map[cat.reason_category_id] = cat.name;
+    });
+    console.log("Reason categories:", reasonCategories);
+    console.log("Category map:", map);
+    return map;
+  }, [reasonCategories]);
+
   // Filter queues for the selected month
   const selectedMonthQueues = useMemo(() => {
     if (!queues || queues.length === 0) return [];
@@ -99,16 +133,34 @@ export default function AnalyticsTab({
   // Calculate reason distribution from selected month queues
   const reasonDistribution = useMemo(() => {
     const reasonCounts = {};
+
     selectedMonthQueues.forEach((queue) => {
-      const reason = queue.reason || "Other";
-      reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+      let reasonLabel = "Other";
+
+      // Priority 1: Use reason_category_id with categoryMap (most likely for backend data)
+      if (queue.reason_category_id && categoryMap[queue.reason_category_id]) {
+        reasonLabel = categoryMap[queue.reason_category_id];
+        console.log(
+          `Queue ${queue.queue_entry_id}: reason_category_id=${queue.reason_category_id} -> ${reasonLabel}`
+        );
+      }
+      // Priority 2: Check for reason_category object with name
+      else if (queue.reason_category && queue.reason_category.name) {
+        reasonLabel = queue.reason_category.name;
+      }
+      // Priority 3: Fall back to reason field (mock data)
+      else if (queue.reason) {
+        reasonLabel = queue.reason;
+      }
+
+      reasonCounts[reasonLabel] = (reasonCounts[reasonLabel] || 0) + 1;
     });
+
+    console.log("Final reason counts:", reasonCounts);
     return Object.entries(reasonCounts)
       .map(([reason, value]) => ({ reason, value }))
       .sort((a, b) => b.value - a.value);
-  }, [selectedMonthQueues]);
-
-  // Calculate status mix from monthly stats
+  }, [selectedMonthQueues, categoryMap]); // Calculate status mix from monthly stats
   const statusMix = useMemo(
     () => [
       { name: "Completed", value: monthlyStats.completed },
