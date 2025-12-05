@@ -124,7 +124,6 @@ export default function RegisterForm({ onSubmit }) {
             {[
               { label: "Male", value: "male" },
               { label: "Female", value: "female" },
-              { label: "Other", value: "other" },
             ].map((opt) => (
               <label
                 key={opt.value}
