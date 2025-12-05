@@ -27,8 +27,7 @@ import { useSystemStatus } from "../hooks/useSystemStatus";
 import { SyncLoader } from "react-spinners";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+  process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
 
 export default function PatientPage() {
   const router = useRouter();

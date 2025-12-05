@@ -13,8 +13,7 @@ import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 
-const API_BASE_URL =
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/";
+const API_BASE_URL = "http://qalert-backend.test/api";
 
 export default function AdminPortal() {
   const [email_address, setEmail_address] = useState("");
@@ -221,7 +220,7 @@ export default function AdminPortal() {
 
     try {
       const response = await fetch(
-        "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/adminLogin",
+        "http://qalert-backend.test/api/adminLogin",
         {
           method: "POST",
           headers: {
@@ -294,17 +293,14 @@ export default function AdminPortal() {
     try {
       // Call the same logout API endpoint used by patient portal
       if (adminToken) {
-        await fetch(
-          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/logout",
-          {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${adminToken}`,
-            },
-          }
-        );
+        await fetch("http://qalert-backend.test/api/logout", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
       }
     } catch (error) {
       console.error("Logout API error:", error);

@@ -10,7 +10,7 @@ export function useSystemStatus() {
     const checkSystemStatus = async () => {
       try {
         const response = await fetch(
-          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/system-status"
+          "http://qalert-backend.test/api/system-status"
         );
         const data = await response.json();
         setIsOnline(data.is_online === 1);
