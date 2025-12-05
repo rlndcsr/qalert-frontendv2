@@ -307,7 +307,7 @@ export default function QueueDisplay() {
               </div>
               <div className="flex-1">
                 <p className="text-white text-xs md:text-sm font-bold mb-0.5">
-                  Please Proceed
+                  Please Proceed (called)
                 </p>
                 {isLoadingData ? (
                   <div className="flex items-center justify-between animate-pulse">

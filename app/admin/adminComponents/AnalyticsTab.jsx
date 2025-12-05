@@ -537,7 +537,7 @@ export default function AnalyticsTab({
       </div>
 
       {/* SLA Tracking */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+      {/* <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
         <h3 className="text-sm font-semibold text-[#25323A] mb-2">
           SLA Tracking
         </h3>
@@ -545,7 +545,6 @@ export default function AnalyticsTab({
           Example: 90% of tickets completed within 10 minutes.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Radial-like progress with CSS */}
           <div className="flex items-center justify-center p-4">
             <div className="relative w-32 h-32">
               <svg
@@ -558,7 +557,6 @@ export default function AnalyticsTab({
                   stroke="#e5e7eb"
                   strokeWidth="4"
                 />
-                {/* 90% arc */}
                 <path
                   d="M18 2 a 16 16 0 0 1 0 32 a 16 16 0 0 1 0 -32"
                   fill="none"
@@ -577,7 +575,6 @@ export default function AnalyticsTab({
             </div>
           </div>
 
-          {/* Distribution bar */}
           <div className="md:col-span-2">
             <p className="text-xs text-gray-600 mb-2">
               Completion Time Distribution (static)
@@ -616,9 +613,8 @@ export default function AnalyticsTab({
             </div>
           </div>
         </div>
-      </div>
-      {/* Static Insight Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      </div> */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
           <h4 className="text-sm font-semibold text-[#25323A] mb-2">
             Operational Insight
@@ -642,7 +638,7 @@ export default function AnalyticsTab({
             <li>Track repeat visit reasons to drive service improvements.</li>
           </ul>
         </div>
-      </div>
+      </div> */}
     </motion.div>
   );
 }

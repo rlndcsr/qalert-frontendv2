@@ -250,7 +250,7 @@ export default function Home() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push("/admin")}
                 >
-                  Staff Login
+                  Admin Login
                 </motion.button>
               </motion.div>
 
@@ -319,7 +319,7 @@ export default function Home() {
                   onClick={() => isOnline && window.open("/queues", "_blank")}
                   disabled={!isOnline}
                 >
-                  {isOnline ? "View Display" : "System Offline"}
+                  {isOnline ? "View Queue" : "System Offline"}
                 </motion.button>
               </motion.div>
             </motion.div>
