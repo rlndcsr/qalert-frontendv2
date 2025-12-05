@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL || "http://qalert-backend.test/api";
+  process.env.NEXT_PUBLIC_APP_BASE_URL ||
+  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

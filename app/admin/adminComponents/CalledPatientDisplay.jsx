@@ -3,7 +3,8 @@
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const API_BASE_URL = "http://qalert-backend.test/api";
+const API_BASE_URL =
+  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
 export default function CalledPatientDisplay({
   calledPatient,

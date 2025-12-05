@@ -32,12 +32,18 @@ export default function QueueDisplay() {
       try {
         // Fetch queues and users in parallel
         const [queuesResponse, usersResponse] = await Promise.all([
-          fetch("http://qalert-backend.test/api/queues", {
-            headers: { Accept: "application/json" },
-          }),
-          fetch("http://qalert-backend.test/api/users", {
-            headers: { Accept: "application/json" },
-          }),
+          fetch(
+            "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/queues",
+            {
+              headers: { Accept: "application/json" },
+            }
+          ),
+          fetch(
+            "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/users",
+            {
+              headers: { Accept: "application/json" },
+            }
+          ),
         ]);
 
         if (queuesResponse.ok && usersResponse.ok) {
