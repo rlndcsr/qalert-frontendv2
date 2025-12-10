@@ -498,8 +498,8 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            ©2025 QAlert - Caraga State University University Center for Health
-            and Wellness
+            ©2025 QAlert - Caraga State University - University Center for
+            Health and Wellness
           </motion.p>
         </div>
       </motion.footer>
