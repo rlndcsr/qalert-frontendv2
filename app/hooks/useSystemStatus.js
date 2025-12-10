@@ -10,10 +10,25 @@ export function useSystemStatus() {
     const checkSystemStatus = async () => {
       try {
         const response = await fetch(
-          "http://qalert-backend.test/api/system-status"
+          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/system-status",
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "ngrok-skip-browser-warning": true,
+            },
+            mode: "cors",
+          }
         );
-        const data = await response.json();
-        setIsOnline(data.is_online === 1);
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+          console.error("Failed to fetch system status:", response.status);
+          setIsOnline(false);
+        } else {
+          const data = await response.json();
+          setIsOnline(data.is_online === 1);
+        }
       } catch (error) {
         console.error("Failed to fetch system status:", error);
         // Assume offline if API call fails

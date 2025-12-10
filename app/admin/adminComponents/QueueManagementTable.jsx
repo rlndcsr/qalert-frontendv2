@@ -3,7 +3,8 @@
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const API_BASE_URL = "http://qalert-backend.test/api";
+const API_BASE_URL =
+  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
 export default function QueueManagementTable({
   todayQueues,
@@ -29,6 +30,7 @@ export default function QueueManagementTable({
             Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": true,
           },
           body: JSON.stringify({ queue_status: "called" }),
         }

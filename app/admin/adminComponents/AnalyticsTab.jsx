@@ -36,7 +36,13 @@ export default function AnalyticsTab({
     const fetchReasonCategories = async () => {
       try {
         const response = await fetch(
-          "http://qalert-backend.test/api/reason-categories"
+          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/reason-categories",
+          {
+            headers: {
+              Accept: "application/json",
+              "ngrok-skip-browser-warning": true,
+            },
+          }
         );
         if (response.ok) {
           const data = await response.json();

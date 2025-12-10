@@ -13,7 +13,8 @@ import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 
-const API_BASE_URL = "http://qalert-backend.test/api";
+const API_BASE_URL =
+  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
 export default function AdminPortal() {
   const [email_address, setEmail_address] = useState("");
@@ -86,6 +87,7 @@ export default function AdminPortal() {
         const headers = {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": true,
         };
 
         const [queuesResponse, usersResponse] = await Promise.all([
@@ -119,7 +121,12 @@ export default function AdminPortal() {
 
     const fetchSystemStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/system-status`);
+        const response = await fetch(`${API_BASE_URL}/system-status`, {
+          headers: {
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": true,
+          },
+        });
         const data = await response.json();
         setSystemStatus(data.is_online === 1);
       } catch (error) {
@@ -189,6 +196,7 @@ export default function AdminPortal() {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": true,
         },
         body: JSON.stringify({ is_online: newStatus ? 1 : 0 }),
       });
@@ -220,12 +228,13 @@ export default function AdminPortal() {
 
     try {
       const response = await fetch(
-        "http://qalert-backend.test/api/adminLogin",
+        "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/adminLogin",
         {
           method: "POST",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": true,
           },
           body: JSON.stringify({
             email_address: email_address.trim(),
@@ -293,14 +302,18 @@ export default function AdminPortal() {
     try {
       // Call the same logout API endpoint used by patient portal
       if (adminToken) {
-        await fetch("http://qalert-backend.test/api/logout", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-        });
+        await fetch(
+          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/logout",
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${adminToken}`,
+              "ngrok-skip-browser-warning": true,
+            },
+          }
+        );
       }
     } catch (error) {
       console.error("Logout API error:", error);
