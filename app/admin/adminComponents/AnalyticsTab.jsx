@@ -357,7 +357,7 @@ export default function AnalyticsTab({
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="reason" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} cursor={false} />
                 <Bar dataKey="value" name="Count" radius={[4, 4, 0, 0]}>
                   {reasonDistribution.map((entry, index) => (
                     <Cell

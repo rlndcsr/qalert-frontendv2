@@ -465,7 +465,7 @@ export default function AdminPortal() {
                     />
                   </svg>
                   <div className="text-sm leading-relaxed">
-                    <p className="font-medium">System Offline</p>
+                    <p className="font-medium">System is offline</p>
                     <p>
                       Patients cannot register or join the queue until it is
                       turned back online.
