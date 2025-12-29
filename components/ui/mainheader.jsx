@@ -135,7 +135,7 @@ export default function MainHeader() {
                   )}
                 </div>
                 <span className="hidden md:inline text-xs">
-                  {isOnline ? "System Online" : "System Offline"}
+                  {isOnline ? "Online" : "Offline"}
                 </span>
               </div>
             )}
