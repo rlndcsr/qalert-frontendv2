@@ -32,6 +32,8 @@ export default function JoinQueueDialog({
   isJoining,
   onSubmit,
   user,
+  onDutyDoctor,
+  isLoadingDoctor,
 }) {
   const reasonCategories = [
     { id: 1, name: "Minor Illness" },
@@ -64,6 +66,43 @@ export default function JoinQueueDialog({
                     Please specify the purpose of your visit
                   </DialogDescription>
                 </DialogHeader>
+
+                {isLoadingDoctor && (
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-[#9611f8]/20 bg-[#F5F3FF] p-3">
+                    <div className="w-8 h-8 bg-white/60 border border-[#9611f8]/20 rounded-full flex items-center justify-center mt-[2px] animate-pulse">
+                      <div className="w-5 h-5 bg-[#9611f8]/20 rounded"></div>
+                    </div>
+                    <div className="text-sm flex-1 space-y-2">
+                      <div className="h-4 w-24 bg-[#9611f8]/20 rounded animate-pulse"></div>
+                      <div className="h-4 w-40 bg-[#9611f8]/20 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                )}
+
+                {onDutyDoctor && !isLoadingDoctor && (
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-[#9611f8]/20 bg-[#F5F3FF] p-3">
+                    <div className="w-8 h-8 bg-white border border-[#9611f8]/20 rounded-full flex items-center justify-center mt-[6px]">
+                      <Image
+                        src="/icons/users.png"
+                        alt="Doctor on Duty"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="text-sm flex-1">
+                      <p className="font-medium text-[#25323A]">
+                        Doctor on Duty
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-semibold">
+                          {onDutyDoctor.name}
+                        </span>{" "}
+                        ({onDutyDoctor.day} {onDutyDoctor.shift})
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-4">
                   <label className="block text-[13px] font-medium text-[#25323A] mb-2">

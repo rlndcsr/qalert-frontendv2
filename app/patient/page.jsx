@@ -67,6 +67,9 @@ export default function PatientPage() {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [updatedReason, setUpdatedReason] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [onDutyDoctor, setOnDutyDoctor] = useState(null);
+  const [isLoadingDoctor, setIsLoadingDoctor] = useState(false);
+  const [isFetchingDoctor, setIsFetchingDoctor] = useState(false);
 
   const handleLogin = async (formData) => {
     if (isLoggingIn) return;
@@ -469,13 +472,231 @@ export default function PatientPage() {
     }
   };
 
+  const fetchOnDutyDoctor = async () => {
+    // Prevent multiple simultaneous calls
+    if (isFetchingDoctor) {
+      console.log("[fetchOnDutyDoctor] Already fetching, skipping...");
+      return;
+    }
+
+    setIsFetchingDoctor(true);
+    setIsLoadingDoctor(true);
+    try {
+      // Get current day and shift
+      const now = new Date();
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const currentDay = dayNames[now.getDay()];
+
+      // Determine shift: AM if before 12:00 PM, PM if after 12:00 PM
+      const currentHour = now.getHours();
+      const currentShift = currentHour < 12 ? "AM" : "PM";
+
+      console.log(
+        "[fetchOnDutyDoctor] Current day:",
+        currentDay,
+        "Shift:",
+        currentShift
+      );
+
+      // Use the backend URL
+      const backendBaseUrl =
+        "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+
+      // Fetch all three APIs in parallel
+      const [doctorsResponse, schedulesResponse, doctorSchedulesResponse] =
+        await Promise.all([
+          fetch(`${backendBaseUrl}/doctors`, {
+            headers: {
+              Accept: "application/json",
+              "ngrok-skip-browser-warning": true,
+            },
+          }),
+          fetch(`${backendBaseUrl}/schedules`, {
+            headers: {
+              Accept: "application/json",
+              "ngrok-skip-browser-warning": true,
+            },
+          }),
+          fetch(`${backendBaseUrl}/doctor-schedule`, {
+            headers: {
+              Accept: "application/json",
+              "ngrok-skip-browser-warning": true,
+            },
+          }),
+        ]);
+
+      // Check each response individually and handle errors gracefully
+      if (!doctorsResponse.ok) {
+        const errorText = await doctorsResponse.text().catch(() => "");
+        console.warn("[fetchOnDutyDoctor] Doctors API failed:", {
+          status: doctorsResponse.status,
+          statusText: doctorsResponse.statusText,
+          error: errorText,
+        });
+        setOnDutyDoctor(null);
+        setIsLoadingDoctor(false);
+        setIsFetchingDoctor(false);
+        return;
+      }
+
+      if (!schedulesResponse.ok) {
+        const errorText = await schedulesResponse.text().catch(() => "");
+        console.warn("[fetchOnDutyDoctor] Schedules API failed:", {
+          status: schedulesResponse.status,
+          statusText: schedulesResponse.statusText,
+          error: errorText,
+        });
+        setOnDutyDoctor(null);
+        setIsLoadingDoctor(false);
+        setIsFetchingDoctor(false);
+        return;
+      }
+
+      let doctorSchedules;
+      if (!doctorSchedulesResponse.ok) {
+        const errorText = await doctorSchedulesResponse.text().catch(() => "");
+        console.warn(
+          "[fetchOnDutyDoctor] Doctor-schedule API failed, trying alternative:",
+          {
+            status: doctorSchedulesResponse.status,
+            statusText: doctorSchedulesResponse.statusText,
+            error: errorText,
+            url: `${backendBaseUrl}/doctor-schedule`,
+          }
+        );
+
+        // Try alternative endpoint name (doctor_schedules with underscore)
+        console.log(
+          "[fetchOnDutyDoctor] Trying alternative endpoint: doctor_schedules"
+        );
+        const altResponse = await fetch(`${backendBaseUrl}/doctor_schedules`, {
+          headers: {
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": true,
+          },
+        });
+
+        if (!altResponse.ok) {
+          const altErrorText = await altResponse.text().catch(() => "");
+          console.warn(
+            "[fetchOnDutyDoctor] Alternative endpoint also failed:",
+            {
+              status: altResponse.status,
+              statusText: altResponse.statusText,
+              error: altErrorText,
+            }
+          );
+          setOnDutyDoctor(null);
+          setIsLoadingDoctor(false);
+          setIsFetchingDoctor(false);
+          return;
+        }
+
+        doctorSchedules = await altResponse.json();
+      } else {
+        doctorSchedules = await doctorSchedulesResponse.json();
+      }
+
+      const doctors = await doctorsResponse.json();
+      const schedules = await schedulesResponse.json();
+
+      console.log("[fetchOnDutyDoctor] Data fetched:", {
+        doctorsCount: doctors?.length,
+        schedulesCount: schedules?.length,
+        doctorSchedulesCount: doctorSchedules?.length,
+      });
+
+      // Find the schedule that matches current day and shift
+      const matchingSchedule = schedules.find(
+        (schedule) =>
+          schedule.day === currentDay && schedule.shift === currentShift
+      );
+
+      console.log("[fetchOnDutyDoctor] Matching schedule:", matchingSchedule);
+
+      if (!matchingSchedule) {
+        console.log("[fetchOnDutyDoctor] No matching schedule found");
+        setOnDutyDoctor(null);
+        setIsLoadingDoctor(false);
+        setIsFetchingDoctor(false);
+        return;
+      }
+
+      // Find the doctor_schedule that matches the schedule_id
+      const matchingDoctorSchedule = doctorSchedules.find(
+        (ds) => ds.schedule_id === matchingSchedule.schedule_id
+      );
+
+      console.log(
+        "[fetchOnDutyDoctor] Matching doctor schedule:",
+        matchingDoctorSchedule
+      );
+
+      if (!matchingDoctorSchedule) {
+        console.log("[fetchOnDutyDoctor] No matching doctor schedule found");
+        setOnDutyDoctor(null);
+        setIsLoadingDoctor(false);
+        setIsFetchingDoctor(false);
+        return;
+      }
+
+      // Find the doctor that matches the doctor_id
+      const doctor = doctors.find(
+        (doc) =>
+          doc.doctor_id === matchingDoctorSchedule.doctor_id &&
+          doc.is_active === 1
+      );
+
+      console.log("[fetchOnDutyDoctor] Found doctor:", doctor);
+
+      if (doctor) {
+        // Convert day abbreviation to full day name
+        const dayNameMap = {
+          Mon: "Monday",
+          Tue: "Tuesday",
+          Wed: "Wednesday",
+          Thu: "Thursday",
+          Fri: "Friday",
+          Sat: "Saturday",
+          Sun: "Sunday",
+        };
+        const fullDayName = dayNameMap[currentDay] || currentDay;
+
+        setOnDutyDoctor({
+          name: doctor.doctor_name,
+          shift: currentShift,
+          day: fullDayName,
+        });
+        console.log("[fetchOnDutyDoctor] Doctor set:", doctor.doctor_name);
+      } else {
+        console.log("[fetchOnDutyDoctor] No active doctor found");
+        setOnDutyDoctor(null);
+      }
+    } catch (error) {
+      console.warn("[fetchOnDutyDoctor] Error:", error);
+      setOnDutyDoctor(null);
+    } finally {
+      setIsLoadingDoctor(false);
+      setIsFetchingDoctor(false);
+    }
+  };
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       fetchUserQueue();
       fetchQueuePosition();
+      fetchOnDutyDoctor();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, user?.user_id, user?.id_number]);
+
+  // Refresh doctor info when dialog opens
+  useEffect(() => {
+    if (isJoinOpen && isAuthenticated) {
+      fetchOnDutyDoctor();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isJoinOpen, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col">
@@ -575,6 +796,8 @@ export default function PatientPage() {
                       setJoinReasonCategory("");
                       setJoinReasonError("");
                       setJoinReasonCategoryError("");
+                      // Fetch doctor info before opening dialog
+                      fetchOnDutyDoctor();
                       setIsJoinOpen(true);
                     }}
                   />
@@ -612,6 +835,8 @@ export default function PatientPage() {
         isJoining={isJoining}
         onSubmit={handleJoinQueue}
         user={user}
+        onDutyDoctor={onDutyDoctor}
+        isLoadingDoctor={isLoadingDoctor}
       />
 
       <CancelQueueDialog
