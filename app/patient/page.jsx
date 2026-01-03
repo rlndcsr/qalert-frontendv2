@@ -70,6 +70,8 @@ export default function PatientPage() {
   const [onDutyDoctor, setOnDutyDoctor] = useState(null);
   const [isLoadingDoctor, setIsLoadingDoctor] = useState(false);
   const [isFetchingDoctor, setIsFetchingDoctor] = useState(false);
+  const [doctorsData, setDoctorsData] = useState([]);
+  const [doctorSchedulesData, setDoctorSchedulesData] = useState([]);
 
   const handleLogin = async (formData) => {
     if (isLoggingIn) return;
@@ -600,6 +602,10 @@ export default function PatientPage() {
       const doctors = await doctorsResponse.json();
       const schedules = await schedulesResponse.json();
 
+      // Store doctors and doctorSchedules for later use
+      setDoctorsData(doctors || []);
+      setDoctorSchedulesData(doctorSchedules || []);
+
       console.log("[fetchOnDutyDoctor] Data fetched:", {
         doctorsCount: doctors?.length,
         schedulesCount: schedules?.length,
@@ -788,6 +794,17 @@ export default function PatientPage() {
                       }, 100);
                     }}
                     isLoading={false}
+                    doctorName={(() => {
+                      if (!queueEntry?.schedule_id) return null;
+                      const doctorSchedule = doctorSchedulesData.find(
+                        (ds) => ds.schedule_id === queueEntry.schedule_id
+                      );
+                      if (!doctorSchedule) return null;
+                      const doctor = doctorsData.find(
+                        (doc) => doc.doctor_id === doctorSchedule.doctor_id
+                      );
+                      return doctor?.doctor_name || null;
+                    })()}
                   />
                 ) : (
                   <JoinQueueCard

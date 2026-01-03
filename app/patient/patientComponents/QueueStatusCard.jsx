@@ -11,6 +11,7 @@ export default function QueueStatusCard({
   onCancelClick,
   onUpdateClick,
   isLoading,
+  doctorName,
 }) {
   if (isLoading) {
     return (
@@ -122,7 +123,11 @@ export default function QueueStatusCard({
               fill="currentColor"
               className="w-4 h-4"
             >
-              <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7 .75.75 0 00.75.75h12.5A.75.75 0 0019 21a7 7 0 00-7-7z" />
+              <path
+                fillRule="evenodd"
+                d="M2.625 6.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0A.75.75 0 0 1 8.25 6h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75ZM2.625 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0ZM7.5 12a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12A.75.75 0 0 1 7.5 12Zm-4.875 5.25a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75Z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <div className="flex-1">
@@ -149,24 +154,15 @@ export default function QueueStatusCard({
               fill="currentColor"
               className="w-4 h-4"
             >
-              <path
-                fillRule="evenodd"
-                d="M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5zM11.25 6a.75.75 0 011.5 0v5.19l3.03 3.03a.75.75 0 11-1.06 1.06l-3.22-3.22A.75.75 0 0111.25 11V6z"
-                clipRule="evenodd"
-              />
+              <path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
             </svg>
           </div>
           <div className="flex-1">
             <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-              Est. Wait Time
+              Doctor on Duty
             </p>
             <p className="text-xs font-semibold text-[#25323A] mt-1">
-              {queueEntry.queue_status === "now_serving"
-                ? "Now Serving"
-                : !queueEntry.queue_status ||
-                  queueEntry.queue_status === "waiting"
-                ? queueEntry.estimated_time_wait ?? "Pending"
-                : "—"}
+              {doctorName || "—"}
             </p>
           </div>
         </div>
