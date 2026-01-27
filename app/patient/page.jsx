@@ -15,6 +15,7 @@ import WhatToDoNextCard from "./patientComponents/WhatToDoNextCard";
 import JoinQueueDialog from "./patientComponents/JoinQueueDialog";
 import CancelQueueDialog from "./patientComponents/CancelQueueDialog";
 import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
+import PatientSidebar from "./patientComponents/PatientSidebar";
 import {
   getTodayDateString,
   getOrdinalPosition,
@@ -713,7 +714,15 @@ export default function PatientPage() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 w-full flex items-start justify-center px-8 py-16">
+      {isAuthenticated && (
+        <PatientSidebar onLogout={handleLogout} isLoggingOut={isLoggingOut} />
+      )}
+
+      <main
+        className={`flex-1 w-full flex items-start justify-center px-8 py-16 transition-all duration-200 ${
+          isAuthenticated ? "ml-16" : ""
+        }`}
+      >
         <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
           {isLoading ? (
             <motion.div
