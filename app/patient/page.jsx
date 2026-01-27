@@ -17,6 +17,7 @@ import CancelQueueDialog from "./patientComponents/CancelQueueDialog";
 import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
 import PatientSidebar from "./patientComponents/PatientSidebar";
 import PlaceholderView from "./patientComponents/views/PlaceholderView";
+import MyDoctorsView from "./patientComponents/views/MyDoctorsView";
 import {
   getTodayDateString,
   getOrdinalPosition,
@@ -868,11 +869,7 @@ export default function PatientPage() {
                   </div>
                 </motion.div>
               ) : activeView === "doctors" ? (
-                <PlaceholderView
-                  key="doctors"
-                  title="My Doctors"
-                  description="View and manage your assigned doctors"
-                />
+                <MyDoctorsView key="doctors" />
               ) : activeView === "queue" ? (
                 <PlaceholderView
                   key="queue"
