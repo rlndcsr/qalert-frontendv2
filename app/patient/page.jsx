@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Menu } from "lucide-react";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
 import WelcomeCard from "./patientComponents/WelcomeCard";
@@ -53,6 +54,7 @@ export default function PatientPage() {
   const [activeTab, setActiveTab] = useState("login");
   const [activeView, setActiveView] = useState("home");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [joinReason, setJoinReason] = useState("");
@@ -717,18 +719,41 @@ export default function PatientPage() {
           onViewChange={setActiveView}
           isExpanded={isSidebarExpanded}
           onExpandedChange={setIsSidebarExpanded}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
+      {/* Mobile Header with Hamburger */}
+      {isAuthenticated && (
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-sm border-b border-gray-200/50 z-30 flex items-center px-4">
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6 text-gray-600" />
+          </button>
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-sm font-semibold text-[#25323A]">QAlert</span>
+          </div>
+          <div className="w-10" /> {/* Spacer for balance */}
+        </header>
+      )}
+
       <main
-        className={`flex-1 w-full flex items-start justify-center px-8 py-16 transition-all duration-200 overflow-x-hidden ${
-          isAuthenticated ? (isSidebarExpanded ? "pl-60" : "pl-16") : ""
+        className={`flex-1 w-full flex items-start justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16 transition-all duration-200 overflow-x-hidden ${
+          isAuthenticated
+            ? `pt-20 lg:pt-16 lg:pl-16 ${
+                isSidebarExpanded ? "lg:pl-60" : "lg:pl-16"
+              }`
+            : ""
         }`}
       >
         <div className="max-w-5xl w-full flex justify-center items-start">
           {isLoading ? (
             <motion.div
-              className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md text-center"
+              className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 sm:p-8 w-full max-w-md text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -741,7 +766,7 @@ export default function PatientPage() {
             </motion.div>
           ) : !isAuthenticated ? (
             <motion.div
-              className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md"
+              className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 sm:p-8 w-full max-w-md"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -782,14 +807,14 @@ export default function PatientPage() {
             <AnimatePresence mode="wait">
               {activeView === "home" ? (
                 <motion.div
-                  className="w-full max-w-5xl -mt-4"
+                  className="w-full max-w-5xl"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.4 }}
                   key="home"
                 >
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <WelcomeCard user={user} isLoading={isQueueLoading} />
 
                     {isQueueLoading ? (
