@@ -15,6 +15,7 @@ import JoinQueueDialog from "./patientComponents/JoinQueueDialog";
 import CancelQueueDialog from "./patientComponents/CancelQueueDialog";
 import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
 import PatientSidebar from "./patientComponents/PatientSidebar";
+import PlaceholderView from "./patientComponents/views/PlaceholderView";
 import {
   getTodayDateString,
   getOrdinalPosition,
@@ -50,6 +51,8 @@ export default function PatientPage() {
   } = useAuth();
 
   const [activeTab, setActiveTab] = useState("login");
+  const [activeView, setActiveView] = useState("home");
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [joinReason, setJoinReason] = useState("");
@@ -705,17 +708,24 @@ export default function PatientPage() {
   }, [isJoinOpen, isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col overflow-x-hidden">
       {isAuthenticated && (
-        <PatientSidebar onLogout={handleLogout} isLoggingOut={isLoggingOut} />
+        <PatientSidebar
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+          activeView={activeView}
+          onViewChange={setActiveView}
+          isExpanded={isSidebarExpanded}
+          onExpandedChange={setIsSidebarExpanded}
+        />
       )}
 
       <main
-        className={`flex-1 w-full flex items-start justify-center px-8 py-16 transition-all duration-200 ${
-          isAuthenticated ? "ml-16" : ""
+        className={`flex-1 w-full flex items-start justify-center px-8 py-16 transition-all duration-200 overflow-x-hidden ${
+          isAuthenticated ? (isSidebarExpanded ? "pl-60" : "pl-16") : ""
         }`}
       >
-        <div className="max-w-6xl mx-auto w-full flex justify-center items-start">
+        <div className="max-w-5xl w-full flex justify-center items-start">
           {isLoading ? (
             <motion.div
               className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md text-center"
@@ -769,66 +779,95 @@ export default function PatientPage() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            <motion.div
-              className="w-full max-w-5xl -mt-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              key="authed"
-            >
-              <div className="space-y-6">
-                <WelcomeCard user={user} isLoading={isQueueLoading} />
+            <AnimatePresence mode="wait">
+              {activeView === "home" ? (
+                <motion.div
+                  className="w-full max-w-5xl -mt-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4 }}
+                  key="home"
+                >
+                  <div className="space-y-6">
+                    <WelcomeCard user={user} isLoading={isQueueLoading} />
 
-                {isQueueLoading ? (
-                  <QueueStatusCard isLoading={true} />
-                ) : queueEntry ? (
-                  <QueueStatusCard
-                    queueEntry={queueEntry}
-                    queuePosition={queuePosition}
-                    user={user}
-                    getOrdinalPosition={getOrdinalPosition}
-                    onCancelClick={() => setIsCancelOpen(true)}
-                    onUpdateClick={() => {
-                      setIsUpdateOpen(true);
-                      setTimeout(() => {
-                        setUpdatedReason(queueEntry.reason);
-                      }, 100);
-                    }}
-                    isLoading={false}
-                    doctorName={(() => {
-                      if (!queueEntry?.schedule_id) return null;
-                      const doctorSchedule = doctorSchedulesData.find(
-                        (ds) => ds.schedule_id === queueEntry.schedule_id
-                      );
-                      if (!doctorSchedule) return null;
-                      const doctor = doctorsData.find(
-                        (doc) => doc.doctor_id === doctorSchedule.doctor_id
-                      );
-                      return doctor?.doctor_name || null;
-                    })()}
-                  />
-                ) : (
-                  <JoinQueueCard
-                    onJoinClick={() => {
-                      setJoinReason("");
-                      setJoinReasonCategory("");
-                      setJoinReasonError("");
-                      setJoinReasonCategoryError("");
-                      // Fetch doctor info before opening dialog
-                      fetchOnDutyDoctor();
-                      setIsJoinOpen(true);
-                    }}
-                  />
-                )}
+                    {isQueueLoading ? (
+                      <QueueStatusCard isLoading={true} />
+                    ) : queueEntry ? (
+                      <QueueStatusCard
+                        queueEntry={queueEntry}
+                        queuePosition={queuePosition}
+                        user={user}
+                        getOrdinalPosition={getOrdinalPosition}
+                        onCancelClick={() => setIsCancelOpen(true)}
+                        onUpdateClick={() => {
+                          setIsUpdateOpen(true);
+                          setTimeout(() => {
+                            setUpdatedReason(queueEntry.reason);
+                          }, 100);
+                        }}
+                        isLoading={false}
+                        doctorName={(() => {
+                          if (!queueEntry?.schedule_id) return null;
+                          const doctorSchedule = doctorSchedulesData.find(
+                            (ds) => ds.schedule_id === queueEntry.schedule_id
+                          );
+                          if (!doctorSchedule) return null;
+                          const doctor = doctorsData.find(
+                            (doc) => doc.doctor_id === doctorSchedule.doctor_id
+                          );
+                          return doctor?.doctor_name || null;
+                        })()}
+                      />
+                    ) : (
+                      <JoinQueueCard
+                        onJoinClick={() => {
+                          setJoinReason("");
+                          setJoinReasonCategory("");
+                          setJoinReasonError("");
+                          setJoinReasonCategoryError("");
+                          // Fetch doctor info before opening dialog
+                          fetchOnDutyDoctor();
+                          setIsJoinOpen(true);
+                        }}
+                      />
+                    )}
 
-                <CompletedQueueCard completedEntries={completedEntries} />
+                    <CompletedQueueCard completedEntries={completedEntries} />
 
-                <WhatToDoNextCard
-                  queueEntry={queueEntry}
-                  isLoading={isQueueLoading}
+                    <WhatToDoNextCard
+                      queueEntry={queueEntry}
+                      isLoading={isQueueLoading}
+                    />
+                  </div>
+                </motion.div>
+              ) : activeView === "doctors" ? (
+                <PlaceholderView
+                  key="doctors"
+                  title="My Doctors"
+                  description="View and manage your assigned doctors"
                 />
-              </div>
-            </motion.div>
+              ) : activeView === "queue" ? (
+                <PlaceholderView
+                  key="queue"
+                  title="Appointment Queue"
+                  description="View your appointment queue status"
+                />
+              ) : activeView === "notifications" ? (
+                <PlaceholderView
+                  key="notifications"
+                  title="Notifications"
+                  description="View your notifications and alerts"
+                />
+              ) : activeView === "feedback" ? (
+                <PlaceholderView
+                  key="feedback"
+                  title="Feedback"
+                  description="Share your feedback and suggestions"
+                />
+              ) : null}
+            </AnimatePresence>
           )}
         </div>
       </main>

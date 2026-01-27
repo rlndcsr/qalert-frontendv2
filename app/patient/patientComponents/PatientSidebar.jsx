@@ -22,10 +22,14 @@ const sidebarItems = [
   { id: "feedback", label: "Feedback", icon: MessageSquare },
 ];
 
-export default function PatientSidebar({ onLogout, isLoggingOut }) {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [activeItem, setActiveItem] = useState("home");
-
+export default function PatientSidebar({
+  onLogout,
+  isLoggingOut,
+  activeView,
+  onViewChange,
+  isExpanded,
+  onExpandedChange,
+}) {
   const sidebarVariants = {
     expanded: {
       width: 240,
@@ -68,9 +72,7 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
   };
 
   const handleItemClick = (itemId) => {
-    setActiveItem(itemId);
-    // Future: Add navigation logic here
-    // e.g., router.push(`/patient/${itemId}`)
+    onViewChange(itemId);
   };
 
   return (
@@ -82,7 +84,7 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
     >
       {/* Toggle Button */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => onExpandedChange(!isExpanded)}
         className="absolute -right-3 top-6 w-6 h-6 bg-white border border-gray-200 rounded-full shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer z-50"
         aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
       >
@@ -159,7 +161,7 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
         <ul className="space-y-3">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.id;
+            const isActive = activeView === item.id;
 
             return (
               <li key={item.id}>
