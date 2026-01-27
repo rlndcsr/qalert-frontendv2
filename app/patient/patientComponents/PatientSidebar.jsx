@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -77,7 +78,7 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
       initial={false}
       animate={isExpanded ? "expanded" : "collapsed"}
       variants={sidebarVariants}
-      className="fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200/50 shadow-sm z-40 flex flex-col"
+      className="fixed left-0 top-0 h-screen bg-white border-r border-gray-200/50 shadow-sm z-40 flex flex-col"
     >
       {/* Toggle Button */}
       <button
@@ -93,8 +94,68 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
         </motion.div>
       </button>
 
+      {/* Logo / Icon */}
+      <div className="px-3 pt-6 pb-4 border-b border-gray-100 flex flex-col items-center h-[160px]">
+        <AnimatePresence mode="wait">
+          {isExpanded ? (
+            <motion.div
+              key="logo"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="w-24 h-24 flex items-center justify-center"
+            >
+              <Image
+                src="/images/qalert-logo.png"
+                alt="QAlert Logo"
+                width={256}
+                height={256}
+                className="w-24 h-24 object-contain"
+                quality={100}
+                priority
+                unoptimized
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="icon"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="w-10 h-10 flex items-center justify-center"
+            >
+              <Image
+                src="/images/qalert-icon.png"
+                alt="QAlert Icon"
+                width={128}
+                height={128}
+                className="w-10 h-10 object-contain"
+                quality={100}
+                priority
+                unoptimized
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence mode="wait">
+          {isExpanded && (
+            <motion.p
+              variants={labelVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="mt-2 text-xs text-gray-500 text-center whitespace-nowrap"
+            >
+              Queueing and Notification System
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Navigation Items */}
-      <nav className="flex-1 pt-8 px-2 overflow-hidden">
+      <nav className="flex-1 pt-4 px-2 overflow-hidden">
         <ul className="space-y-3">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
@@ -153,7 +214,7 @@ export default function PatientSidebar({ onLogout, isLoggingOut }) {
         <button
           onClick={onLogout}
           disabled={isLoggingOut}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer group relative ${
+          className={`w-full flex items-center gap-3 px-3 py-2.5 mb-4 rounded-lg transition-colors cursor-pointer group relative ${
             isLoggingOut
               ? "opacity-50 cursor-not-allowed"
               : "text-gray-600 hover:bg-red-50 hover:text-red-600"

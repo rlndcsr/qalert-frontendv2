@@ -61,38 +61,6 @@ export default function PatientHeader({
                 />
               </motion.button>
             )}
-            <motion.div
-              key={`users-${isAuthenticated ? "auth" : "guest"}`}
-              className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden"
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                duration: 0.45,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.02,
-              }}
-            >
-              <Image
-                src="/images/csuuchw-nobg.png"
-                alt="CSU-UCHW Logo"
-                width={32}
-                height={32}
-                className="w-full h-full object-contain"
-              />
-            </motion.div>
-            <motion.h1
-              key={`title-${isAuthenticated ? "auth" : "guest"}`}
-              className="text-lg font-bold text-[#25323A]"
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                duration: 0.45,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.04,
-              }}
-            >
-              Patient Portal
-            </motion.h1>
           </div>
 
           {isAuthenticated && user && (

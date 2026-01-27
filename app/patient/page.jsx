@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
-import PatientHeader from "./patientComponents/PatientHeader";
 import WelcomeCard from "./patientComponents/WelcomeCard";
 import QueueStatusCard from "./patientComponents/QueueStatusCard";
 import JoinQueueCard from "./patientComponents/JoinQueueCard";
@@ -707,13 +706,6 @@ export default function PatientPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 font-sans flex flex-col">
-      <PatientHeader
-        isAuthenticated={isAuthenticated}
-        user={user}
-        isLoggingOut={isLoggingOut}
-        onLogout={handleLogout}
-      />
-
       {isAuthenticated && (
         <PatientSidebar onLogout={handleLogout} isLoggingOut={isLoggingOut} />
       )}
