@@ -5,13 +5,12 @@ import { motion } from "framer-motion";
 import {
   History,
   RefreshCw,
-  Hash,
   FileText,
   Calendar,
-  Clock,
   Tag,
+  Stethoscope,
 } from "lucide-react";
-import { getAuthToken, toYMD } from "../patientUtils";
+import { getAuthToken } from "../patientUtils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
@@ -26,15 +25,14 @@ function HistoryCardSkeleton() {
           key={i}
           className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 animate-pulse"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-5 w-24 bg-gray-200 rounded" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="h-5 w-32 bg-gray-200 rounded" />
             <div className="h-6 w-20 bg-gray-200 rounded-full" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="h-12 bg-gray-200 rounded-lg" />
-            <div className="h-12 bg-gray-200 rounded-lg" />
-            <div className="h-12 bg-gray-200 rounded-lg" />
-            <div className="h-12 bg-gray-200 rounded-lg" />
+          <div className="h-4 w-3/4 bg-gray-200 rounded mb-4" />
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-28 bg-gray-200 rounded" />
+            <div className="h-4 w-24 bg-gray-200 rounded" />
           </div>
         </div>
       ))}
@@ -46,23 +44,18 @@ function HistoryCardSkeleton() {
 function StatusBadge({ status }) {
   const getStatusConfig = (status) => {
     switch (status) {
-      case "now_serving":
-        return {
-          label: "Now Serving",
-          className: "bg-green-100 text-green-700",
-        };
-      case "called":
-        return { label: "Called", className: "bg-blue-100 text-blue-700" };
       case "completed":
         return {
           label: "Completed",
-          className: "bg-gray-100 text-gray-700 border border-gray-300",
+          className: "bg-green-100 text-green-700",
         };
       case "cancelled":
         return { label: "Cancelled", className: "bg-red-100 text-red-700" };
-      case "waiting":
       default:
-        return { label: "Waiting", className: "bg-amber-100 text-amber-700" };
+        return {
+          label: status || "Unknown",
+          className: "bg-gray-100 text-gray-700",
+        };
     }
   };
 
@@ -77,27 +70,8 @@ function StatusBadge({ status }) {
   );
 }
 
-// History item info component
-function HistoryInfoItem({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-7 h-7 bg-[#4ad294]/10 text-[#4ad294] rounded-full flex items-center justify-center flex-shrink-0">
-        <Icon className="w-3.5 h-3.5" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-          {label}
-        </p>
-        <p className="text-sm font-medium text-gray-700 truncate">
-          {value || "—"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // History card component for individual queue entry
-function HistoryCard({ entry, reasonCategories }) {
+function HistoryCard({ entry, reasonCategories, doctorName }) {
   const formattedQueueNumber = entry.queue_number
     ? String(entry.queue_number).padStart(3, "0")
     : "—";
@@ -119,11 +93,16 @@ function HistoryCard({ entry, reasonCategories }) {
     if (!categoryId || !reasonCategories || reasonCategories.length === 0) {
       return "—";
     }
+    // Handle both string and number comparison
     const category = reasonCategories.find(
-      (cat) => cat.reason_category_id === categoryId
+      (cat) => String(cat.reason_category_id) === String(categoryId)
     );
-    return category?.name || "—";
+    return category?.name || category?.category_name || "—";
   };
+
+  // Get the reason category ID - check multiple possible field names
+  const reasonCategoryId =
+    entry.reason_category_id || entry.reason_id || entry.category_id;
 
   return (
     <motion.div
@@ -132,41 +111,45 @@ function HistoryCard({ entry, reasonCategories }) {
       transition={{ duration: 0.2 }}
       className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow duration-200"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header with Queue Number and Status */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-[#4ad294]">
             #{formattedQueueNumber}
-          </span>
-          <span className="text-xs text-gray-400">
-            {formatDate(entry.date || entry.created_at)}
           </span>
         </div>
         <StatusBadge status={entry.queue_status} />
       </div>
 
-      {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <HistoryInfoItem
-          icon={Tag}
-          label="Reason"
-          value={getReasonCategoryName(entry.reason_category_id)}
-        />
-        <HistoryInfoItem
-          icon={FileText}
-          label="Description"
-          value={entry.reason}
-        />
-        <HistoryInfoItem
-          icon={Calendar}
-          label="Date"
-          value={formatDate(entry.date || entry.created_at)}
-        />
-        <HistoryInfoItem
-          icon={Clock}
-          label="Est. Wait"
-          value={entry.estimated_time_wait || "N/A"}
-        />
+      {/* Reason Category (Main Label) */}
+      <div className="mb-2">
+        <div className="flex items-center gap-2 mb-1">
+          <Tag className="w-4 h-4 text-[#4ad294]" />
+          <span className="text-base font-semibold text-gray-900">
+            {getReasonCategoryName(reasonCategoryId)}
+          </span>
+        </div>
+      </div>
+
+      {/* Reason Description (Secondary Text) */}
+      {entry.reason && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 pl-6">{entry.reason}</p>
+        </div>
+      )}
+
+      {/* Metadata Row: Doctor and Date */}
+      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100">
+        {doctorName && (
+          <div className="flex items-center gap-1.5">
+            <Stethoscope className="w-3.5 h-3.5 text-gray-400" />
+            <span>{doctorName}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+          <span>{formatDate(entry.date || entry.created_at)}</span>
+        </div>
       </div>
     </motion.div>
   );
@@ -174,11 +157,9 @@ function HistoryCard({ entry, reasonCategories }) {
 
 // Service to fetch reason categories
 const fetchReasonCategories = async () => {
-  const token = getAuthToken();
   const headers = {
     Accept: "application/json",
     "ngrok-skip-browser-warning": "true",
-    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   try {
@@ -197,6 +178,73 @@ const fetchReasonCategories = async () => {
     console.warn("Error fetching reason categories:", err);
     return [];
   }
+};
+
+// Service to fetch doctors
+const fetchDoctors = async () => {
+  const headers = {
+    Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/doctors`, { headers });
+
+    if (!response.ok) {
+      console.warn("Failed to fetch doctors");
+      return [];
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : data?.data || [];
+  } catch (err) {
+    console.warn("Error fetching doctors:", err);
+    return [];
+  }
+};
+
+// Service to fetch doctor schedules
+const fetchDoctorSchedules = async () => {
+  const headers = {
+    Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/doctor-schedule`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      console.warn("Failed to fetch doctor schedules");
+      return [];
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : data?.data || [];
+  } catch (err) {
+    console.warn("Error fetching doctor schedules:", err);
+    return [];
+  }
+};
+
+// Helper function to resolve doctor name from schedule_id
+const resolveDoctorName = (scheduleId, doctorSchedules, doctors) => {
+  if (!scheduleId || !doctorSchedules || !doctors) return null;
+
+  // Find the doctor-schedule entry that matches this schedule_id
+  const doctorSchedule = doctorSchedules.find(
+    (ds) => ds.schedule_id === scheduleId
+  );
+
+  if (!doctorSchedule) return null;
+
+  // Find the doctor that matches the doctor_id
+  const doctor = doctors.find(
+    (doc) => doc.doctor_id === doctorSchedule.doctor_id
+  );
+
+  return doctor?.doctor_name || null;
 };
 
 // Service to fetch user's queue history
@@ -218,17 +266,20 @@ const fetchUserHistory = async () => {
     throw new Error("User ID not found");
   }
 
-  // Fetch queues and reason categories in parallel
-  const [queueResponse, reasonCategories] = await Promise.all([
-    fetch(`${API_BASE_URL}/queues`, {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-        "ngrok-skip-browser-warning": "true",
-      },
-    }),
-    fetchReasonCategories(),
-  ]);
+  // Fetch all required data in parallel
+  const [queueResponse, reasonCategories, doctors, doctorSchedules] =
+    await Promise.all([
+      fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      }),
+      fetchReasonCategories(),
+      fetchDoctors(),
+      fetchDoctorSchedules(),
+    ]);
 
   if (!queueResponse.ok) {
     throw new Error("Failed to fetch queue history");
@@ -245,8 +296,14 @@ const fetchUserHistory = async () => {
     return qUserId == userId;
   });
 
+  // Filter to only show completed or cancelled entries
+  const finishedEntries = userEntries.filter((q) => {
+    const status = q?.queue_status?.toLowerCase();
+    return status === "completed" || status === "cancelled";
+  });
+
   // Sort by date descending (most recent first)
-  const sortedEntries = userEntries.sort((a, b) => {
+  const sortedEntries = finishedEntries.sort((a, b) => {
     const aDate = a?.date || a?.created_at;
     const bDate = b?.date || b?.created_at;
     const aTime = aDate ? new Date(aDate).getTime() : 0;
@@ -254,12 +311,14 @@ const fetchUserHistory = async () => {
     return bTime - aTime;
   });
 
-  return { history: sortedEntries, reasonCategories };
+  return { history: sortedEntries, reasonCategories, doctors, doctorSchedules };
 };
 
 export default function MyHistoryView() {
   const [history, setHistory] = useState([]);
   const [reasonCategories, setReasonCategories] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [doctorSchedules, setDoctorSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -268,9 +327,12 @@ export default function MyHistoryView() {
     setError(null);
 
     try {
-      const { history, reasonCategories } = await fetchUserHistory();
+      const { history, reasonCategories, doctors, doctorSchedules } =
+        await fetchUserHistory();
       setHistory(history);
       setReasonCategories(reasonCategories);
+      setDoctors(doctors);
+      setDoctorSchedules(doctorSchedules);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError(err.message || "Failed to load history");
@@ -301,7 +363,7 @@ export default function MyHistoryView() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My History</h1>
             <p className="text-sm text-gray-500">
-              View your past queue entries
+              View your completed and cancelled visits
             </p>
           </div>
         </div>
@@ -341,11 +403,10 @@ export default function MyHistoryView() {
             <History className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            No Queue History Yet
+            No Visit History Yet
           </h3>
           <p className="text-gray-500 text-sm">
-            You haven't joined any queues yet. Your queue history will appear
-            here once you start using the service.
+            Your completed and cancelled visits will appear here.
           </p>
         </div>
       ) : (
@@ -355,13 +416,18 @@ export default function MyHistoryView() {
               key={entry.queue_entry_id || index}
               entry={entry}
               reasonCategories={reasonCategories}
+              doctorName={resolveDoctorName(
+                entry.schedule_id,
+                doctorSchedules,
+                doctors
+              )}
             />
           ))}
 
           {/* Stats footer */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
-              Showing {history.length} queue{history.length !== 1 ? "s" : ""} in
+              Showing {history.length} visit{history.length !== 1 ? "s" : ""} in
               your history
             </p>
           </div>

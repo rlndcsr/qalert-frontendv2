@@ -109,7 +109,7 @@ export default function DoctorCard({ doctor, schedules }) {
           <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-3 border-[#4ad294]/30">
             <Image
               src={getAvatarSrc()}
-              alt={`Dr. ${doctor.doctor_name}`}
+              alt={doctor.doctor_name}
               width={96}
               height={96}
               className="w-full h-full object-cover"
@@ -119,7 +119,7 @@ export default function DoctorCard({ doctor, schedules }) {
 
         {/* Doctor Name - Centered below image */}
         <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          Dr. {doctor.doctor_name}
+          {doctor.doctor_name}
         </h3>
 
         {/* Schedules - Centered below name */}
