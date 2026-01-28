@@ -10,7 +10,9 @@ import {
   Activity,
   Users,
   Tag,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 import {
   getAuthToken,
   getTodayDateString,
@@ -373,6 +375,17 @@ export default function AppointmentQueueView() {
           />
         </button>
       </div>
+
+      {/* View Live Queue Link */}
+      <Link
+        href="/queues"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 mb-6 px-4 py-2.5 bg-[#4ad294]/10 hover:bg-[#4ad294]/20 text-[#2a9d6e] font-medium text-sm rounded-lg transition-colors"
+      >
+        <ExternalLink className="w-4 h-4" />
+        View Live Queue Display
+      </Link>
 
       {/* Content */}
       {isLoading ? (

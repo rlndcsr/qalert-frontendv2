@@ -12,6 +12,7 @@ import StatisticsCards from "./adminComponents/StatisticsCards";
 import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
+import PatientRecordView from "./adminComponents/PatientRecordView";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 
@@ -607,13 +608,13 @@ export default function AdminPortal() {
             />
           ) : (
             <AnimatePresence mode="wait">
-              {activeView === "home"
-                ? renderHomeView()
-                : activeView === "patient-record"
-                ? renderPlaceholderView("Patient Record")
-                : activeView === "current-queue"
-                ? renderPlaceholderView("Current Queue")
-                : null}
+              {activeView === "home" ? (
+                renderHomeView()
+              ) : activeView === "patient-record" ? (
+                <PatientRecordView key="patient-record" />
+              ) : activeView === "current-queue" ? (
+                renderPlaceholderView("Current Queue")
+              ) : null}
             </AnimatePresence>
           )}
         </AnimatePresence>

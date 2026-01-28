@@ -3,19 +3,11 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home,
-  Users,
-  ClipboardList,
-  LogOut,
-  ChevronLeft,
-  X,
-} from "lucide-react";
+import { Home, Users, LogOut, ChevronLeft, X } from "lucide-react";
 
 const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
   { id: "patient-record", label: "Patient Record", icon: Users },
-  { id: "current-queue", label: "Current Queue", icon: ClipboardList },
 ];
 
 export default function AdminSidebar({
