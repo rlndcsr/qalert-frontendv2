@@ -1,14 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Stethoscope, RefreshCw } from "lucide-react";
+import { Stethoscope, RefreshCw, Calendar } from "lucide-react";
 import DoctorCard from "../DoctorCard";
-import { getAuthToken } from "../patientUtils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+
+// Filter options configuration
+const FILTER_OPTIONS = [
+  { id: "all", label: "All Doctors" },
+  { id: "Monday", label: "Monday" },
+  { id: "Tuesday", label: "Tuesday" },
+  { id: "Wednesday", label: "Wednesday" },
+  { id: "Thursday", label: "Thursday" },
+  { id: "Friday", label: "Friday" },
+];
+
+// Day abbreviation to full name mapping for schedule matching
+const DAY_ABBREV_TO_FULL = {
+  Mon: "Monday",
+  Tue: "Tuesday",
+  Wed: "Wednesday",
+  Thu: "Thursday",
+  Fri: "Friday",
+  Sat: "Saturday",
+  Sun: "Sunday",
+};
 
 // Skeleton card component for loading state
 function DoctorCardSkeleton() {
@@ -34,22 +54,44 @@ function DoctorCardSkeleton() {
   );
 }
 
+// Filter pills component
+function DayFilter({ activeFilter, onFilterChange }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {FILTER_OPTIONS.map((option) => (
+          <button
+            key={option.id}
+            onClick={() => onFilterChange(option.id)}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
+              activeFilter === option.id
+                ? "bg-[#4ad294] text-white shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MyDoctorsView() {
   const [doctors, setDoctors] = useState([]);
   const [doctorSchedules, setDoctorSchedules] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("all");
 
   const fetchDoctorsData = async () => {
     setIsLoading(true);
     setError(null);
-    const token = getAuthToken();
 
     const headers = {
       Accept: "application/json",
       "ngrok-skip-browser-warning": "true",
-      ...(token && { Authorization: `Bearer ${token}` }),
     };
 
     try {
@@ -63,19 +105,30 @@ export default function MyDoctorsView() {
       if (!doctorsRes.ok) {
         throw new Error("Failed to fetch doctors");
       }
+
+      // Handle doctor-schedule API - try alternative endpoint if primary fails
+      let doctorSchedulesData;
       if (!doctorSchedulesRes.ok) {
-        throw new Error("Failed to fetch doctor schedules");
+        // Try alternative endpoint name (doctor_schedules with underscore)
+        const altResponse = await fetch(`${API_BASE_URL}/doctor_schedules`, {
+          headers,
+        });
+        if (!altResponse.ok) {
+          throw new Error("Failed to fetch doctor schedules");
+        }
+        doctorSchedulesData = await altResponse.json();
+      } else {
+        doctorSchedulesData = await doctorSchedulesRes.json();
       }
+
       if (!schedulesRes.ok) {
         throw new Error("Failed to fetch schedules");
       }
 
-      const [doctorsData, doctorSchedulesData, schedulesData] =
-        await Promise.all([
-          doctorsRes.json(),
-          doctorSchedulesRes.json(),
-          schedulesRes.json(),
-        ]);
+      const [doctorsData, schedulesData] = await Promise.all([
+        doctorsRes.json(),
+        schedulesRes.json(),
+      ]);
 
       setDoctors(doctorsData);
       setDoctorSchedules(doctorSchedulesData);
@@ -112,8 +165,41 @@ export default function MyDoctorsView() {
     return doctorScheduleDetails;
   };
 
-  // Filter to show only active doctors
-  const activeDoctors = doctors.filter((doctor) => doctor.is_active);
+  // Get all active doctors
+  const activeDoctors = useMemo(() => {
+    return doctors.filter((doctor) => doctor.is_active);
+  }, [doctors]);
+
+  // Check if a doctor has a schedule on a specific day
+  const doctorHasScheduleOnDay = (doctor, dayFilter) => {
+    // Find all doctor_schedule entries for this doctor
+    const doctorScheduleEntries = doctorSchedules.filter(
+      (ds) => ds.doctor_id === doctor.doctor_id
+    );
+
+    // Check if any of those schedules match the selected day
+    return doctorScheduleEntries.some((ds) => {
+      const schedule = schedules.find((s) => s.schedule_id === ds.schedule_id);
+      if (!schedule) return false;
+
+      // Handle both abbreviated (Mon, Tue) and full (Monday, Tuesday) day names
+      const scheduleDay = schedule.day;
+      const fullDayName = DAY_ABBREV_TO_FULL[scheduleDay] || scheduleDay;
+
+      return fullDayName === dayFilter;
+    });
+  };
+
+  // Filter doctors based on active filter
+  const filteredDoctors = useMemo(() => {
+    if (activeFilter === "all") {
+      return activeDoctors;
+    }
+
+    return activeDoctors.filter((doctor) =>
+      doctorHasScheduleOnDay(doctor, activeFilter)
+    );
+  }, [activeDoctors, activeFilter, doctorSchedules, schedules]);
 
   return (
     <motion.div
@@ -153,6 +239,14 @@ export default function MyDoctorsView() {
         </button>
       </div>
 
+      {/* Day Filter */}
+      {!isLoading && !error && activeDoctors.length > 0 && (
+        <DayFilter
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+        />
+      )}
+
       {/* Content */}
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
@@ -183,9 +277,22 @@ export default function MyDoctorsView() {
             There are currently no active doctors in the system.
           </p>
         </div>
+      ) : filteredDoctors.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            <Calendar className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No Doctors Available on {activeFilter}
+          </h3>
+          <p className="text-gray-500 text-sm">
+            There are no doctors scheduled on this day. Try selecting a
+            different day.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-          {activeDoctors.map((doctor) => (
+          {filteredDoctors.map((doctor) => (
             <DoctorCard
               key={doctor.doctor_id}
               doctor={doctor}
@@ -196,11 +303,13 @@ export default function MyDoctorsView() {
       )}
 
       {/* Stats footer */}
-      {!isLoading && !error && activeDoctors.length > 0 && (
+      {!isLoading && !error && filteredDoctors.length > 0 && (
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
-            Showing {activeDoctors.length} active doctor
+            Showing {filteredDoctors.length} of {activeDoctors.length} active
+            doctor
             {activeDoctors.length !== 1 ? "s" : ""}
+            {activeFilter !== "all" && ` on ${activeFilter}`}
           </p>
         </div>
       )}
