@@ -19,6 +19,7 @@ import PatientSidebar from "./patientComponents/PatientSidebar";
 import PlaceholderView from "./patientComponents/views/PlaceholderView";
 import MyDoctorsView from "./patientComponents/views/MyDoctorsView";
 import AppointmentQueueView from "./patientComponents/views/AppointmentQueueView";
+import MyHistoryView from "./patientComponents/views/MyHistoryView";
 import {
   getTodayDateString,
   getOrdinalPosition,
@@ -53,8 +54,23 @@ export default function PatientPage() {
     logout,
   } = useAuth();
 
+  // Initialize activeView from localStorage or default to "home"
+  const [activeView, setActiveView] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("patientActiveView") || "home";
+    }
+    return "home";
+  });
+
+  // Persist activeView to localStorage whenever it changes
+  const handleViewChange = (view) => {
+    setActiveView(view);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("patientActiveView", view);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState("login");
-  const [activeView, setActiveView] = useState("home");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -718,7 +734,7 @@ export default function PatientPage() {
           onLogout={handleLogout}
           isLoggingOut={isLoggingOut}
           activeView={activeView}
-          onViewChange={setActiveView}
+          onViewChange={handleViewChange}
           isExpanded={isSidebarExpanded}
           onExpandedChange={setIsSidebarExpanded}
           isMobileOpen={isMobileSidebarOpen}
@@ -873,18 +889,8 @@ export default function PatientPage() {
                 <MyDoctorsView key="doctors" />
               ) : activeView === "queue" ? (
                 <AppointmentQueueView key="queue" />
-              ) : activeView === "notifications" ? (
-                <PlaceholderView
-                  key="notifications"
-                  title="Notifications"
-                  description="View your notifications and alerts"
-                />
-              ) : activeView === "feedback" ? (
-                <PlaceholderView
-                  key="feedback"
-                  title="Feedback"
-                  description="Share your feedback and suggestions"
-                />
+              ) : activeView === "history" ? (
+                <MyHistoryView key="history" />
               ) : null}
             </AnimatePresence>
           )}

@@ -7,8 +7,7 @@ import {
   Home,
   Stethoscope,
   ClipboardList,
-  Bell,
-  MessageSquare,
+  History,
   LogOut,
   ChevronLeft,
   X,
@@ -18,8 +17,7 @@ const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
   { id: "doctors", label: "My Doctors", icon: Stethoscope },
   { id: "queue", label: "Appointment Queue", icon: ClipboardList },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "feedback", label: "Feedback", icon: MessageSquare },
+  { id: "history", label: "My History", icon: History },
 ];
 
 export default function PatientSidebar({
