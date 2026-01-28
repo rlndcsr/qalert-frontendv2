@@ -12,6 +12,7 @@ export default function AdminHeader({
   setIsUserMenuOpen,
   handleLogout,
   isLoggingOut,
+  isSidebarExpanded = false,
 }) {
   const router = useRouter();
   const userMenuRef = useRef(null);
@@ -33,7 +34,15 @@ export default function AdminHeader({
   }, [isUserMenuOpen, setIsUserMenuOpen]);
 
   return (
-    <header className="bg-white/80 backdrop-blur-md h-16 border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
+    <header
+      className={`bg-white/80 backdrop-blur-md h-16 border-b border-gray-200/50 fixed top-0 right-0 z-30 shadow-sm transition-all duration-200 hidden lg:block ${
+        isAuthenticated
+          ? isSidebarExpanded
+            ? "lg:left-60"
+            : "lg:left-16"
+          : "left-0"
+      }`}
+    >
       <div className="w-full px-8 h-full">
         <div className="flex items-center justify-between select-none h-full">
           {/* Left group: back button + portal icon + title */}
