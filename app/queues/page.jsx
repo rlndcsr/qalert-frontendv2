@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSystemStatus } from "../hooks/useSystemStatus";
 import Image from "next/image";
+
+// Constants
+const POLLING_INTERVAL = 3000; // 3 seconds
+const API_BASE_URL =
+  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev";
 
 export default function QueueDisplay() {
   const router = useRouter();
@@ -22,41 +27,55 @@ export default function QueueDisplay() {
   const [queueEntries, setQueueEntries] = useState([]);
   const [users, setUsers] = useState({});
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Refs for comparing data to avoid unnecessary re-renders
+  const previousQueueDataRef = useRef(null);
+  const previousUsersDataRef = useRef(null);
 
   // Helper to format queue numbers as 3 digits (e.g., 002)
   const formatQueueNumber = (n) => String(n).padStart(3, "0");
 
-  // Fetch queue entries and users
-  useEffect(() => {
-    const fetchData = async () => {
+  // Helper to get auth token from localStorage
+  const getAuthToken = useCallback(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("token");
+    }
+    return null;
+  }, []);
+
+  // Helper to compare arrays/objects for equality
+  const isDataEqual = useCallback((newData, oldData) => {
+    if (!oldData) return false;
+    return JSON.stringify(newData) === JSON.stringify(oldData);
+  }, []);
+
+  // Fetch queue entries and users with optimized state updates
+  const fetchQueueData = useCallback(
+    async (isInitial = false) => {
       try {
+        const token = getAuthToken();
+        const headers = {
+          Accept: "application/json",
+          "ngrok-skip-browser-warning": "true",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        };
+
         // Fetch queues and users in parallel
         const [queuesResponse, usersResponse] = await Promise.all([
-          fetch(
-            "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/queues",
-            {
-              headers: {
-                Accept: "application/json",
-                "ngrok-skip-browser-warning": true,
-              },
-            }
-          ),
-          fetch(
-            "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/users",
-            {
-              headers: {
-                Accept: "application/json",
-                "ngrok-skip-browser-warning": true,
-              },
-            }
-          ),
+          fetch(`${API_BASE_URL}/api/queues`, { headers }),
+          fetch(`${API_BASE_URL}/api/users`, { headers }),
         ]);
 
         if (queuesResponse.ok && usersResponse.ok) {
           const queuesData = await queuesResponse.json();
           const usersData = await usersResponse.json();
 
-          console.log("All queue entries:", queuesData);
+          // Filter queue entries for today only
+          const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format in local timezone
+          const todayQueues = queuesData.filter(
+            (entry) => entry.date === today,
+          );
 
           // Create a user map for quick lookup
           const userMap = {};
@@ -64,31 +83,47 @@ export default function QueueDisplay() {
             userMap[user.user_id] = user;
           });
 
-          // Filter queue entries for today only
-          const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format in local timezone
-          console.log("Today's date:", today);
-          const todayQueues = queuesData.filter(
-            (entry) => entry.date === today
-          );
-          console.log("Today's queue entries:", todayQueues);
+          // Only update state if data has changed (prevents unnecessary re-renders)
+          if (!isDataEqual(todayQueues, previousQueueDataRef.current)) {
+            previousQueueDataRef.current = todayQueues;
+            setQueueEntries(todayQueues);
+          }
 
-          setQueueEntries(todayQueues);
-          setUsers(userMap);
+          if (!isDataEqual(userMap, previousUsersDataRef.current)) {
+            previousUsersDataRef.current = userMap;
+            setUsers(userMap);
+          }
         } else {
-          console.error("Failed to fetch data");
+          console.error("Failed to fetch data:", {
+            queues: queuesResponse.status,
+            users: usersResponse.status,
+          });
         }
       } catch (error) {
         console.error("Error fetching queue data:", error);
       } finally {
-        setIsLoadingData(false);
+        if (isInitial) {
+          setIsLoadingData(false);
+          setIsInitialLoad(false);
+        }
       }
-    };
+    },
+    [getAuthToken, isDataEqual],
+  );
 
-    fetchData();
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // Initial fetch and polling setup
+  useEffect(() => {
+    // Perform initial fetch
+    fetchQueueData(true);
+
+    // Set up polling interval (every 3 seconds)
+    const intervalId = setInterval(() => {
+      fetchQueueData(false);
+    }, POLLING_INTERVAL);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
+  }, [fetchQueueData]);
 
   // Process queue data
   const { nowServing, ready, waiting, totalInQueue } = useMemo(() => {
@@ -163,7 +198,7 @@ export default function QueueDisplay() {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
-        })
+        }),
       );
       const day = d.getDate();
       const month = d.toLocaleDateString("en-US", { month: "short" });
