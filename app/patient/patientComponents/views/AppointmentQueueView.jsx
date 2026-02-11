@@ -11,6 +11,8 @@ import {
   Users,
   Tag,
   ExternalLink,
+  CalendarClock,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -151,7 +153,7 @@ function UserQueueCard({ userQueue, reasonCategories }) {
       return "—";
     }
     const category = reasonCategories.find(
-      (cat) => cat.reason_category_id === categoryId
+      (cat) => cat.reason_category_id === categoryId,
     );
     return category?.name || "—";
   };
@@ -185,12 +187,12 @@ function UserQueueCard({ userQueue, reasonCategories }) {
             userQueue.queue_status === "now_serving"
               ? "Now Serving"
               : userQueue.queue_status === "called"
-              ? "Called"
-              : userQueue.queue_status === "completed"
-              ? "Completed"
-              : userQueue.queue_status === "cancelled"
-              ? "Cancelled"
-              : "Waiting"
+                ? "Called"
+                : userQueue.queue_status === "completed"
+                  ? "Completed"
+                  : userQueue.queue_status === "cancelled"
+                    ? "Cancelled"
+                    : "Waiting"
           }
         />
         <QueueInfoItem
@@ -300,17 +302,154 @@ const fetchQueueData = async () => {
   // Get the most recent user entry (prioritize active statuses)
   const activeStatuses = ["waiting", "called", "now_serving"];
   const activeUserEntry = sortedUserEntries.find((q) =>
-    activeStatuses.includes(q?.queue_status)
+    activeStatuses.includes(q?.queue_status),
   );
   const userQueue = activeUserEntry || sortedUserEntries[0] || null;
 
   return { userQueue, nowServingQueue, reasonCategories };
 };
 
+// Service to fetch future appointments
+const fetchFutureAppointment = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  // Get user data from localStorage
+  const userDataStr = localStorage.getItem("userData");
+  if (!userDataStr) {
+    return null;
+  }
+
+  const userData = JSON.parse(userDataStr);
+  const userId = userData?.id || userData?.user_id || userData?.uid;
+  if (!userId) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/appointments`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const list = Array.isArray(data)
+      ? data
+      : data?.data || data?.appointments || data?.items || [];
+
+    const today = getTodayDateString();
+
+    // Filter for user's future appointments (after today, not cancelled)
+    const futureAppointments = list.filter((apt) => {
+      const aptUserId = apt?.user_id ?? apt?.user?.id;
+      if (aptUserId != userId) return false;
+
+      const aptDate = toYMD(apt?.appointment_date);
+      if (!aptDate) return false;
+
+      // Check if date is in the future (after today)
+      const isFuture = aptDate > today;
+
+      // Check if status is not cancelled
+      const status = (apt?.status || "").toLowerCase();
+      const isNotCancelled = status !== "cancelled";
+
+      return isFuture && isNotCancelled;
+    });
+
+    // Sort by date ascending to get the nearest future appointment
+    futureAppointments.sort((a, b) => {
+      const aDate = toYMD(a?.appointment_date) || "";
+      const bDate = toYMD(b?.appointment_date) || "";
+      return aDate.localeCompare(bDate);
+    });
+
+    return futureAppointments[0] || null;
+  } catch (err) {
+    console.error("Error fetching future appointments:", err);
+    return null;
+  }
+};
+
+// Future Appointment Reminder Card component
+function FutureAppointmentCard({ appointment }) {
+  const appointmentDate = appointment?.appointment_date;
+  const appointmentTime = appointment?.appointment_time;
+
+  // Format the date nicely
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  // Format the time nicely
+  const formatTime = (timeStr) => {
+    if (!timeStr) return "—";
+    const [hours, minutes] = timeStr.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6"
+    >
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <CalendarClock className="w-6 h-6 text-blue-600" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-blue-900 mb-1">
+            Upcoming Appointment
+          </h3>
+          <p className="text-sm text-blue-700 mb-3">
+            You have a scheduled appointment. Don't forget to come on time!
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center gap-2 text-blue-800">
+              <Calendar className="w-4 h-4" />
+              <span className="font-medium">{formatDate(appointmentDate)}</span>
+            </div>
+            {appointmentTime && (
+              <div className="flex items-center gap-2 text-blue-800">
+                <CalendarClock className="w-4 h-4" />
+                <span className="font-medium">
+                  {formatTime(appointmentTime)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function AppointmentQueueView() {
   const [userQueue, setUserQueue] = useState(null);
   const [nowServingQueue, setNowServingQueue] = useState(null);
   const [reasonCategories, setReasonCategories] = useState([]);
+  const [futureAppointment, setFutureAppointment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -319,11 +458,16 @@ export default function AppointmentQueueView() {
     setError(null);
 
     try {
-      const { userQueue, nowServingQueue, reasonCategories } =
-        await fetchQueueData();
-      setUserQueue(userQueue);
-      setNowServingQueue(nowServingQueue);
-      setReasonCategories(reasonCategories);
+      // Fetch queue data and future appointments in parallel
+      const [queueData, futureApt] = await Promise.all([
+        fetchQueueData(),
+        fetchFutureAppointment(),
+      ]);
+
+      setUserQueue(queueData.userQueue);
+      setNowServingQueue(queueData.nowServingQueue);
+      setReasonCategories(queueData.reasonCategories);
+      setFutureAppointment(futureApt);
     } catch (err) {
       console.error("Error fetching queue data:", err);
       setError(err.message || "Failed to load queue data");
@@ -402,17 +546,26 @@ export default function AppointmentQueueView() {
           </button>
         </div>
       ) : !userQueue ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <ClipboardList className="w-8 h-8 text-gray-400" />
+        <div className="space-y-4">
+          {/* Future Appointment Reminder */}
+          {futureAppointment && (
+            <FutureAppointmentCard appointment={futureAppointment} />
+          )}
+
+          {/* No Queue Today Message */}
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <ClipboardList className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              No Active Queue Today
+            </h3>
+            <p className="text-gray-500 text-sm">
+              {futureAppointment
+                ? "Your appointment is scheduled for a future date. Come back on the day of your appointment."
+                : "You don't have any queue entries for today. Visit the Home page to book an appointment."}
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            No Active Queue Today
-          </h3>
-          <p className="text-gray-500 text-sm">
-            You don't have any queue entries for today. Visit the Home page to
-            join the queue.
-          </p>
         </div>
       ) : (
         <div className="space-y-4">
