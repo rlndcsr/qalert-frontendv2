@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { Menu } from "lucide-react";
+import { Menu, ArrowLeft } from "lucide-react";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
 import VerifyEmailForm from "./patientComponents/VerifyEmailForm";
@@ -808,6 +808,15 @@ export default function PatientPage() {
               transition={{ duration: 0.6 }}
               key="guest"
             >
+              {activeTab !== "verify" && (
+                <button
+                  onClick={() => router.back()}
+                  className="flex items-center gap-2 text-gray-600 hover:text-[#25323A] mb-4 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">Back</span>
+                </button>
+              )}
               {activeTab !== "verify" && (
                 <div className="flex mb-8">
                   <button
