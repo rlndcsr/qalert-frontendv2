@@ -17,7 +17,37 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { toast } from "sonner";
+import {
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Users,
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from "lucide-react";
 import MonthSelector from "./MonthSelector";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  generateReportData,
+  convertToCSV,
+  downloadCSV,
+  downloadPDFReport,
+  getDoctors,
+} from "../services/reportsService";
 
 export default function AnalyticsTab({
   stats,
@@ -30,6 +60,29 @@ export default function AnalyticsTab({
 }) {
   // State for reason categories
   const [reasonCategories, setReasonCategories] = useState([]);
+
+  // State for report generation
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportPreview, setReportPreview] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+
+  // Filter states
+  const [selectedDoctor, setSelectedDoctor] = useState("all");
+  const [selectedQueueStatus, setSelectedQueueStatus] = useState("all");
+
+  // Fetch doctors on mount
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const doctorsData = await getDoctors();
+        setDoctors(doctorsData);
+      } catch (error) {
+        console.warn("Could not fetch doctors:", error);
+      }
+    };
+    fetchDoctors();
+  }, []);
 
   // Fetch reason categories on component mount
   useEffect(() => {
@@ -258,13 +311,263 @@ export default function AnalyticsTab({
       className="space-y-8"
     >
       {/* Month Selector */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <MonthSelector
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           onMonthChange={onMonthChange}
           onYearChange={onYearChange}
         />
+      </div>
+
+      {/* Report Generation Section */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-[#25323A]">
+                Generate Report
+              </h3>
+              <p className="text-xs text-gray-500">
+                Download monthly data as PDF
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+          >
+            <Filter className="w-3.5 h-3.5" />
+            Filters
+            {showFilters ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t border-gray-100 pt-4 mb-4"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Doctor Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Filter by Doctor
+                </label>
+                <Select
+                  value={selectedDoctor}
+                  onValueChange={setSelectedDoctor}
+                >
+                  <SelectTrigger className="w-full h-9 text-sm">
+                    <SelectValue placeholder="All Doctors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Doctors</SelectItem>
+                    {doctors.map((doctor) => (
+                      <SelectItem
+                        key={doctor.doctor_id || doctor.id}
+                        value={String(doctor.doctor_id || doctor.id)}
+                      >
+                        {doctor.name || doctor.doctor_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Queue Status Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Queue Status
+                </label>
+                <Select
+                  value={selectedQueueStatus}
+                  onValueChange={setSelectedQueueStatus}
+                >
+                  <SelectTrigger className="w-full h-9 text-sm">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="waiting">Waiting</SelectItem>
+                    <SelectItem value="called">Called</SelectItem>
+                    <SelectItem value="now_serving">Now Serving</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Reset Filters */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setSelectedDoctor("all");
+                    setSelectedQueueStatus("all");
+                    setReportPreview(null);
+                  }}
+                  className="px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Report Preview */}
+        {reportPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-4 border border-gray-200"
+          >
+            <h4 className="text-sm font-semibold text-[#25323A] mb-3">
+              Report Preview
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-teal-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Queue Entries
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-[#25323A]">
+                  {reportPreview.summary.totalQueues}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Completed
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-green-600">
+                  {reportPreview.summary.completedQueues}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <XCircle className="w-4 h-4 text-rose-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Cancelled
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-rose-600">
+                  {reportPreview.summary.cancelledQueues}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Waiting
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-amber-600">
+                  {reportPreview.summary.waitingQueues}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Emergency
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-orange-600">
+                  {reportPreview.summary.emergencyEncounters}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="w-4 h-4 text-indigo-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    Patients
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-indigo-600">
+                  {reportPreview.summary.uniquePatients}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Generate Button */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={async () => {
+              if (!selectedMonth || !selectedYear) {
+                toast.error("Please select a month first");
+                return;
+              }
+
+              setIsGeneratingReport(true);
+              try {
+                const yearMonth = `${selectedYear}-${selectedMonth}`;
+                const filters = {
+                  doctorId: selectedDoctor,
+                  queueStatus: selectedQueueStatus,
+                };
+
+                const reportData = await generateReportData(yearMonth, filters);
+                setReportPreview(reportData);
+                toast.success("Report preview generated successfully");
+              } catch (error) {
+                console.error("Error generating report:", error);
+                toast.error(error.message || "Failed to generate report");
+              } finally {
+                setIsGeneratingReport(false);
+              }
+            }}
+            disabled={isGeneratingReport}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-teal-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {isGeneratingReport ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="w-4 h-4" />
+                Preview Report
+              </>
+            )}
+          </button>
+
+          {reportPreview && (
+            <button
+              onClick={async () => {
+                try {
+                  const yearMonth = `${selectedYear}-${selectedMonth}`;
+                  await downloadPDFReport(yearMonth);
+                  toast.success("Report downloaded successfully");
+                } catch (error) {
+                  console.error("Error downloading report:", error);
+                  toast.error(error.message || "Failed to download report");
+                }
+              }}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-indigo-600 hover:to-indigo-700 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </button>
+          )}
+        </div>
       </div>
 
       {/* KPI Cards */}
