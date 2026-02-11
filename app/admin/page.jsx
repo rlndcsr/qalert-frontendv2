@@ -13,6 +13,7 @@ import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import PatientRecordView from "./adminComponents/PatientRecordView";
+import EmergencyEncountersView from "./adminComponents/EmergencyEncountersView";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 
@@ -615,6 +616,8 @@ export default function AdminPortal() {
                 renderHomeView()
               ) : activeView === "patient-record" ? (
                 <PatientRecordView key="patient-record" />
+              ) : activeView === "emergency-encounters" ? (
+                <EmergencyEncountersView key="emergency-encounters" />
               ) : activeView === "current-queue" ? (
                 renderPlaceholderView("Current Queue")
               ) : null}
