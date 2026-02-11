@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -120,9 +121,9 @@ function ViewModal({ encounter, isOpen, onClose }) {
     };
   }, [isOpen, onClose]);
 
-  if (!encounter) return null;
+  if (!encounter || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -227,7 +228,8 @@ function ViewModal({ encounter, isOpen, onClose }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -243,14 +245,48 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Helper function to format date to YYYY-MM-DD for input[type="date"]
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    // If already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    // Try to parse and format
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to format time to HH:MM for input[type="time"]
+  const formatTimeForInput = (timeString) => {
+    if (!timeString) return "";
+    // If already in HH:MM or HH:MM:SS format, extract HH:MM
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(timeString)) {
+      return timeString.substring(0, 5);
+    }
+    // If it's an ISO datetime string
+    if (timeString.includes("T")) {
+      const date = new Date(timeString);
+      if (isNaN(date.getTime())) return "";
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    }
+    return timeString;
+  };
+
   useEffect(() => {
     if (encounter) {
       setFormData({
         patient_name: encounter.patient_name || "",
         id_number: encounter.id_number || "",
         contact_number: encounter.contact_number || "",
-        date: encounter.date || "",
-        time: encounter.time || "",
+        date: formatDateForInput(encounter.date),
+        time: formatTimeForInput(encounter.time),
         details: encounter.details || "",
       });
     }
@@ -293,9 +329,9 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
     }
   };
 
-  if (!encounter) return null;
+  if (!encounter || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -446,7 +482,8 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -480,9 +517,9 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
     }
   };
 
-  if (!encounter) return null;
+  if (!encounter || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -537,7 +574,8 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -607,7 +645,9 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
     }
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -782,7 +822,8 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

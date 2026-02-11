@@ -15,13 +15,13 @@ import {
 
 const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
-  { id: "queue-history", label: "Queue History", icon: History },
-  { id: "patient-record", label: "Patient Record", icon: Users },
   {
     id: "emergency-encounters",
     label: "Emergency Encounters",
     icon: AlertTriangle,
   },
+  { id: "queue-history", label: "Queue History", icon: History },
+  { id: "patient-record", label: "Patients", icon: Users },
 ];
 
 export default function AdminSidebar({
