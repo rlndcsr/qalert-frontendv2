@@ -10,10 +10,12 @@ import {
   ChevronLeft,
   X,
   AlertTriangle,
+  History,
 } from "lucide-react";
 
 const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
+  { id: "queue-history", label: "Queue History", icon: History },
   { id: "patient-record", label: "Patient Record", icon: Users },
   {
     id: "emergency-encounters",

@@ -14,6 +14,7 @@ import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import PatientRecordView from "./adminComponents/PatientRecordView";
 import EmergencyEncountersView from "./adminComponents/EmergencyEncountersView";
+import QueueHistoryView from "./adminComponents/QueueHistoryView";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 
@@ -614,6 +615,8 @@ export default function AdminPortal() {
             <AnimatePresence mode="wait">
               {activeView === "home" ? (
                 renderHomeView()
+              ) : activeView === "queue-history" ? (
+                <QueueHistoryView key="queue-history" />
               ) : activeView === "patient-record" ? (
                 <PatientRecordView key="patient-record" />
               ) : activeView === "emergency-encounters" ? (
