@@ -802,7 +802,9 @@ export default function PatientPage() {
             </motion.div>
           ) : !isAuthenticated ? (
             <motion.div
-              className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 sm:p-8 w-full max-w-md"
+              className={`bg-white rounded-lg shadow-lg border border-gray-200 p-6 sm:p-8 w-full ${
+                activeTab === "register" ? "max-w-md lg:max-w-4xl" : "max-w-md"
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
