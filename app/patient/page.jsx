@@ -21,6 +21,7 @@ import PlaceholderView from "./patientComponents/views/PlaceholderView";
 import MyDoctorsView from "./patientComponents/views/MyDoctorsView";
 import AppointmentQueueView from "./patientComponents/views/AppointmentQueueView";
 import MyHistoryView from "./patientComponents/views/MyHistoryView";
+import AppointmentView from "./patientComponents/Appointment/AppointmentView";
 import {
   getTodayDateString,
   getOrdinalPosition,
@@ -927,6 +928,8 @@ export default function PatientPage() {
                 </motion.div>
               ) : activeView === "doctors" ? (
                 <MyDoctorsView key="doctors" />
+              ) : activeView === "appointment" ? (
+                <AppointmentView key="appointment" />
               ) : activeView === "queue" ? (
                 <AppointmentQueueView key="queue" />
               ) : activeView === "history" ? (
