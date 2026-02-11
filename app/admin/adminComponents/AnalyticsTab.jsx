@@ -42,7 +42,7 @@ export default function AnalyticsTab({
               Accept: "application/json",
               "ngrok-skip-browser-warning": true,
             },
-          }
+          },
         );
         if (response.ok) {
           const data = await response.json();
@@ -85,15 +85,15 @@ export default function AnalyticsTab({
   const monthlyStats = useMemo(() => {
     const totalQueues = selectedMonthQueues.length;
     const completed = selectedMonthQueues.filter(
-      (q) => q.queue_status.toLowerCase() === "completed"
+      (q) => q.queue_status.toLowerCase() === "completed",
     ).length;
     const cancelled = selectedMonthQueues.filter(
-      (q) => q.queue_status.toLowerCase() === "cancelled"
+      (q) => q.queue_status.toLowerCase() === "cancelled",
     ).length;
     const activeInMonth = selectedMonthQueues.filter((q) =>
       ["waiting", "called", "now_serving"].includes(
-        q.queue_status.toLowerCase()
-      )
+        q.queue_status.toLowerCase(),
+      ),
     ).length;
 
     return {
@@ -147,7 +147,7 @@ export default function AnalyticsTab({
       if (queue.reason_category_id && categoryMap[queue.reason_category_id]) {
         reasonLabel = categoryMap[queue.reason_category_id];
         console.log(
-          `Queue ${queue.queue_entry_id}: reason_category_id=${queue.reason_category_id} -> ${reasonLabel}`
+          `Queue ${queue.queue_entry_id}: reason_category_id=${queue.reason_category_id} -> ${reasonLabel}`,
         );
       }
       // Priority 2: Check for reason_category object with name
@@ -172,7 +172,7 @@ export default function AnalyticsTab({
       { name: "Completed", value: monthlyStats.completed },
       { name: "Cancelled", value: monthlyStats.cancelled },
     ],
-    [monthlyStats]
+    [monthlyStats],
   );
 
   const COLORS = ["#00968a", "#2563eb", "#9333ea", "#f59e0b", "#ef4444"]; // reused palette
@@ -246,22 +246,6 @@ export default function AnalyticsTab({
       border: "border-amber-200",
       text: "text-amber-700",
     },
-    {
-      label: "Avg Daily Queues",
-      value: avgDailyQueues,
-      sub: "Average per active day",
-      bg: "from-blue-50 to-blue-100",
-      border: "border-blue-200",
-      text: "text-blue-700",
-    },
-    {
-      label: "Active Days",
-      value: activeDays,
-      sub: "Days with queue activity",
-      bg: "from-purple-50 to-purple-100",
-      border: "border-purple-200",
-      text: "text-purple-700",
-    },
   ];
 
   return (
@@ -284,7 +268,7 @@ export default function AnalyticsTab({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {kpis.map((kpi, idx) => (
           <div
             key={kpi.label + idx}

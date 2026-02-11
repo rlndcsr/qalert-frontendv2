@@ -69,10 +69,10 @@ export default function AdminPortal() {
   // Month selector state for analytics
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(
-    String(currentDate.getMonth() + 1).padStart(2, "0")
+    String(currentDate.getMonth() + 1).padStart(2, "0"),
   );
   const [selectedYear, setSelectedYear] = useState(
-    String(currentDate.getFullYear())
+    String(currentDate.getFullYear()),
   );
 
   // Check for adminToken on mount
@@ -179,7 +179,7 @@ export default function AdminPortal() {
         queue.queue_status.toLowerCase() !== "cancelled" &&
         queue.queue_status.toLowerCase() !== "called" &&
         queue.queue_status.toLowerCase() !== "now_serving" &&
-        queue.queue_status.toLowerCase() !== "completed"
+        queue.queue_status.toLowerCase() !== "completed",
     );
   }, [queues, todayDate]);
 
@@ -199,7 +199,7 @@ export default function AdminPortal() {
         (queue) =>
           queue.date === todayDate &&
           (queue.queue_status.toLowerCase() === "called" ||
-            queue.queue_status.toLowerCase() === "now_serving")
+            queue.queue_status.toLowerCase() === "now_serving"),
       );
       if (calledOrServing) {
         setCalledPatient(calledOrServing);
@@ -230,7 +230,7 @@ export default function AdminPortal() {
       toast.success(
         newStatus
           ? "System is now online. Patients can register and join the queue."
-          : "System is now offline. New registrations are temporarily disabled."
+          : "System is now offline. New registrations are temporarily disabled.",
       );
     } catch (error) {
       toast.error("Failed to update system status");
@@ -263,14 +263,14 @@ export default function AdminPortal() {
             email_address: email_address.trim(),
             password: password.trim(),
           }),
-        }
+        },
       );
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         toast.error(
-          data?.message || "Login failed. Please check your credentials."
+          data?.message || "Login failed. Please check your credentials.",
         );
         setIsLoggingIn(false);
         return;
@@ -335,7 +335,7 @@ export default function AdminPortal() {
               Authorization: `Bearer ${adminToken}`,
               "ngrok-skip-browser-warning": true,
             },
-          }
+          },
         );
       }
     } catch (error) {
@@ -365,12 +365,12 @@ export default function AdminPortal() {
     // Count all queues for today with status: waiting, called, now_serving (not completed/cancelled)
     const activeQueue = allTodayQueues.filter((q) =>
       ["waiting", "called", "now_serving"].includes(
-        q.queue_status.toLowerCase()
-      )
+        q.queue_status.toLowerCase(),
+      ),
     ).length;
     // Count all queues for today with status 'completed'
     const completed = allTodayQueues.filter(
-      (q) => q.queue_status.toLowerCase() === "completed"
+      (q) => q.queue_status.toLowerCase() === "completed",
     ).length;
     const todayTotal = allTodayQueues.length;
     const totalPatients = new Set(todayQueues.map((q) => q.user_id)).size;
@@ -510,9 +510,12 @@ export default function AdminPortal() {
             onMonthChange={setSelectedMonth}
             onYearChange={setSelectedYear}
             queues={
-              selectedYear === "2025" &&
-              (selectedMonth === "10" || selectedMonth === "11")
-                ? mockMonthlyQueues[selectedMonth][selectedYear]
+              mockMonthlyQueues[parseInt(selectedMonth)]?.[
+                parseInt(selectedYear)
+              ]
+                ? mockMonthlyQueues[parseInt(selectedMonth)][
+                    parseInt(selectedYear)
+                  ]
                 : queues
             }
             todayDate={todayDate}
