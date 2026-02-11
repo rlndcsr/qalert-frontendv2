@@ -201,23 +201,50 @@ export function useAppointment() {
           : dsData?.data || dsData?.doctor_schedules || [];
       }
 
+      // Debug: Log the data to understand the structure
+      console.log("[fetchSchedules] schedules:", list);
+      console.log("[fetchSchedules] doctorSchedules:", doctorSchedules);
+      console.log("[fetchSchedules] doctors:", doctors);
+
       // Enrich schedules with doctor info
       const enrichedSchedules = list.map((schedule) => {
+        // Use loose equality (==) to handle string/number type mismatches
         const ds = doctorSchedules.find(
-          (d) => d.schedule_id === schedule.schedule_id,
+          (d) => d.schedule_id == schedule.schedule_id,
         );
-        const doctor = ds
-          ? doctors.find((doc) => doc.doctor_id === ds.doctor_id)
+
+        // Also try to find doctor directly from schedule if it has doctor_id
+        const directDoctorId = schedule.doctor_id || ds?.doctor_id;
+        const doctor = directDoctorId
+          ? doctors.find((doc) => doc.doctor_id == directDoctorId)
           : null;
+
+        // Debug: Log when we can't find a match
+        if (!doctor) {
+          console.log(
+            `[fetchSchedules] No doctor found for schedule_id=${schedule.schedule_id}, day=${schedule.day}`,
+            { ds, directDoctorId, schedule },
+          );
+        }
 
         return {
           ...schedule,
-          doctor_name: doctor?.doctor_name || "Unknown Doctor",
-          doctor_id: ds?.doctor_id || null,
+          doctor_name: doctor?.doctor_name || null, // Use null instead of "Unknown Doctor"
+          doctor_id: directDoctorId || null,
         };
       });
 
-      setSchedules(enrichedSchedules);
+      // Filter out schedules without a valid doctor (no "Unknown Doctor" entries)
+      const validSchedules = enrichedSchedules.filter(
+        (schedule) => schedule.doctor_name !== null,
+      );
+
+      console.log(
+        "[fetchSchedules] Valid schedules after filtering:",
+        validSchedules,
+      );
+
+      setSchedules(validSchedules);
     } catch (err) {
       console.error("[fetchSchedules] Error:", err);
       toast.error("Unable to load appointment data. Please try again.");

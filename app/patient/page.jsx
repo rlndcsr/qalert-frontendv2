@@ -907,13 +907,8 @@ export default function PatientPage() {
                     ) : (
                       <JoinQueueCard
                         onJoinClick={() => {
-                          setJoinReason("");
-                          setJoinReasonCategory("");
-                          setJoinReasonError("");
-                          setJoinReasonCategoryError("");
-                          // Fetch doctor info before opening dialog
-                          fetchOnDutyDoctor();
-                          setIsJoinOpen(true);
+                          // Redirect to appointment page instead of opening dialog
+                          handleViewChange("appointment");
                         }}
                       />
                     )}
