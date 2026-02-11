@@ -72,7 +72,7 @@ export function useAuth() {
       return { success: true, user: data.user };
     } catch (error) {
       toast.error(
-        error.message || "Login failed. Please check your credentials."
+        error.message || "Login failed. Please check your credentials.",
       );
       return { success: false, error: error.message };
     } finally {
@@ -144,6 +144,78 @@ export function useAuth() {
     setUser(newUserData);
   };
 
+  const verifyEmail = async (emailAddress, verificationCode) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-email`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({
+          email_address: emailAddress,
+          code: verificationCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        toast.error(data.message || "Email verification failed");
+        return { success: false, error: data.message };
+      }
+    } catch (error) {
+      if (error.name === "TypeError" || error.name === "SyntaxError") {
+        toast.error("Network error. Please check your connection.");
+        return { success: false, error: error.message };
+      }
+
+      toast.error(
+        error.message || "Email verification failed. Please try again.",
+      );
+      return { success: false, error: error.message };
+    }
+  };
+
+  const resendVerificationCode = async (emailAddress) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/resend-verification-code`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({
+          email_address: emailAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        toast.error(data.message || "Failed to resend verification code");
+        return { success: false, error: data.message };
+      }
+    } catch (error) {
+      if (error.name === "TypeError" || error.name === "SyntaxError") {
+        toast.error("Network error. Please check your connection.");
+        return { success: false, error: error.message };
+      }
+
+      toast.error(
+        error.message ||
+          "Failed to resend verification code. Please try again.",
+      );
+      return { success: false, error: error.message };
+    }
+  };
+
   return {
     isAuthenticated,
     user,
@@ -154,5 +226,7 @@ export function useAuth() {
     registerWithAPI,
     logout,
     updateUser,
+    verifyEmail,
+    resendVerificationCode,
   };
 }

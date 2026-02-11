@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Menu } from "lucide-react";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
+import VerifyEmailForm from "./patientComponents/VerifyEmailForm";
 import WelcomeCard from "./patientComponents/WelcomeCard";
 import QueueStatusCard from "./patientComponents/QueueStatusCard";
 import JoinQueueCard from "./patientComponents/JoinQueueCard";
@@ -71,6 +72,7 @@ export default function PatientPage() {
   };
 
   const [activeTab, setActiveTab] = useState("login");
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -110,10 +112,26 @@ export default function PatientPage() {
   };
 
   const handleRegister = (formData) => {
-    setActiveTab("login");
+    // This is now called after registration success
+    // The switch to verify tab is handled by handleRegistrationSuccess
+  };
+
+  const handleRegistrationSuccess = (email) => {
+    setPendingVerificationEmail(email);
+    setActiveTab("verify");
     toast.success(
-      "Registration successful! Please log in with your credentials."
+      "Registration successful! Please verify your email to continue.",
     );
+  };
+
+  const handleVerificationSuccess = () => {
+    setPendingVerificationEmail("");
+    setActiveTab("login");
+  };
+
+  const handleBackToRegister = () => {
+    setPendingVerificationEmail("");
+    setActiveTab("register");
   };
 
   const handleLogout = async () => {
@@ -275,7 +293,7 @@ export default function PatientPage() {
             "ngrok-skip-browser-warning": true,
           },
           body: JSON.stringify({ queue_status: "cancelled" }),
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to cancel queue entry");
@@ -288,7 +306,7 @@ export default function PatientPage() {
       fetchQueuePosition();
     } catch (error) {
       toast.error(
-        error.message || "An error occurred while cancelling the queue entry"
+        error.message || "An error occurred while cancelling the queue entry",
       );
     } finally {
       setIsCancelling(false);
@@ -322,7 +340,7 @@ export default function PatientPage() {
             "ngrok-skip-browser-warning": true,
           },
           body: JSON.stringify({ reason: updatedReason.trim() }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -335,7 +353,7 @@ export default function PatientPage() {
       fetchUserQueue();
     } catch (error) {
       toast.error(
-        error.message || "An error occurred while updating the reason"
+        error.message || "An error occurred while updating the reason",
       );
     } finally {
       setIsUpdating(false);
@@ -398,10 +416,10 @@ export default function PatientPage() {
         .map((x) => x.q);
 
       const activeEntries = todayEntries.filter((q) =>
-        activeStatuses.has(q?.queue_status)
+        activeStatuses.has(q?.queue_status),
       );
       const completedEntries = todayEntries.filter(
-        (q) => q?.queue_status === "completed"
+        (q) => q?.queue_status === "completed",
       );
 
       const sortedActive = activeEntries.sort((a, b) => {
@@ -485,7 +503,7 @@ export default function PatientPage() {
         });
 
       const currentIndex = todays.findIndex(
-        (q) => (q?.user_id ?? q?.user?.id) === userId
+        (q) => (q?.user_id ?? q?.user?.id) === userId,
       );
       if (currentIndex >= 0) {
         setQueuePosition(currentIndex + 1);
@@ -520,7 +538,7 @@ export default function PatientPage() {
         "[fetchOnDutyDoctor] Current day:",
         currentDay,
         "Shift:",
-        currentShift
+        currentShift,
       );
 
       // Use the backend URL
@@ -587,12 +605,12 @@ export default function PatientPage() {
             statusText: doctorSchedulesResponse.statusText,
             error: errorText,
             url: `${backendBaseUrl}/doctor-schedule`,
-          }
+          },
         );
 
         // Try alternative endpoint name (doctor_schedules with underscore)
         console.log(
-          "[fetchOnDutyDoctor] Trying alternative endpoint: doctor_schedules"
+          "[fetchOnDutyDoctor] Trying alternative endpoint: doctor_schedules",
         );
         const altResponse = await fetch(`${backendBaseUrl}/doctor_schedules`, {
           headers: {
@@ -609,7 +627,7 @@ export default function PatientPage() {
               status: altResponse.status,
               statusText: altResponse.statusText,
               error: altErrorText,
-            }
+            },
           );
           setOnDutyDoctor(null);
           setIsLoadingDoctor(false);
@@ -638,7 +656,7 @@ export default function PatientPage() {
       // Find the schedule that matches current day and shift
       const matchingSchedule = schedules.find(
         (schedule) =>
-          schedule.day === currentDay && schedule.shift === currentShift
+          schedule.day === currentDay && schedule.shift === currentShift,
       );
 
       console.log("[fetchOnDutyDoctor] Matching schedule:", matchingSchedule);
@@ -653,12 +671,12 @@ export default function PatientPage() {
 
       // Find the doctor_schedule that matches the schedule_id
       const matchingDoctorSchedule = doctorSchedules.find(
-        (ds) => ds.schedule_id === matchingSchedule.schedule_id
+        (ds) => ds.schedule_id === matchingSchedule.schedule_id,
       );
 
       console.log(
         "[fetchOnDutyDoctor] Matching doctor schedule:",
-        matchingDoctorSchedule
+        matchingDoctorSchedule,
       );
 
       if (!matchingDoctorSchedule) {
@@ -673,7 +691,7 @@ export default function PatientPage() {
       const doctor = doctors.find(
         (doc) =>
           doc.doctor_id === matchingDoctorSchedule.doctor_id &&
-          doc.is_active === 1
+          doc.is_active === 1,
       );
 
       console.log("[fetchOnDutyDoctor] Found doctor:", doctor);
@@ -790,35 +808,46 @@ export default function PatientPage() {
               transition={{ duration: 0.6 }}
               key="guest"
             >
-              <div className="flex mb-8">
-                <button
-                  onClick={() => setActiveTab("login")}
-                  className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
-                    activeTab === "login"
-                      ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => setActiveTab("register")}
-                  className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
-                    activeTab === "register"
-                      ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  Register
-                </button>
-              </div>
+              {activeTab !== "verify" && (
+                <div className="flex mb-8">
+                  <button
+                    onClick={() => setActiveTab("login")}
+                    className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
+                      activeTab === "login"
+                        ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("register")}
+                    className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
+                      activeTab === "register"
+                        ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    Register
+                  </button>
+                </div>
+              )}
 
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "login" ? (
                   <LoginForm onSubmit={handleLogin} isLoading={isLoggingIn} />
-                ) : (
-                  <RegisterForm onSubmit={handleRegister} />
-                )}
+                ) : activeTab === "register" ? (
+                  <RegisterForm
+                    onSubmit={handleRegister}
+                    onRegistrationSuccess={handleRegistrationSuccess}
+                  />
+                ) : activeTab === "verify" ? (
+                  <VerifyEmailForm
+                    email={pendingVerificationEmail}
+                    onVerified={handleVerificationSuccess}
+                    onBack={handleBackToRegister}
+                  />
+                ) : null}
               </AnimatePresence>
             </motion.div>
           ) : (
@@ -854,11 +883,11 @@ export default function PatientPage() {
                         doctorName={(() => {
                           if (!queueEntry?.schedule_id) return null;
                           const doctorSchedule = doctorSchedulesData.find(
-                            (ds) => ds.schedule_id === queueEntry.schedule_id
+                            (ds) => ds.schedule_id === queueEntry.schedule_id,
                           );
                           if (!doctorSchedule) return null;
                           const doctor = doctorsData.find(
-                            (doc) => doc.doctor_id === doctorSchedule.doctor_id
+                            (doc) => doc.doctor_id === doctorSchedule.doctor_id,
                           );
                           return doctor?.doctor_name || null;
                         })()}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 
-export default function RegisterForm({ onSubmit }) {
+export default function RegisterForm({ onSubmit, onRegistrationSuccess }) {
   const { registerWithAPI } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
@@ -34,6 +34,10 @@ export default function RegisterForm({ onSubmit }) {
     try {
       const result = await registerWithAPI(formData);
       if (result.success) {
+        // Call onRegistrationSuccess with the email for verification
+        if (onRegistrationSuccess) {
+          onRegistrationSuccess(formData.emailRegister);
+        }
         // Call the original onSubmit if provided (for any additional handling)
         if (onSubmit) {
           onSubmit(formData);
