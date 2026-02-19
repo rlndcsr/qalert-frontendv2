@@ -74,19 +74,19 @@ export default function QueueStatusCard({
             queueEntry.queue_status === "now_serving"
               ? "bg-green-100 text-green-700"
               : queueEntry.queue_status === "called"
-              ? "bg-blue-100 text-blue-700"
-              : queueEntry.queue_status === "completed"
-              ? "bg-white text-gray-700 border border-gray-300"
-              : queueEntry.queue_status === "cancelled"
-              ? "bg-red-100 text-red-700"
-              : "bg-amber-100 text-amber-700"
+                ? "bg-blue-100 text-blue-700"
+                : queueEntry.queue_status === "completed"
+                  ? "bg-white text-gray-700 border border-gray-300"
+                  : queueEntry.queue_status === "cancelled"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-amber-100 text-amber-700"
           }`}
         >
           {queueEntry.queue_status === "now_serving"
             ? "now serving"
             : queueEntry.queue_status === "called"
-            ? "called"
-            : queueEntry.queue_status || "waiting"}
+              ? "called"
+              : queueEntry.queue_status || "waiting"}
         </span>
       </div>
 
@@ -137,12 +137,14 @@ export default function QueueStatusCard({
             <p className="text-xs font-semibold text-[#25323A] mt-1">
               {queueEntry.queue_status === "now_serving"
                 ? "Now Serving"
-                : !queueEntry.queue_status ||
-                  queueEntry.queue_status === "waiting"
-                ? queuePosition !== null
-                  ? getOrdinalPosition(queuePosition)
-                  : ""
-                : "—"}
+                : queueEntry.queue_status === "called"
+                  ? "Called"
+                  : !queueEntry.queue_status ||
+                      queueEntry.queue_status === "waiting"
+                    ? queuePosition !== null
+                      ? getOrdinalPosition(queuePosition)
+                      : ""
+                    : "—"}
             </p>
           </div>
         </div>
@@ -159,7 +161,7 @@ export default function QueueStatusCard({
           </div>
           <div className="flex-1">
             <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-              Doctor on Duty
+              Doctor
             </p>
             <p className="text-xs font-semibold text-[#25323A] mt-1">
               {doctorName || "—"}

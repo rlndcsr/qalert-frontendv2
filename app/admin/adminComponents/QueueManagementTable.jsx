@@ -12,7 +12,7 @@ export default function QueueManagementTable({
   userMap,
   isFetchingData,
   setQueues,
-  setCalledPatient,
+  setCalledPatients,
 }) {
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
@@ -33,7 +33,7 @@ export default function QueueManagementTable({
             "ngrok-skip-browser-warning": true,
           },
           body: JSON.stringify({ queue_status: "called" }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -45,12 +45,15 @@ export default function QueueManagementTable({
         prevQueues.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
             ? { ...q, queue_status: "called" }
-            : q
-        )
+            : q,
+        ),
       );
 
-      // Set as called patient
-      setCalledPatient({ ...queue, queue_status: "called" });
+      // Add to called patients list
+      setCalledPatients((prev) => [
+        ...prev,
+        { ...queue, queue_status: "called" },
+      ]);
 
       // Send SMS notification
       try {
@@ -59,7 +62,7 @@ export default function QueueManagementTable({
         const moceanTo = rawPhone.replace(/^0/, "63");
 
         const text = `CSU-UCHW: You are now called for queue #${String(
-          queue.queue_number
+          queue.queue_number,
         ).padStart(3, "0")}. Please proceed to the clinic. Thank you.`;
 
         await fetch("/api/sms", {
@@ -182,10 +185,10 @@ export default function QueueManagementTable({
             ) : (
               (() => {
                 const sorted = todayQueues.sort(
-                  (a, b) => a.queue_number - b.queue_number
+                  (a, b) => a.queue_number - b.queue_number,
                 );
                 const firstWaitingId = sorted.find(
-                  (q) => q.queue_status.toLowerCase() === "waiting"
+                  (q) => q.queue_status.toLowerCase() === "waiting",
                 )?.queue_entry_id;
 
                 return sorted.map((queue, index) => {

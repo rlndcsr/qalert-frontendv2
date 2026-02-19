@@ -65,8 +65,8 @@ export default function AdminPortal() {
   // User menu state
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // Called patient state
-  const [calledPatient, setCalledPatient] = useState(null);
+  // Called patients state (supports multiple called patients)
+  const [calledPatients, setCalledPatients] = useState([]);
 
   // Month selector state for analytics
   const currentDate = new Date();
@@ -194,20 +194,18 @@ export default function AdminPortal() {
     return map;
   }, [users]);
 
-  // Restore called/now_serving patient from queue data on refresh
+  // Restore called/now_serving patients from queue data on refresh
   useEffect(() => {
-    if (queues.length > 0 && !calledPatient) {
-      const calledOrServing = queues.find(
+    if (queues.length > 0) {
+      const calledOrServingPatients = queues.filter(
         (queue) =>
           queue.date === todayDate &&
           (queue.queue_status.toLowerCase() === "called" ||
             queue.queue_status.toLowerCase() === "now_serving"),
       );
-      if (calledOrServing) {
-        setCalledPatient(calledOrServing);
-      }
+      setCalledPatients(calledOrServingPatients);
     }
-  }, [queues, todayDate, calledPatient]);
+  }, [queues, todayDate]);
 
   const handleToggleSystemStatus = async () => {
     if (isTogglingStatus) return;
@@ -489,10 +487,10 @@ export default function AdminPortal() {
             <StatisticsCards stats={stats} isFetchingData={isFetchingData} />
 
             <CalledPatientDisplay
-              calledPatient={calledPatient}
+              calledPatients={calledPatients}
               userMap={userMap}
               setQueues={setQueues}
-              setCalledPatient={setCalledPatient}
+              setCalledPatients={setCalledPatients}
             />
 
             <QueueManagementTable
@@ -501,7 +499,7 @@ export default function AdminPortal() {
               userMap={userMap}
               isFetchingData={isFetchingData}
               setQueues={setQueues}
-              setCalledPatient={setCalledPatient}
+              setCalledPatients={setCalledPatients}
             />
           </motion.div>
         ) : (

@@ -10,7 +10,7 @@ export async function POST(req) {
     if (!to || !text) {
       return NextResponse.json(
         { error: "Missing 'to' or 'text'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer apit-HVaCGYj7MEi9ZGx5JkPWEDFQIoPGlboS-Umioa",
+        Authorization: "Bearer apit-53fCIYhDkdPEWfipOUiI4QL6h9kkyBis-smU0a",
       },
       body: params.toString(),
     });
@@ -36,7 +36,7 @@ export async function POST(req) {
     if (!resp.ok) {
       return NextResponse.json(
         { error: "Mocean error", details: body },
-        { status: resp.status }
+        { status: resp.status },
       );
     }
 
@@ -44,7 +44,7 @@ export async function POST(req) {
   } catch (err) {
     return NextResponse.json(
       { error: "Server error", details: String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

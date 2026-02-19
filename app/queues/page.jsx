@@ -129,8 +129,8 @@ export default function QueueDisplay() {
   const { nowServing, ready, waiting, totalInQueue } = useMemo(() => {
     if (isLoadingData || queueEntries.length === 0) {
       return {
-        nowServing: null,
-        ready: null,
+        nowServing: [],
+        ready: [],
         waiting: [],
         totalInQueue: 0,
       };
@@ -149,25 +149,19 @@ export default function QueueDisplay() {
       .filter((entry) => entry.queue_status === "waiting")
       .sort((a, b) => a.queue_number - b.queue_number);
 
-    // Now serving: first "now_serving" entry only
-    const nowServingEntry = nowServingEntries[0];
-    const nowServingData = nowServingEntry
-      ? {
-          number: nowServingEntry.queue_number,
-          name: users[nowServingEntry.user_id]?.name || "Unknown",
-          id_number: users[nowServingEntry.user_id]?.id_number || "",
-        }
-      : null;
+    // Now serving: all "now_serving" entries
+    const nowServingData = nowServingEntries.map((entry) => ({
+      number: entry.queue_number,
+      name: users[entry.user_id]?.name || "Unknown",
+      id_number: users[entry.user_id]?.id_number || "",
+    }));
 
-    // Ready (Please Proceed): first "called" entry
-    const readyEntry = calledEntries[0];
-    const readyData = readyEntry
-      ? {
-          number: readyEntry.queue_number,
-          name: users[readyEntry.user_id]?.name || "Unknown",
-          id_number: users[readyEntry.user_id]?.id_number || "",
-        }
-      : null;
+    // Ready (Please Proceed): all "called" entries
+    const readyData = calledEntries.map((entry) => ({
+      number: entry.queue_number,
+      name: users[entry.user_id]?.name || "Unknown",
+      id_number: users[entry.user_id]?.id_number || "",
+    }));
 
     // Waiting: all "waiting" entries
     const waitingData = waitingEntries.map((entry, index) => ({
@@ -294,36 +288,53 @@ export default function QueueDisplay() {
               <div className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full"></div>
               <div className="absolute bottom-10 right-10 w-24 h-24 bg-white rounded-full"></div>
             </div>
-            <div className="relative z-10 text-center">
+            <div className="relative z-10 text-center w-full">
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full mb-3">
                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                 <span className="text-white text-[10px] md:text-xs font-medium tracking-wide uppercase">
                   Now Serving
                 </span>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
-                {isLoadingData ? (
+              {isLoadingData ? (
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
                   <div className="animate-pulse">
                     <div className="h-[36px] md:h-[48px] bg-white/20 rounded w-16 mx-auto mb-2.5"></div>
                     <div className="h-[28px] md:h-[32px] bg-white/20 rounded w-32 mx-auto mb-1.5"></div>
                     <div className="h-[16px] md:h-[20px] bg-white/20 rounded w-20 mx-auto"></div>
                   </div>
-                ) : nowServing ? (
-                  <>
-                    <div className="text-[36px] md:text-[48px] font-black text-white leading-none mb-2.5">
-                      {formatQueueNumber(nowServing.number)}
+                </div>
+              ) : nowServing.length > 0 ? (
+                <div
+                  className={`grid gap-2 ${nowServing.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+                >
+                  {nowServing.map((patient, index) => (
+                    <div
+                      key={index}
+                      className="bg-white/10 backdrop-blur-md rounded-xl p-3 md:p-4 border border-white/20"
+                    >
+                      <div
+                        className={`font-black text-white leading-none mb-1 ${nowServing.length === 1 ? "text-[36px] md:text-[48px]" : "text-[24px] md:text-[32px]"}`}
+                      >
+                        {formatQueueNumber(patient.number)}
+                      </div>
+                      <div
+                        className={`font-bold text-white mb-0.5 truncate ${nowServing.length === 1 ? "text-lg md:text-xl" : "text-sm md:text-base"}`}
+                      >
+                        {patient.name}
+                      </div>
+                      <div
+                        className={`text-white/90 ${nowServing.length === 1 ? "text-xs md:text-sm" : "text-[10px] md:text-xs"}`}
+                      >
+                        {patient.id_number}
+                      </div>
                     </div>
-                    <div className="text-lg md:text-xl font-bold text-white mb-1.5">
-                      {nowServing.name}
-                    </div>
-                    <div className="text-xs md:text-sm text-white/90">
-                      {nowServing.id_number}
-                    </div>
-                  </>
-                ) : (
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
                   <div className="text-white/80 text-base md:text-lg"></div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -364,21 +375,28 @@ export default function QueueDisplay() {
                       <div className="h-[12px] md:h-[14px] bg-white/20 rounded w-16"></div>
                     </div>
                   </div>
-                ) : ready ? (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white text-base md:text-lg font-black">
-                        {formatQueueNumber(ready.number)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white text-xs md:text-sm font-semibold">
-                        {ready.name}
-                      </p>
-                      <p className="text-white/80 text-[10px] md:text-xs">
-                        {ready.id_number}
-                      </p>
-                    </div>
+                ) : ready.length > 0 ? (
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {ready.map((patient, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-white text-base md:text-lg font-black">
+                            {formatQueueNumber(patient.number)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white text-xs md:text-sm font-semibold">
+                            {patient.name}
+                          </p>
+                          <p className="text-white/80 text-[10px] md:text-xs">
+                            {patient.id_number}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-white/80 text-xs md:text-sm">

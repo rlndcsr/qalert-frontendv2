@@ -200,11 +200,11 @@ function UserQueueCard({ userQueue, reasonCategories }) {
           label="Reason"
           value={getReasonCategoryName(userQueue.reason_category_id)}
         />
-        <QueueInfoItem
+        {/* <QueueInfoItem
           icon={FileText}
           label="Description"
           value={userQueue.reason}
-        />
+        /> */}
       </div>
     </motion.div>
   );
