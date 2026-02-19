@@ -61,9 +61,21 @@ export default function QueueManagementTable({
         const rawPhone = patient.phone_number || "";
         const moceanTo = rawPhone.replace(/^0/, "63");
 
+        // Calculate the user's position in the queue
+        const sortedQueues = [...todayQueues].sort(
+          (a, b) => a.queue_number - b.queue_number,
+        );
+        const position =
+          sortedQueues.findIndex(
+            (q) => q.queue_entry_id === queue.queue_entry_id,
+          ) + 1;
+
         const text = `CSU-UCHW: You are now called for queue #${String(
           queue.queue_number,
-        ).padStart(3, "0")}. Please proceed to the clinic. Thank you.`;
+        ).padStart(
+          3,
+          "0",
+        )}. Your position: ${position}. Please proceed to the clinic. Thank you.`;
 
         await fetch("/api/sms", {
           method: "POST",
@@ -278,7 +290,7 @@ export default function QueueManagementTable({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
-                          {statusLower === "waiting" && isFirstWaiting && (
+                          {statusLower === "waiting" && (
                             <button
                               onClick={() => handleCallPatient(queue)}
                               className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors"

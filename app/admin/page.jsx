@@ -99,15 +99,20 @@ export default function AdminPortal() {
     checkAuth();
   }, []);
 
-  // Fetch queues and users when authenticated
+  // Fetch queues and users when authenticated with live polling
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const fetchData = async () => {
-      const token = localStorage.getItem("adminToken");
-      if (!token) return;
+    let isMounted = true;
 
-      setIsFetchingData(true);
+    const fetchData = async (isInitialLoad = false) => {
+      const token = localStorage.getItem("adminToken");
+      if (!token || !isMounted) return;
+
+      // Only show loading state on initial load
+      if (isInitialLoad) {
+        setIsFetchingData(true);
+      }
       try {
         const headers = {
           Accept: "application/json",
@@ -127,17 +132,36 @@ export default function AdminPortal() {
         const queuesData = await queuesResponse.json();
         const usersData = await usersResponse.json();
 
-        setQueues(queuesData);
-        setUsers(usersData);
+        if (isMounted) {
+          setQueues(queuesData);
+          setUsers(usersData);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
-        toast.error("Failed to load queue data");
+        // Only show error toast on initial load to avoid spamming
+        if (isInitialLoad && isMounted) {
+          toast.error("Failed to load queue data");
+        }
       } finally {
-        setIsFetchingData(false);
+        if (isInitialLoad && isMounted) {
+          setIsFetchingData(false);
+        }
       }
     };
 
-    fetchData();
+    // Initial fetch
+    fetchData(true);
+
+    // Set up polling interval (every 3 seconds for faster updates)
+    const pollInterval = setInterval(() => {
+      fetchData(false);
+    }, 3000);
+
+    // Cleanup interval on unmount or when authentication changes
+    return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+    };
   }, [isAuthenticated]);
 
   // Fetch system status when authenticated
