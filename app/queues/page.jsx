@@ -29,6 +29,10 @@ export default function QueueDisplay() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // State for emergency encounters
+  const [emergencyEncounters, setEmergencyEncounters] = useState([]);
+  const previousEmergencyDataRef = useRef(null);
+
   // Refs for comparing data to avoid unnecessary re-renders
   const previousQueueDataRef = useRef(null);
   const previousUsersDataRef = useRef(null);
@@ -50,6 +54,26 @@ export default function QueueDisplay() {
     return JSON.stringify(newData) === JSON.stringify(oldData);
   }, []);
 
+  // Helper to get today's date in YYYY-MM-DD format (local timezone)
+  const getTodayString = useCallback(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  // Helper to normalize UTC date to local date for comparison
+  const normalizeDateToLocal = useCallback((dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
   // Fetch queue entries and users with optimized state updates
   const fetchQueueData = useCallback(
     async (isInitial = false) => {
@@ -61,11 +85,13 @@ export default function QueueDisplay() {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        // Fetch queues and users in parallel
-        const [queuesResponse, usersResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/queues`, { headers }),
-          fetch(`${API_BASE_URL}/api/users`, { headers }),
-        ]);
+        // Fetch queues, users, and emergency encounters in parallel
+        const [queuesResponse, usersResponse, emergencyResponse] =
+          await Promise.all([
+            fetch(`${API_BASE_URL}/api/queues`, { headers }),
+            fetch(`${API_BASE_URL}/api/users`, { headers }),
+            fetch(`${API_BASE_URL}/api/emergency-encounters`, { headers }),
+          ]);
 
         if (queuesResponse.ok && usersResponse.ok) {
           const queuesData = await queuesResponse.json();
@@ -76,6 +102,26 @@ export default function QueueDisplay() {
           const todayQueues = queuesData.filter(
             (entry) => entry.date === today,
           );
+
+          // Handle emergency encounters
+          if (emergencyResponse.ok) {
+            const emergencyData = await emergencyResponse.json();
+            const allEncounters = Array.isArray(emergencyData)
+              ? emergencyData
+              : emergencyData.data || [];
+            // Filter for today's encounters
+            const todayString = getTodayString();
+            const todayEncounters = allEncounters.filter((enc) => {
+              const encDate = normalizeDateToLocal(enc.date);
+              return encDate === todayString;
+            });
+            if (
+              !isDataEqual(todayEncounters, previousEmergencyDataRef.current)
+            ) {
+              previousEmergencyDataRef.current = todayEncounters;
+              setEmergencyEncounters(todayEncounters);
+            }
+          }
 
           // Create a user map for quick lookup
           const userMap = {};
@@ -108,7 +154,7 @@ export default function QueueDisplay() {
         }
       }
     },
-    [getAuthToken, isDataEqual],
+    [getAuthToken, isDataEqual, getTodayString, normalizeDateToLocal],
   );
 
   // Initial fetch and polling setup
@@ -406,6 +452,52 @@ export default function QueueDisplay() {
               </div>
             </div>
           </div>
+
+          {/* Emergency Encounters */}
+          {emergencyEncounters.length > 0 && (
+            <div className="rounded-2xl shadow-sm p-3 relative overflow-hidden flex-shrink-0 bg-white border-2 border-red-500">
+              <div className="flex items-center gap-3">
+                <div className="bg-red-50 rounded-xl p-2 md:p-3 border border-red-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-5 h-5 md:w-6 md:h-6 text-red-600"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-red-600 text-xs md:text-sm font-bold mb-1">
+                    Emergency ({emergencyEncounters.length})
+                  </p>
+                  <div className="space-y-1.5 max-h-24 overflow-y-auto">
+                    {emergencyEncounters.map((enc, index) => (
+                      <div
+                        key={enc.id || index}
+                        className="flex items-center justify-between"
+                      >
+                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate max-w-[120px]">
+                          {enc.patient_name}
+                        </p>
+                        <p className="text-[10px] md:text-xs text-gray-500">
+                          {enc.details
+                            ? enc.details.length > 15
+                              ? enc.details.substring(0, 15) + "..."
+                              : enc.details
+                            : "—"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column - Waiting Queue */}
