@@ -877,14 +877,17 @@ export default function EmergencyEncountersView() {
   const itemsPerPage = 10;
 
   // Date filter state
-  const [dateFilterType, setDateFilterType] = useState("all"); // 'all', 'today', 'range'
+  const [dateFilterType, setDateFilterType] = useState("today"); // 'all', 'today', 'range'
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Get today's date in YYYY-MM-DD format for comparisons
+  // Get today's date in YYYY-MM-DD format for comparisons (using local timezone)
   const getTodayString = () => {
     const today = new Date();
-    return today.toISOString().split("T")[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   // Modal state
@@ -911,23 +914,87 @@ export default function EmergencyEncountersView() {
     }
   };
 
+  // Helper function to normalize date to YYYY-MM-DD format for comparison
+  // Handles UTC dates by converting to local timezone first
+  const normalizeDateForComparison = (dateString) => {
+    if (!dateString) return "";
+
+    // If it contains 'T' or 'Z', it's an ISO/UTC date - parse and convert to local
+    if (dateString.includes("T") || dateString.includes("Z")) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+    }
+
+    // If it's already in YYYY-MM-DD format (without time)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // If it's in MM/DD/YYYY format
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(dateString)) {
+      const [month, day, year] = dateString.split("/");
+      return `${year}-${month}-${day}`;
+    }
+
+    // If it's in YYYY/MM/DD format
+    if (/^\d{4}\/\d{2}\/\d{2}/.test(dateString)) {
+      const [year, month, day] = dateString.split("/");
+      return `${year}-${month}-${day}`;
+    }
+
+    // Try to parse as Date object
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    return dateString;
+  };
+
   // Filter encounters based on search and date
   const filteredEncounters = useMemo(() => {
     let result = encounters;
+
+    // Debug logging
+    console.log("=== DEBUG Emergency Encounters Filter ===");
+    console.log("dateFilterType:", dateFilterType);
+    console.log("encounters count:", encounters.length);
+    if (encounters.length > 0) {
+      console.log("Sample encounter:", encounters[0]);
+      console.log("Sample enc.date:", encounters[0]?.date);
+      console.log(
+        "Normalized date:",
+        normalizeDateForComparison(encounters[0]?.date),
+      );
+    }
+    console.log("Today string:", getTodayString());
 
     // Apply date filter
     if (dateFilterType === "today") {
       const today = getTodayString();
       result = result.filter((enc) => {
-        const encDate = enc.date?.split("T")[0];
+        const encDate = normalizeDateForComparison(enc.date);
+        console.log(
+          `Comparing: encDate="${encDate}" vs today="${today}" => ${encDate === today}`,
+        );
         return encDate === today;
       });
     } else if (dateFilterType === "range" && startDate && endDate) {
       result = result.filter((enc) => {
-        const encDate = enc.date?.split("T")[0];
+        const encDate = normalizeDateForComparison(enc.date);
         return encDate >= startDate && encDate <= endDate;
       });
     }
+
+    console.log("Filtered result count:", result.length);
 
     // Apply search filter
     if (searchQuery.trim()) {
