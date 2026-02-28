@@ -16,11 +16,12 @@ export default function QueueStatusCard({
   if (isLoading) {
     return (
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#4ad294]/20 p-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
       >
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#4ad294] via-[#64dca6] to-[#4ad294]" />
         {/* Skeleton UI for queue status card */}
         <div className="animate-pulse flex flex-col gap-4">
           <div className="h-6 w-1/3 bg-gray-100 rounded" />
@@ -42,11 +43,12 @@ export default function QueueStatusCard({
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#4ad294]/20 p-6"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
     >
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#4ad294] via-[#64dca6] to-[#4ad294]" />
       {/* Header Row */}
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-start gap-3">
@@ -92,7 +94,7 @@ export default function QueueStatusCard({
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-        <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3 shadow-sm">
           <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +117,7 @@ export default function QueueStatusCard({
             </p>
           </div>
         </div>
-        <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3 shadow-sm">
           <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -148,7 +150,7 @@ export default function QueueStatusCard({
             </p>
           </div>
         </div>
-        <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3 shadow-sm">
           <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -171,7 +173,7 @@ export default function QueueStatusCard({
       </div>
 
       {/* Notifications Banner */}
-      <div className="rounded-lg border border-[#4ad294]/20 bg-[#F0FDF4] p-4 mb-5 flex items-start gap-3">
+      <div className="rounded-xl border border-[#4ad294]/20 bg-[#F0FDF4] p-4 mb-5 flex items-start gap-3 shadow-sm">
         <div className="w-8 h-8 bg-white border border-[#4ad294]/30 rounded-full flex items-center justify-center">
           <Image
             src="/icons/bell.png"
@@ -196,7 +198,7 @@ export default function QueueStatusCard({
       </div>
 
       {/* Footer Row */}
-      <div className="pt-3 border-t border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="pt-3 border-t border-[#4ad294]/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="text-xs text-gray-500 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -228,14 +230,14 @@ export default function QueueStatusCard({
             <button
               type="button"
               onClick={onUpdateClick}
-              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-md transition-colors hover:cursor-pointer"
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-lg transition-colors hover:cursor-pointer bg-white"
             >
               Update Reason
             </button>
             <button
               type="button"
               onClick={onCancelClick}
-              className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-md transition-colors hover:cursor-pointer"
+              className="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg transition-colors hover:cursor-pointer bg-white"
             >
               Cancel Queue Entry
             </button>

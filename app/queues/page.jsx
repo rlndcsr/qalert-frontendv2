@@ -273,7 +273,7 @@ export default function QueueDisplay() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-3 bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex items-center gap-2 md:gap-3 bg-white/95 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl shadow-sm border border-slate-300/70">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -324,7 +324,7 @@ export default function QueueDisplay() {
         <div className="col-span-1 md:col-span-5 flex flex-col gap-3 md:gap-4 min-h-0">
           {/* Now Serving */}
           <div
-            className="rounded-2xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden"
+            className="rounded-3xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden border border-[#5D7391]"
             style={{
               background:
                 "linear-gradient(to bottom right, #374D6C, #4A6280, #374D6C)",
@@ -356,7 +356,7 @@ export default function QueueDisplay() {
                   {nowServing.map((patient, index) => (
                     <div
                       key={index}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-3 md:p-4 border border-white/20"
+                      className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 border border-white/25 shadow-sm"
                     >
                       <div
                         className={`font-black text-white leading-none mb-1 ${nowServing.length === 1 ? "text-[36px] md:text-[48px]" : "text-[24px] md:text-[32px]"}`}
@@ -386,14 +386,14 @@ export default function QueueDisplay() {
 
           {/* Please Proceed */}
           <div
-            className="rounded-2xl shadow-lg p-3 relative overflow-hidden flex-shrink-0"
+            className="rounded-3xl shadow-lg p-3 relative overflow-hidden flex-shrink-0 border border-[#8AA0B8]"
             style={{
               background: "linear-gradient(to bottom right, #5A7A9A, #6B8CAC)",
             }}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
             <div className="relative z-10 flex items-center gap-3">
-              <div className="bg-white rounded-xl p-2 md:p-3 shadow-lg">
+              <div className="bg-white rounded-2xl p-2 md:p-3 shadow-lg border border-white/70">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -455,9 +455,9 @@ export default function QueueDisplay() {
 
           {/* Emergency Encounters */}
           {emergencyEncounters.length > 0 && (
-            <div className="rounded-2xl shadow-sm p-3 relative overflow-hidden flex-shrink-0 bg-white border-2 border-red-500">
+            <div className="rounded-3xl shadow-sm p-3 relative overflow-hidden flex-shrink-0 bg-white border-2 border-red-500">
               <div className="flex items-center gap-3">
-                <div className="bg-red-50 rounded-xl p-2 md:p-3 border border-red-200">
+                <div className="bg-red-50 rounded-2xl p-2 md:p-3 border border-red-200 shadow-sm">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -501,7 +501,7 @@ export default function QueueDisplay() {
         </div>
 
         {/* Right Column - Waiting Queue */}
-        <div className="col-span-1 md:col-span-7 bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col overflow-hidden min-h-0">
+        <div className="col-span-1 md:col-span-7 bg-white/95 rounded-3xl shadow-lg border border-slate-300/70 flex flex-col overflow-hidden min-h-0">
           <div
             className="px-3 md:px-4 py-2 md:py-2.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0"
             style={{
@@ -544,7 +544,7 @@ export default function QueueDisplay() {
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="rounded-xl p-2.5 md:p-3 border border-slate-200 animate-pulse break-inside-avoid"
+                    className="rounded-2xl p-2.5 md:p-3 border border-slate-200 animate-pulse break-inside-avoid"
                     style={{
                       background:
                         "linear-gradient(to right, #F1F5F9, transparent)",
@@ -565,7 +565,7 @@ export default function QueueDisplay() {
               waiting.map((w, index) => (
                 <div
                   key={w.number}
-                  className="rounded-xl p-2.5 md:p-3 border border-slate-200 hover:shadow-md transition-all break-inside-avoid mb-2.5 md:mb-3"
+                  className="rounded-2xl p-2.5 md:p-3 border border-slate-200 hover:shadow-md transition-all break-inside-avoid mb-2.5 md:mb-3"
                   style={{
                     background:
                       "linear-gradient(to right, #F1F5F9, transparent)",
@@ -573,7 +573,7 @@ export default function QueueDisplay() {
                 >
                   <div className="flex items-center gap-2.5 md:gap-3">
                     <div
-                      className="rounded-xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
+                      className="rounded-2xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
                       style={{
                         backgroundColor: "#E8EDF2",
                         borderColor: "#374D6C",

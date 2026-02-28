@@ -103,12 +103,13 @@ export default function QueueManagementTable({
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+      className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <div className="p-6 border-b border-gray-200">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
+      <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#00968a]/5 to-transparent">
         <h2 className="text-lg font-semibold text-[#25323A] mb-1">
           Queue Management
         </h2>
@@ -119,7 +120,7 @@ export default function QueueManagementTable({
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-slate-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Position
@@ -242,7 +243,10 @@ export default function QueueManagementTable({
                       : queue.estimated_time_wait || `~${(index + 1) * 10}m`;
 
                   return (
-                    <tr key={queue.queue_entry_id} className="hover:bg-gray-50">
+                    <tr
+                      key={queue.queue_entry_id}
+                      className="hover:bg-slate-50/80 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
                         {index + 1}
                       </td>
@@ -293,7 +297,7 @@ export default function QueueManagementTable({
                           {statusLower === "waiting" && (
                             <button
                               onClick={() => handleCallPatient(queue)}
-                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors"
+                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                             >
                               Call
                             </button>
@@ -302,7 +306,7 @@ export default function QueueManagementTable({
                             statusLower === "serving") && (
                             <button
                               onClick={() => handleCompletePatient(queue)}
-                              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors"
+                              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                             >
                               Complete
                             </button>

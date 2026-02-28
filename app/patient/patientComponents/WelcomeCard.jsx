@@ -7,7 +7,7 @@ export default function WelcomeCard({ user, isLoading }) {
   if (isLoading) {
     return (
       <motion.div
-        className="bg-gradient-to-br from-[#4ad294] to-[#3bb882] rounded-2xl shadow-lg p-8 relative overflow-hidden"
+        className="bg-gradient-to-br from-[#4ad294] to-[#3bb882] rounded-2xl shadow-lg p-8 relative overflow-hidden border border-white/30"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -34,11 +34,12 @@ export default function WelcomeCard({ user, isLoading }) {
 
   return (
     <motion.div
-      className="bg-gradient-to-br from-[#4ad294] via-[#3ec085] to-[#2fa872] rounded-xl shadow-md p-6 relative overflow-hidden"
+      className="bg-gradient-to-br from-[#4ad294] via-[#3ec085] to-[#2fa872] rounded-2xl shadow-lg p-6 relative overflow-hidden border border-white/30"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.28),transparent_42%)] pointer-events-none" />
       {/* Heart Rate icon - top left with circular background */}
       <div className="absolute top-6 left-6 w-12 h-12 bg-white/15 rounded-full border-2 border-white/40 flex items-center justify-center backdrop-blur-sm">
         <Image

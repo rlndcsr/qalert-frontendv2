@@ -74,11 +74,12 @@ export default function CalledPatientDisplay({
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8"
+      className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20 p-6 mb-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
     >
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
       <div className="flex items-center gap-2 mb-4">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -98,7 +99,7 @@ export default function CalledPatientDisplay({
             <div key={calledPatient.queue_entry_id} className="flex gap-4">
               {/* Patient Info */}
               <div
-                className={`flex-1 p-4 rounded-lg ${
+                className={`flex-1 p-4 rounded-xl shadow-sm ${
                   calledPatient.queue_status === "now_serving"
                     ? "bg-green-50 border border-green-200"
                     : "bg-blue-50 border border-blue-200"
@@ -155,7 +156,7 @@ export default function CalledPatientDisplay({
                   Status
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm h-fit bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm h-fit bg-white shadow-sm"
                   value=""
                   onChange={(e) =>
                     handleStatusChange(calledPatient, e.target.value)

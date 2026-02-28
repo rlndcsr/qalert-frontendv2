@@ -12,7 +12,8 @@ export default function StatisticsCards({ stats, isFetchingData }) {
       transition={{ duration: 0.5, delay: 0.2 }}
     >
       {/* Active Queue */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20 p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
         <div className="flex items-center gap-2">
           <Image
             src="/icons/active-queue.png"
@@ -35,7 +36,8 @@ export default function StatisticsCards({ stats, isFetchingData }) {
       </div>
 
       {/* Completed */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20 p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
         <div className="flex items-center gap-2">
           <Image
             src="/icons/completed.png"
@@ -58,7 +60,8 @@ export default function StatisticsCards({ stats, isFetchingData }) {
       </div>
 
       {/* Today Total */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20 p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
         <div className="flex items-center gap-2">
           <Image
             src="/icons/total-today.png"

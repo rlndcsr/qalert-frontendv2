@@ -9,7 +9,7 @@ export default function CompletedQueueCard({ completedEntries }) {
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-green-200 p-6"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -18,6 +18,7 @@ export default function CompletedQueueCard({ completedEntries }) {
         delay: 0.1,
       }}
     >
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-green-400 via-green-300 to-green-400" />
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
@@ -55,7 +56,7 @@ export default function CompletedQueueCard({ completedEntries }) {
         {completedEntries.map((ce) => (
           <div
             key={ce.queue_entry_id || ce.id || ce.created_at}
-            className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+            className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm"
           >
             <div className="flex items-start justify-between mb-2">
               <p className="text-sm font-medium text-[#25323A] line-clamp-2">
@@ -89,7 +90,7 @@ export default function CompletedQueueCard({ completedEntries }) {
       </div>
 
       {/* Note */}
-      <div className="mt-4 text-xs text-gray-600 bg-green-50 border border-green-200 rounded-lg p-3">
+      <div className="mt-4 text-xs text-gray-600 bg-green-50 border border-green-200 rounded-xl p-3 shadow-sm">
         <span className="font-medium text-green-700">✓ Visit Complete</span>
         <p className="mt-1">
           Thank you for using our queueing system. Feel free to join the queue

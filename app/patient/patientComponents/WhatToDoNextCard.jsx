@@ -6,11 +6,12 @@ export default function WhatToDoNextCard({ queueEntry, isLoading }) {
   if (isLoading) {
     return (
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#4ad294]/20 p-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.06 }}
       >
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#4ad294] via-[#64dca6] to-[#4ad294]" />
         <div className="animate-pulse space-y-4">
           <div className="h-6 w-40 bg-gray-100 rounded" />
           <div className="space-y-3">
@@ -38,7 +39,7 @@ export default function WhatToDoNextCard({ queueEntry, isLoading }) {
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#4ad294]/20 p-6"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -47,6 +48,7 @@ export default function WhatToDoNextCard({ queueEntry, isLoading }) {
         delay: 0.06,
       }}
     >
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#4ad294] via-[#64dca6] to-[#4ad294]" />
       <h3 className="text-lg font-semibold text-[#25323A] mb-4">
         What to do next?
       </h3>
