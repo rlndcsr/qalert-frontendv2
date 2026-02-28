@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { sileo } from "sileo";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
@@ -71,9 +72,11 @@ export function useAuth() {
 
       return { success: true, user: data.user };
     } catch (error) {
-      toast.error(
-        error.message || "Login failed. Please check your credentials.",
-      );
+      sileo.error({
+        title: "Login failed",
+        description:
+          error.message || "Please check your credentials and try again.",
+      });
       return { success: false, error: error.message };
     } finally {
       setIsLoggingIn(false);
@@ -122,18 +125,24 @@ export function useAuth() {
       } else {
         // Handle validation errors from backend
         // Display the main message as toast
-        toast.error(data.message || "Registration failed");
+        sileo.error({
+          title: data.message || "Registration failed",
+        });
         return { success: false, error: data.message };
       }
     } catch (error) {
       // Handle network errors or validation errors
       if (error.name === "TypeError" || error.name === "SyntaxError") {
-        toast.error("Network error. Please check your connection.");
+        sileo.error({
+          title: "Network error. Please check your connection.",
+        });
         return { success: false, error: error.message };
       }
 
       // Handle validation errors from backend
-      toast.error(error.message || "Registration failed. Please try again.");
+      sileo.error({
+        title: error.message || "Registration failed. Please try again.",
+      });
       return { success: false, error: error.message };
     }
   };
@@ -164,18 +173,25 @@ export function useAuth() {
       if (response.ok) {
         return { success: true, data };
       } else {
-        toast.error(data.message || "Email verification failed");
+        sileo.error({
+          title: data.message || "Email verification failed",
+        });
         return { success: false, error: data.message };
       }
     } catch (error) {
       if (error.name === "TypeError" || error.name === "SyntaxError") {
-        toast.error("Network error. Please check your connection.");
+        sileo.error({
+          title: "Email verification failed",
+          description: "Network error. Please check your connection.",
+        });
         return { success: false, error: error.message };
       }
 
-      toast.error(
-        error.message || "Email verification failed. Please try again.",
-      );
+      sileo.error({
+        title: "Email verification failed",
+        description:
+          error.message || "Email verification failed. Please try again.",
+      });
       return { success: false, error: error.message };
     }
   };

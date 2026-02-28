@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { sileo } from "sileo";
 import { Mail, RefreshCw, CheckCircle, ArrowLeft } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -64,7 +65,10 @@ export default function VerifyEmailForm({ email, onVerified, onBack }) {
     const verificationCode = code.join("");
 
     if (verificationCode.length !== 6) {
-      toast.error("Please enter the complete 6-digit verification code");
+      sileo.error({
+        title: "Email verification failed",
+        description: "Please enter the complete 6-digit verification code.",
+      });
       return;
     }
 
@@ -74,7 +78,6 @@ export default function VerifyEmailForm({ email, onVerified, onBack }) {
       const result = await verifyEmail(email, verificationCode);
 
       if (result.success) {
-        toast.success("Email verified successfully! You can now log in.");
         if (onVerified) {
           onVerified();
         }

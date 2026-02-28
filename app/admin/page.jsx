@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { sileo } from "sileo";
 import { SyncLoader } from "react-spinners";
 import { Menu } from "lucide-react";
 import AdminHeader from "./adminComponents/AdminHeader";
@@ -267,7 +268,10 @@ export default function AdminPortal() {
     e.preventDefault();
 
     if (!email_address.trim() || !password.trim()) {
-      toast.error("Please enter both email and password.");
+      sileo.error({
+        title: "Login failed",
+        description: "Please enter both email and password.",
+      });
       return;
     }
 
@@ -293,9 +297,11 @@ export default function AdminPortal() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        toast.error(
-          data?.message || "Login failed. Please check your credentials.",
-        );
+        sileo.error({
+          title: "Login failed",
+          description:
+            data?.message || "Please check your credentials and try again.",
+        });
         setIsLoggingIn(false);
         return;
       }
@@ -304,6 +310,10 @@ export default function AdminPortal() {
       if (data?.adminToken) {
         localStorage.setItem("adminToken", data.adminToken);
         setIsAuthenticated(true);
+        sileo.success({
+          title: "Login successful",
+          description: "Welcome back.",
+        });
 
         // Store admin user info if provided by API
         if (data?.user) {
@@ -331,6 +341,10 @@ export default function AdminPortal() {
       }
     } catch (error) {
       console.error("Admin login error:", error);
+      sileo.error({
+        title: "Login failed",
+        description: "An unexpected error occurred during login.",
+      });
     } finally {
       setIsLoggingIn(false);
     }

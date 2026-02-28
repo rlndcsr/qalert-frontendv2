@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { sileo } from "sileo";
 import { Menu, ArrowLeft } from "lucide-react";
 import LoginForm from "./patientComponents/LoginForm";
 import RegisterForm from "./patientComponents/RegisterForm";
@@ -105,10 +106,16 @@ export default function PatientPage() {
     try {
       const result = await loginWithAPI(formData.login, formData.password);
       if (result.success) {
-        toast.success("Login successful! Welcome back.");
+        sileo.success({
+          title: "Login successful",
+          description: "Welcome back.",
+        });
       }
     } catch (error) {
-      toast.error("An unexpected error occurred during login");
+      sileo.error({
+        title: "Login failed",
+        description: "An unexpected error occurred during login.",
+      });
     }
   };
 
@@ -120,14 +127,21 @@ export default function PatientPage() {
   const handleRegistrationSuccess = (email) => {
     setPendingVerificationEmail(email);
     setActiveTab("verify");
-    toast.success(
-      "Registration successful! Please verify your email to continue.",
-    );
+    sileo.success({
+      title: "Registration successful! Please verify your email to continue.",
+    });
   };
 
   const handleVerificationSuccess = () => {
     setPendingVerificationEmail("");
     setActiveTab("login");
+
+    setTimeout(() => {
+      sileo.success({
+        title: "Email verified successfully",
+        description: "You can now log in.",
+      });
+    }, 120);
   };
 
   const handleBackToRegister = () => {

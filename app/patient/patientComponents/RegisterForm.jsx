@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
+import { sileo } from "sileo";
 
 export default function RegisterForm({ onSubmit, onRegistrationSuccess }) {
   const { registerWithAPI } = useAuth();
@@ -15,7 +16,6 @@ export default function RegisterForm({ onSubmit, onRegistrationSuccess }) {
     confirmPassword: "",
     gender: "",
   });
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
@@ -28,7 +28,55 @@ export default function RegisterForm({ onSubmit, onRegistrationSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear any existing errors
+
+    if (!formData.fullName.trim()) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Full name is required.",
+      });
+      return;
+    }
+
+    if (!formData.emailRegister.trim()) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Email address is required.",
+      });
+      return;
+    }
+
+    if (!/^09\d{9}$/.test(formData.phoneNumber)) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Phone number must start with 09 and be 11 digits.",
+      });
+      return;
+    }
+
+    if (!formData.passwordRegister) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Password is required.",
+      });
+      return;
+    }
+
+    if (formData.passwordRegister !== formData.confirmPassword) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Passwords do not match.",
+      });
+      return;
+    }
+
+    if (!formData.gender) {
+      sileo.error({
+        title: "Registration failed",
+        description: "Please select your gender.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
