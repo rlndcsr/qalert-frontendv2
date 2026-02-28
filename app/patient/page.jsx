@@ -817,8 +817,10 @@ export default function PatientPage() {
             </motion.div>
           ) : !isAuthenticated ? (
             <motion.div
-              className={`bg-white rounded-lg shadow-lg border border-gray-200 p-6 sm:p-8 w-full ${
-                activeTab === "register" ? "max-w-md lg:max-w-4xl" : "max-w-md"
+              className={`w-full border border-gray-200/80 bg-white shadow-xl shadow-gray-200/40 p-6 sm:p-8 rounded-2xl ${
+                activeTab === "register"
+                  ? "max-w-md lg:max-w-4xl"
+                  : "max-w-md lg:max-w-lg"
               }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -828,30 +830,30 @@ export default function PatientPage() {
               {activeTab !== "verify" && (
                 <button
                   onClick={() => router.back()}
-                  className="flex items-center gap-2 text-gray-600 hover:text-[#25323A] mb-4 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 text-gray-600 hover:text-[#25323A] mb-4 transition-colors cursor-pointer text-sm font-medium"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm font-medium">Back</span>
+                  <span>Back</span>
                 </button>
               )}
               {activeTab !== "verify" && (
-                <div className="flex mb-8">
+                <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50/70 p-1.5 flex gap-1.5">
                   <button
                     onClick={() => setActiveTab("login")}
-                    className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                       activeTab === "login"
-                        ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-white text-[#25323A] shadow-sm border border-gray-200"
+                        : "text-gray-600 hover:text-[#25323A] hover:bg-white/70"
                     }`}
                   >
                     Login
                   </button>
                   <button
                     onClick={() => setActiveTab("register")}
-                    className={`flex-1 py-3 px-4 rounded-t-lg font-medium transition-colors cursor-pointer ${
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                       activeTab === "register"
-                        ? "bg-white text-[#25323A] border border-gray-200 border-b-0"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-white text-[#25323A] shadow-sm border border-gray-200"
+                        : "text-gray-600 hover:text-[#25323A] hover:bg-white/70"
                     }`}
                   >
                     Register
