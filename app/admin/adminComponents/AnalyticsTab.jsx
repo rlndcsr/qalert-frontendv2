@@ -447,16 +447,17 @@ export default function AnalyticsTab({
                 const promise = downloadPDFReport(yearMonth);
                 sileo.promise(promise, {
                   loading: {
-                    title: "Generating PDF\u2026",
+                    title: "Downloading PDF\u2026",
                     description: "Preparing your report, please wait.",
                   },
                   success: {
-                    title: "Report downloaded",
+                    title: "PDF downloaded",
                     description: "Your PDF report has been saved successfully.",
                   },
                   error: {
                     title: "Download failed",
-                    description: "Could not generate the PDF. Please try again.",
+                    description:
+                      "Could not generate the PDF. Please try again.",
                   },
                 });
               }}

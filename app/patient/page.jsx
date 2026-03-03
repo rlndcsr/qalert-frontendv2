@@ -107,7 +107,7 @@ export default function PatientPage() {
       if (result.success) {
         sileo.success({
           title: "Login successful",
-          description: "Welcome back.",
+          description: "Welcome back to QAlert patient portal.",
         });
       }
     } catch (error) {

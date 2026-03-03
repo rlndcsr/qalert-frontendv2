@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 export default function LoginForm({
   email_address,
@@ -87,14 +88,25 @@ export default function LoginForm({
           <motion.button
             type="submit"
             disabled={isLoggingIn}
-            className="w-full bg-[#00968a] hover:bg-[#007d73] text-white font-semibold py-3 px-4 rounded-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`w-full text-white font-semibold py-3 px-4 rounded-md transition-colors flex items-center justify-center gap-2 ${
+              isLoggingIn
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#00968a] hover:bg-[#007d73] cursor-pointer"
+            }`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.5 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={isLoggingIn ? {} : { scale: 1.02 }}
+            whileTap={isLoggingIn ? {} : { scale: 0.98 }}
           >
-            {isLoggingIn ? "Logging in..." : "Login"}
+            {isLoggingIn ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
           </motion.button>
         </form>
       </motion.div>

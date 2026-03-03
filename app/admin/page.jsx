@@ -323,7 +323,7 @@ export default function AdminPortal() {
         setIsAuthenticated(true);
         sileo.success({
           title: "Login successful",
-          description: "Welcome back.",
+          description: "Welcome back to QAlert staff dashboard.",
         });
 
         // Store admin user info if provided by API
