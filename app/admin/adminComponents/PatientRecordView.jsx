@@ -12,7 +12,17 @@ import {
   Phone,
   History,
   Users,
+  CreditCard,
 } from "lucide-react";
+
+// Utility: initials from name
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0].slice(0, 2).toUpperCase();
+}
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
@@ -22,23 +32,26 @@ const API_BASE_URL =
 function TableRowSkeleton() {
   return (
     <tr className="animate-pulse">
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-32" />
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gray-200 shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-3.5 bg-gray-200 rounded w-28" />
+            <div className="h-3 bg-gray-200 rounded w-40" />
+          </div>
+        </div>
       </td>
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-40" />
+      <td className="px-5 py-4">
+        <div className="h-3.5 bg-gray-200 rounded w-24" />
       </td>
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-16" />
+      <td className="px-5 py-4">
+        <div className="h-3.5 bg-gray-200 rounded w-20" />
       </td>
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-28" />
+      <td className="px-5 py-4">
+        <div className="h-5 bg-gray-200 rounded-full w-12" />
       </td>
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-24" />
-      </td>
-      <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-16" />
+      <td className="px-5 py-4">
+        <div className="h-5 bg-gray-200 rounded-full w-12 ml-auto" />
       </td>
     </tr>
   );
@@ -91,9 +104,12 @@ function PatientHistoryModal({ patient, isOpen, onClose }) {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Patient Details
-                </h2>
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-[#00968a]" />
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Patient Details
+                  </h2>
+                </div>
                 <button
                   onClick={onClose}
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
@@ -106,15 +122,17 @@ function PatientHistoryModal({ patient, isOpen, onClose }) {
               <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-130px)]">
                 {/* Patient Info Section */}
                 <div className="space-y-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#00968a]/10 flex items-center justify-center">
-                      <User className="w-6 h-6 text-[#00968a]" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-[#00968a]/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl font-bold text-[#00968a]">
+                        {getInitials(patient.name)}
+                      </span>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">
                         {patient.name}
                       </h3>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                         Active
                       </span>
                     </div>
@@ -122,17 +140,31 @@ function PatientHistoryModal({ patient, isOpen, onClose }) {
 
                   <div className="grid gap-3">
                     <div className="flex items-center gap-3 text-sm">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">
-                        {patient.email_address || "—"}
+                      <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-gray-600 truncate">
+                        {patient.email_address || "\u2014"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
-                      <Phone className="w-4 h-4 text-gray-400" />
+                      <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                       <span className="text-gray-600">
-                        {patient.phone_number || "—"}
+                        {patient.phone_number || "\u2014"}
                       </span>
                     </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <CreditCard className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-gray-600 font-mono">
+                        {patient.id_number || "\u2014"}
+                      </span>
+                    </div>
+                    {patient.gender && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <User className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="text-gray-600 capitalize">
+                          {patient.gender}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -186,28 +218,29 @@ function Pagination({
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-      <p className="text-sm text-gray-500">
-        Showing {startItem} to {endItem} of {totalItems} patients
+    <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100">
+      <p className="text-xs text-gray-400">
+        <span className="font-semibold text-gray-600">
+          {startItem}–{endItem}
+        </span>{" "}
+        of {totalItems} users
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-          Previous
         </button>
-        <span className="px-3 py-1.5 text-sm font-medium text-gray-700">
-          Page {currentPage} of {totalPages}
+        <span className="px-3 text-xs font-semibold text-gray-600">
+          {currentPage} / {totalPages}
         </span>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          Next
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -281,7 +314,7 @@ export default function PatientRecordView() {
     if (genderFilter !== "all") {
       result = result.filter(
         (patient) =>
-          patient.gender?.toLowerCase() === genderFilter.toLowerCase()
+          patient.gender?.toLowerCase() === genderFilter.toLowerCase(),
       );
     }
 
@@ -291,7 +324,7 @@ export default function PatientRecordView() {
       result = result.filter(
         (patient) =>
           patient.name?.toLowerCase().includes(query) ||
-          patient.email_address?.toLowerCase().includes(query)
+          patient.email_address?.toLowerCase().includes(query),
       );
     }
 
@@ -307,7 +340,7 @@ export default function PatientRecordView() {
   // Total pages
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredPatients.length / itemsPerPage)
+    Math.ceil(filteredPatients.length / itemsPerPage),
   );
 
   // Reset to page 1 when filters change
@@ -338,47 +371,80 @@ export default function PatientRecordView() {
     >
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#00968a]/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-[#00968a]" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Patient Record</h1>
-            <p className="text-sm text-gray-500">
-              View and manage patient information
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#00968a] flex items-center justify-center shadow-md shadow-[#00968a]/20 shrink-0">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+                Users
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                View user information
+              </p>
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full">
+                  <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  <span className="text-xs font-medium text-gray-600">
+                    {filteredPatients.length} users
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-        {/* Search and Filter Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Toolbar */}
         <div className="px-6 py-4 border-b border-gray-100">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors"
-              />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Left: title + count */}
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                All Users
+              </h2>
+              {!isLoading && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                  {filteredPatients.length}
+                </span>
+              )}
             </div>
 
-            {/* Gender Filter */}
-            <div className="sm:w-40">
-              <select
-                value={genderFilter}
-                onChange={(e) => setGenderFilter(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors bg-white cursor-pointer"
-              >
-                <option value="all">All Genders</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
+            {/* Right: gender tabs + search */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Gender filter */}
+              <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+                {["all", "male", "female"].map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGenderFilter(g)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer capitalize ${
+                      genderFilter === g
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    {g === "all"
+                      ? "All"
+                      : g.charAt(0).toUpperCase() + g.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors text-xs bg-gray-50 w-52"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -387,79 +453,124 @@ export default function PatientRecordView() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Name
+              <tr className="border-b border-gray-100">
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Patient
+                  </span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Email
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Contact
+                  </span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Gender
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    ID Number
+                  </span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Phone Number
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Gender
+                  </span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  ID Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Status
+                <th className="px-5 py-3.5 text-right">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Status
+                  </span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                // Loading skeletons
                 Array.from({ length: 5 }).map((_, index) => (
                   <TableRowSkeleton key={index} />
                 ))
               ) : error ? (
-                // Error state
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <p className="text-red-500">{error}</p>
+                  <td colSpan={5} className="px-5 py-16 text-center">
+                    <p className="text-sm font-medium text-red-500">{error}</p>
                   </td>
                 </tr>
               ) : paginatedPatients.length === 0 ? (
-                // Empty state
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center">
-                      <Users className="w-12 h-12 text-gray-300 mb-3" />
-                      <p className="text-gray-500 text-sm">
-                        {searchQuery || genderFilter !== "all"
-                          ? "No patients found matching your criteria"
-                          : "No patients found"}
-                      </p>
+                  <td colSpan={5} className="px-5 py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <Users className="w-7 h-7 text-gray-300" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-600">
+                          No users found
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {searchQuery || genderFilter !== "all"
+                            ? "Try adjusting your filters"
+                            : "Registered users will appear here"}
+                        </p>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
-                // Patient rows
                 paginatedPatients.map((patient) => (
                   <tr
                     key={patient.user_id}
                     onClick={() => handleRowClick(patient)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="group hover:bg-gray-50/70 cursor-pointer transition-colors"
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {patient.name || ""}
+                    {/* Patient */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#00968a]/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-[#00968a]">
+                            {getInitials(patient.name)}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {patient.name || ""}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
+                            {patient.email_address || ""}
+                          </p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {patient.email_address || ""}
+                    {/* Contact */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                        <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="font-medium">
+                          {patient.phone_number || "\u2014"}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 capitalize">
-                      {patient.gender || ""}
+                    {/* ID Number */}
+                    <td className="px-5 py-4">
+                      <span className="text-xs font-mono text-gray-500">
+                        {patient.id_number || "\u2014"}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {patient.phone_number || ""}
+                    {/* Gender */}
+                    <td className="px-5 py-4">
+                      {patient.gender ? (
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                            patient.gender?.toLowerCase() === "female"
+                              ? "bg-pink-50 text-pink-600"
+                              : "bg-blue-50 text-blue-600"
+                          }`}
+                        >
+                          {patient.gender}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">\u2014</span>
+                      )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {patient.id_number || ""}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {/* Status */}
+                    <td className="px-5 py-4 text-right">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700">
                         Active
                       </span>
                     </td>

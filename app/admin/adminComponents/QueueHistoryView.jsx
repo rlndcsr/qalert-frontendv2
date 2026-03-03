@@ -241,7 +241,9 @@ function ViewModal({ queue, user, reasonCategoryMap, onClose }) {
                 </span>
               </div>
               <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-                {reasonCategoryMap?.[queue.reason_category_id] || queue.reason || "No reason provided"}
+                {reasonCategoryMap?.[queue.reason_category_id] ||
+                  queue.reason ||
+                  "No reason provided"}
               </p>
             </div>
           </div>
@@ -355,11 +357,12 @@ export default function QueueHistoryView() {
         "ngrok-skip-browser-warning": true,
       };
 
-      const [queuesResponse, usersResponse, categoriesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/queues`, { headers }),
-        fetch(`${API_BASE_URL}/users`, { headers }),
-        fetch(`${API_BASE_URL}/reason-categories`, { headers }),
-      ]);
+      const [queuesResponse, usersResponse, categoriesResponse] =
+        await Promise.all([
+          fetch(`${API_BASE_URL}/queues`, { headers }),
+          fetch(`${API_BASE_URL}/users`, { headers }),
+          fetch(`${API_BASE_URL}/reason-categories`, { headers }),
+        ]);
 
       if (!queuesResponse.ok || !usersResponse.ok) {
         throw new Error("Failed to fetch data");
@@ -374,7 +377,9 @@ export default function QueueHistoryView() {
       if (categoriesResponse.ok) {
         const categoriesData = await categoriesResponse.json();
         setReasonCategories(
-          Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [],
+          Array.isArray(categoriesData)
+            ? categoriesData
+            : categoriesData.data || [],
         );
       }
     } catch (error) {
@@ -838,7 +843,9 @@ export default function QueueHistoryView() {
                       {/* Reason */}
                       <td className="px-5 py-4 max-w-[220px]">
                         <p className="text-sm text-gray-600 line-clamp-2 leading-snug">
-                          {reasonCategoryMap[queue.reason_category_id] || queue.reason || "\u2014"}
+                          {reasonCategoryMap[queue.reason_category_id] ||
+                            queue.reason ||
+                            "\u2014"}
                         </p>
                       </td>
                       {/* Actions */}
@@ -927,10 +934,14 @@ export default function QueueHistoryView() {
                       <Clock className="w-3.5 h-3.5 text-gray-400 ml-1" />
                       <span>{formatTime(queue.created_at)}</span>
                     </div>
-                    {(reasonCategoryMap[queue.reason_category_id] || queue.reason) && (
+                    {(reasonCategoryMap[queue.reason_category_id] ||
+                      queue.reason) && (
                       <div className="flex items-start gap-2 text-xs text-gray-500">
                         <FileText className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-                        <p className="line-clamp-2">{reasonCategoryMap[queue.reason_category_id] || queue.reason}</p>
+                        <p className="line-clamp-2">
+                          {reasonCategoryMap[queue.reason_category_id] ||
+                            queue.reason}
+                        </p>
                       </div>
                     )}
                   </div>

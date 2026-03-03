@@ -21,7 +21,7 @@ const sidebarItems = [
     icon: AlertTriangle,
   },
   { id: "queue-history", label: "Queue History", icon: History },
-  { id: "patient-record", label: "Patients", icon: Users },
+  { id: "patient-record", label: "Users", icon: Users },
 ];
 
 export default function AdminSidebar({
