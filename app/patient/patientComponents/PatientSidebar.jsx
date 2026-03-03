@@ -286,7 +286,7 @@ export default function PatientSidebar({
         initial={false}
         animate={isExpanded ? "expanded" : "collapsed"}
         variants={sidebarVariants}
-        className="fixed left-0 top-0 h-screen bg-white border-r border-gray-200/50 shadow-sm z-40 flex-col hidden lg:flex"
+        className="fixed left-0 top-0 h-screen bg-white border-r border-gray-300 shadow-sm z-40 flex-col hidden lg:flex"
       >
         <SidebarContent showLabels={isExpanded} isMobile={false} />
       </motion.aside>
@@ -315,7 +315,7 @@ export default function PatientSidebar({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200/50 shadow-lg z-50 flex flex-col lg:hidden"
+            className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-300 shadow-lg z-50 flex flex-col lg:hidden"
           >
             <SidebarContent showLabels={true} isMobile={true} />
           </motion.aside>
