@@ -167,7 +167,7 @@ function PortalEntryCard({
     <motion.div
       className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white/95 p-6 transition-[border-color,box-shadow,transform] duration-300 ${
         isInteractive
-          ? "cursor-pointer"
+          ? "cursor-default"
           : "cursor-not-allowed opacity-55 grayscale-[0.12]"
       }`}
       initial={{ opacity: 0, y: 30 }}
@@ -265,8 +265,10 @@ function PortalEntryCard({
       </div>
 
       <motion.button
-        className="relative z-10 mt-6 w-full font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
-        whileHover={isInteractive ? { scale: 1.015 } : {}}
+        className={`relative z-10 mt-6 w-full font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors ${
+          isInteractive ? "cursor-pointer" : "cursor-not-allowed"
+        }`}
+        whileHover={isInteractive ? {} : {}}
         whileTap={isInteractive ? { scale: 0.985 } : {}}
         style={{
           backgroundColor: isInteractive ? accentColor : "#d1d5db",
