@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
+import { sileo } from "sileo";
 import { getAuthToken, getTodayDateString, toYMD } from "../patientUtils";
 
 const API_BASE_URL =
@@ -247,7 +247,10 @@ export function useAppointment() {
       setSchedules(validSchedules);
     } catch (err) {
       console.error("[fetchSchedules] Error:", err);
-      toast.error("Unable to load appointment data. Please try again.");
+      sileo.error({
+        title: "Unable to load",
+        description: "Unable to load appointment data. Please try again.",
+      });
     } finally {
       setIsLoadingSchedules(false);
     }
@@ -281,7 +284,10 @@ export function useAppointment() {
       setReasonCategories(list);
     } catch (err) {
       console.error("[fetchReasonCategories] Error:", err);
-      toast.error("Unable to load appointment data. Please try again.");
+      sileo.error({
+        title: "Unable to load",
+        description: "Unable to load appointment data. Please try again.",
+      });
     } finally {
       setIsLoadingReasonCategories(false);
     }
@@ -321,54 +327,68 @@ export function useAppointment() {
     async (scheduleId, appointmentDate, appointmentTime, reasonCategoryId) => {
       const token = getAuthToken();
       if (!token) {
-        toast.error("You are not authenticated. Please log in again.");
+        sileo.error({
+          title: "Not authenticated",
+          description: "You are not authenticated. Please log in again.",
+        });
         return false;
       }
 
       const userId = getUserId();
       if (!userId) {
-        toast.error("Unable to determine your user ID.");
+        sileo.error({
+          title: "Error",
+          description: "Unable to determine your user ID.",
+        });
         return false;
       }
 
       setIsBooking(true);
 
+      const bookingPromise = fetch(`${API_BASE_URL}/appointments`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          schedule_id: parseInt(scheduleId),
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
+          reason_category_id: parseInt(reasonCategoryId),
+        }),
+      }).then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to book appointment");
+        }
+        return data;
+      });
+
       try {
-        const response = await fetch(`${API_BASE_URL}/appointments`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
+        await sileo.promise(bookingPromise, {
+          loading: {
+            title: "Booking appointment",
+            description: "Please wait...",
           },
-          body: JSON.stringify({
-            user_id: userId,
-            schedule_id: parseInt(scheduleId),
-            appointment_date: appointmentDate,
-            appointment_time: appointmentTime,
-            reason_category_id: parseInt(reasonCategoryId),
+          success: {
+            title: "Appointment booked!",
+            description: "Your appointment has been scheduled successfully.",
+          },
+          error: (err) => ({
+            title: "Booking failed",
+            description: err?.message || "An error occurred while booking",
           }),
         });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          const message = data?.message || "Failed to book appointment";
-          toast.error(message);
-          return false;
-        }
-
-        toast.success(
-          "Appointment booked successfully. You are now added to the queue.",
-        );
 
         // Refresh appointments to get the newly created one
         await fetchAppointments();
         return true;
       } catch (err) {
         console.error("[bookAppointment] Error:", err);
-        toast.error(err.message || "An error occurred while booking");
         return false;
       } finally {
         setIsBooking(false);
@@ -382,37 +402,52 @@ export function useAppointment() {
     async (appointmentId) => {
       const token = getAuthToken();
       if (!token) {
-        toast.error("You are not authenticated. Please log in again.");
+        sileo.error({
+          title: "Not authenticated",
+          description: "You are not authenticated. Please log in again.",
+        });
         return false;
       }
 
       setIsCancelling(true);
 
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/appointments/${appointmentId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "true",
-            },
-            body: JSON.stringify({
-              status: "cancelled",
-            }),
+      const cancelPromise = fetch(
+        `${API_BASE_URL}/appointments/${appointmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
           },
-        );
-
+          body: JSON.stringify({
+            status: "cancelled",
+          }),
+        },
+      ).then(async (response) => {
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          const message = data?.message || "Failed to cancel appointment";
-          toast.error(message);
-          return false;
+          throw new Error(data?.message || "Failed to cancel appointment");
         }
+        return response;
+      });
 
-        toast.success("Appointment cancelled.");
+      try {
+        await sileo.promise(cancelPromise, {
+          loading: {
+            title: "Cancelling appointment",
+            description: "Please wait...",
+          },
+          success: {
+            title: "Appointment cancelled",
+            description: "Your appointment has been cancelled.",
+          },
+          error: (err) => ({
+            title: "Cancellation failed",
+            description: err?.message || "An error occurred while cancelling",
+          }),
+        });
 
         // Clear active appointment and refresh
         setActiveAppointment(null);
@@ -420,7 +455,6 @@ export function useAppointment() {
         return true;
       } catch (err) {
         console.error("[cancelAppointment] Error:", err);
-        toast.error(err.message || "An error occurred while cancelling");
         return false;
       } finally {
         setIsCancelling(false);

@@ -10,7 +10,6 @@ import {
   CalendarDays,
   AlertCircle,
 } from "lucide-react";
-import { ClipLoader } from "react-spinners";
 
 // Day abbreviation to full name mapping
 const DAY_ABBREV_TO_FULL = {
@@ -240,17 +239,8 @@ export default function AppointmentCard({
               : "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60 hover:border-rose-300"
           }`}
         >
-          {isCancelling ? (
-            <>
-              <ClipLoader size={16} color="#94a3b8" />
-              <span>Cancelling appointment...</span>
-            </>
-          ) : (
-            <>
-              <XCircle className="w-4.5 h-4.5" />
-              <span>Cancel Appointment</span>
-            </>
-          )}
+          <XCircle className="w-4.5 h-4.5" />
+          <span>Cancel Appointment</span>
         </motion.button>
       </div>
     </motion.div>

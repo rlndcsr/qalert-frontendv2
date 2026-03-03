@@ -540,17 +540,8 @@ function BookingPanel({
             disabled={isBooking}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#4ad294] to-[#3bb882] hover:from-[#3bb882] hover:to-[#2fa872] text-white px-6 py-3 rounded-xl shadow-lg shadow-[#4ad294]/30 transition-all duration-300 font-semibold hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {isBooking ? (
-              <>
-                <ClipLoader size={18} color="#ffffff" />
-                <span>Booking...</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                <span>Confirm Appointment</span>
-              </>
-            )}
+            <CheckCircle className="w-5 h-5" />
+            <span>Confirm Appointment</span>
           </button>
         </form>
       )}
@@ -587,7 +578,7 @@ export default function AppointmentView() {
 
     return (
       <motion.div
-        className="w-full max-w-md mx-auto"
+        className="w-full max-w-4xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -607,12 +598,14 @@ export default function AppointmentView() {
             </div>
           </div>
         </div>
-        <AppointmentCard
-          appointment={activeAppointment}
-          schedule={appointmentSchedule}
-          isCancelling={isCancelling}
-          onCancel={cancelAppointment}
-        />
+        <div className="max-w-md mx-auto">
+          <AppointmentCard
+            appointment={activeAppointment}
+            schedule={appointmentSchedule}
+            isCancelling={isCancelling}
+            onCancel={cancelAppointment}
+          />
+        </div>
       </motion.div>
     );
   }
