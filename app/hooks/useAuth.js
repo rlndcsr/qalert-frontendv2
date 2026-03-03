@@ -232,7 +232,8 @@ export function useAuth() {
       sileo.error({
         title: "Resend failed",
         description:
-          error.message || "Failed to resend verification code. Please try again.",
+          error.message ||
+          "Failed to resend verification code. Please try again.",
       });
       return { success: false, error: error.message };
     }

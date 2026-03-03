@@ -342,7 +342,8 @@ export default function PatientPage() {
     } catch (error) {
       sileo.error({
         title: "Cancellation failed",
-        description: error.message || "An error occurred while cancelling the queue entry",
+        description:
+          error.message || "An error occurred while cancelling the queue entry",
       });
     } finally {
       setIsCancelling(false);
@@ -399,7 +400,8 @@ export default function PatientPage() {
     } catch (error) {
       sileo.error({
         title: "Update failed",
-        description: error.message || "An error occurred while updating the reason",
+        description:
+          error.message || "An error occurred while updating the reason",
       });
     } finally {
       setIsUpdating(false);

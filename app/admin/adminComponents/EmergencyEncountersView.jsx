@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { sileo } from "sileo";
 import {
   Plus,
   Search,
@@ -21,7 +21,6 @@ import {
   ChevronRight,
   RefreshCw,
   CreditCard,
-  Filter,
   RotateCcw,
 } from "lucide-react";
 import {
@@ -62,30 +61,42 @@ const formatTime = (timeString) => {
   return `${hours}:${minutesStr} ${ampm}`;
 };
 
+// Utility: initials from name
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0].slice(0, 2).toUpperCase();
+}
+
 // Skeleton loader for table rows
 function TableRowSkeleton() {
   return (
     <tr className="animate-pulse">
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-28" />
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gray-200 shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-3.5 bg-gray-200 rounded w-28" />
+            <div className="h-3 bg-gray-200 rounded w-20" />
+          </div>
+        </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-20" />
+      <td className="px-5 py-4">
+        <div className="h-3.5 bg-gray-200 rounded w-24" />
       </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-24" />
+      <td className="px-5 py-4">
+        <div className="space-y-1.5">
+          <div className="h-3.5 bg-gray-200 rounded w-24" />
+          <div className="h-3 bg-gray-200 rounded w-16" />
+        </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-20" />
+      <td className="px-5 py-4">
+        <div className="h-3.5 bg-gray-200 rounded w-40" />
       </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-16" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-32" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-4 bg-gray-200 rounded w-24" />
+      <td className="px-5 py-4">
+        <div className="h-7 bg-gray-200 rounded-lg w-24" />
       </td>
     </tr>
   );
@@ -315,7 +326,10 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
       !formData.time ||
       !formData.details
     ) {
-      toast.error("Please fill in all required fields");
+      sileo.error({
+        title: "Required fields missing",
+        description: "Please fill in all required fields.",
+      });
       return;
     }
     setIsSubmitting(true);
@@ -631,7 +645,10 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
       !formData.time ||
       !formData.details
     ) {
-      toast.error("Please fill in all required fields");
+      sileo.error({
+        title: "Required fields missing",
+        description: "Please fill in all required fields.",
+      });
       return;
     }
     setIsSubmitting(true);
@@ -839,28 +856,29 @@ function Pagination({
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t border-gray-100 gap-3">
-      <p className="text-sm text-gray-500">
-        Showing {startItem} to {endItem} of {totalItems} encounters
+    <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100">
+      <p className="text-xs text-gray-400">
+        <span className="font-semibold text-gray-600">
+          {startItem}–{endItem}
+        </span>{" "}
+        of {totalItems} records
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Previous</span>
         </button>
-        <span className="text-sm text-gray-600">
-          Page {currentPage} of {totalPages}
+        <span className="px-3 text-xs font-semibold text-gray-600">
+          {currentPage} / {totalPages}
         </span>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -908,7 +926,10 @@ export default function EmergencyEncountersView() {
       setEncounters(Array.isArray(data) ? data : data.data || []);
     } catch (error) {
       console.error("Error fetching encounters:", error);
-      toast.error("Failed to load emergency encounters");
+      sileo.error({
+        title: "Failed to load encounters",
+        description: "Unable to load emergency encounters. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -1034,37 +1055,56 @@ export default function EmergencyEncountersView() {
   const hasActiveFilters = dateFilterType !== "all" || searchQuery.trim();
 
   const handleCreate = async (formData) => {
-    try {
-      await createEmergencyEncounter(formData);
-      toast.success("Emergency encounter recorded successfully");
-      fetchEncounters();
-    } catch (error) {
-      toast.error(error.message || "Failed to create emergency encounter");
-      throw error;
-    }
+    await sileo.promise(createEmergencyEncounter(formData), {
+      loading: { title: "Recording encounter..." },
+      success: {
+        title: "Encounter recorded",
+        description: "Emergency encounter has been recorded successfully.",
+      },
+      error: (err) => ({
+        title: "Failed to record encounter",
+        description: err.message || "Something went wrong. Please try again.",
+      }),
+    });
+    fetchEncounters();
   };
 
   const handleEdit = async (id, data) => {
-    try {
-      await updateEmergencyEncounter(id, data);
-      toast.success("Emergency encounter updated successfully");
-      fetchEncounters();
-    } catch (error) {
-      toast.error(error.message || "Failed to update emergency encounter");
-      throw error;
-    }
+    await sileo.promise(updateEmergencyEncounter(id, data), {
+      loading: { title: "Updating encounter..." },
+      success: {
+        title: "Encounter updated",
+        description: "Emergency encounter has been updated successfully.",
+      },
+      error: (err) => ({
+        title: "Failed to update encounter",
+        description: err.message || "Something went wrong. Please try again.",
+      }),
+    });
+    fetchEncounters();
   };
 
   const handleDelete = async (id) => {
-    try {
-      await deleteEmergencyEncounter(id);
-      toast.success("Emergency encounter deleted successfully");
-      fetchEncounters();
-    } catch (error) {
-      toast.error(error.message || "Failed to delete emergency encounter");
-      throw error;
-    }
+    await sileo.promise(deleteEmergencyEncounter(id), {
+      loading: { title: "Deleting encounter..." },
+      success: {
+        title: "Encounter deleted",
+        description: "Emergency encounter has been deleted successfully.",
+      },
+      error: (err) => ({
+        title: "Failed to delete encounter",
+        description: err.message || "Something went wrong. Please try again.",
+      }),
+    });
+    fetchEncounters();
   };
+
+  const todayCount = useMemo(() => {
+    const today = getTodayString();
+    return encounters.filter(
+      (enc) => normalizeDateForComparison(enc.date) === today,
+    ).length;
+  }, [encounters]);
 
   return (
     <motion.div
@@ -1075,131 +1115,147 @@ export default function EmergencyEncountersView() {
       transition={{ duration: 0.3 }}
     >
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#00968a] flex items-center justify-center shadow-md shadow-[#00968a]/20 shrink-0">
+            <AlertTriangle className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
               Emergency Encounters
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mt-0.5">
               Record and manage emergency patient visits
             </p>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-gray-400" />
+                <span className="text-xs font-medium text-gray-600">
+                  {encounters.length} total
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-xs font-medium text-red-700">
+                  {todayCount} today
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2.5 bg-[#00968a] hover:bg-[#007a70] text-white font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00968a] hover:bg-[#007a70] active:bg-[#006b62] text-white text-sm font-semibold rounded-xl shadow-sm shadow-[#00968a]/20 transition-all cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Add Encounter
+          Record Encounter
         </button>
       </div>
 
       {/* Encounters List */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-        {/* Header with Search */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Toolbar */}
         <div className="px-6 py-4 border-b border-gray-100">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Emergency Encounters List
-            </h2>
-
-            {/* Search */}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name or ID..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Date Filter */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filter:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Left: title + result count */}
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                All Records
+              </h2>
+              {!isLoading && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                  {filteredEncounters.length}
+                </span>
+              )}
             </div>
 
+            {/* Right: search + filter controls */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* Filter Type Buttons */}
-              <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+              {/* Date filter tabs */}
+              <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
                 <button
                   onClick={() => {
                     setDateFilterType("all");
                     setStartDate("");
                     setEndDate("");
                   }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                     dateFilterType === "all"
                       ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setDateFilterType("today")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                     dateFilterType === "today"
                       ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   Today
                 </button>
                 <button
                   onClick={() => setDateFilterType("range")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                     dateFilterType === "range"
                       ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
-                  Date Range
+                  Range
                 </button>
               </div>
 
-              {/* Date Range Inputs */}
+              {/* Date range pickers */}
               {dateFilterType === "range" && (
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors"
+                      className="pl-7 pr-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors bg-gray-50"
                     />
                   </div>
-                  <span className="text-gray-400 text-sm">to</span>
+                  <span className="text-gray-300 text-xs font-medium">—</span>
                   <div className="relative">
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate}
-                      className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00968a]/20 focus:border-[#00968a] transition-colors"
+                      className="pl-7 pr-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors bg-gray-50"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Clear Filters */}
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search patient or ID..."
+                  className="pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors text-xs bg-gray-50 w-52"
+                />
+              </div>
+
+              {/* Clear */}
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  title="Clear filters"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Clear
+                  Reset
                 </button>
               )}
             </div>
@@ -1210,54 +1266,62 @@ export default function EmergencyEncountersView() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Patient Name
+              <tr className="border-b border-gray-100">
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Patient
+                  </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  ID Number
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Contact
+                  </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Contact
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Date &amp; Time
+                  </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Date
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Details
+                  </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Time
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Details
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
+                <th className="px-5 py-3.5 text-right">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Actions
+                  </span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRowSkeleton key={i} />
                 ))
               ) : paginatedEncounters.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center">
-                      <AlertTriangle className="w-12 h-12 text-gray-300 mb-3" />
-                      <p className="text-gray-500 font-medium">
-                        No emergency encounters found
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        {hasActiveFilters
-                          ? "Try adjusting your filters"
-                          : "Add a new encounter above"}
-                      </p>
+                  <td colSpan={5} className="px-5 py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <AlertTriangle className="w-7 h-7 text-gray-300" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-600">
+                          No encounters found
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {hasActiveFilters
+                            ? "Try adjusting your filters"
+                            : "Record a new emergency encounter to get started"}
+                        </p>
+                      </div>
                       {hasActiveFilters && (
                         <button
                           onClick={clearFilters}
-                          className="mt-3 text-sm text-[#00968a] hover:text-[#007a70] font-medium cursor-pointer"
+                          className="text-xs font-semibold text-red-600 hover:text-red-700 cursor-pointer"
                         >
-                          Clear all filters
+                          Clear filters
                         </button>
                       )}
                     </div>
@@ -1267,51 +1331,76 @@ export default function EmergencyEncountersView() {
                 paginatedEncounters.map((encounter) => (
                   <tr
                     key={encounter.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="group hover:bg-gray-50/70 transition-colors"
                   >
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900">
-                        {encounter.patient_name}
-                      </span>
+                    {/* Patient */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-red-700">
+                            {getInitials(encounter.patient_name)}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {encounter.patient_name}
+                          </p>
+                          <p className="text-xs text-gray-400 font-mono mt-0.5">
+                            {encounter.id_number || "No ID"}
+                          </p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {encounter.id_number || "—"}
+                    {/* Contact */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                        <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="font-medium">
+                          {encounter.contact_number}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {encounter.contact_number}
+                    {/* Date & Time */}
+                    <td className="px-5 py-4">
+                      <p className="text-sm font-medium text-gray-800">
+                        {formatDate(encounter.date)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {formatTime(encounter.time)}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {formatDate(encounter.date)}
+                    {/* Details */}
+                    <td className="px-5 py-4 max-w-[240px]">
+                      <p className="text-sm text-gray-600 line-clamp-2 leading-snug">
+                        {encounter.details}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {formatTime(encounter.time)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate">
-                      {encounter.details}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setViewEncounter(encounter)}
-                          className="p-2 text-gray-500 hover:text-[#00968a] hover:bg-[#00968a]/10 rounded-lg transition-colors cursor-pointer"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setEditEncounter(encounter)}
-                          className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteEncounter(encounter)}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                    {/* Actions */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end">
+                        <div className="inline-flex items-center border border-gray-200 rounded-lg overflow-hidden divide-x divide-gray-200 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setViewEncounter(encounter)}
+                            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+                            title="View details"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditEncounter(encounter)}
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="Edit"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteEncounter(encounter)}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -1326,22 +1415,26 @@ export default function EmergencyEncountersView() {
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
           ) : paginatedEncounters.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">
-                No emergency encounters found
-              </p>
-              <p className="text-gray-400 text-sm">
-                {hasActiveFilters
-                  ? "Try adjusting your filters"
-                  : "Add a new encounter above"}
-              </p>
+            <div className="flex flex-col items-center gap-3 py-14 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <AlertTriangle className="w-7 h-7 text-gray-300" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600">
+                  No encounters found
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {hasActiveFilters
+                    ? "Try adjusting your filters"
+                    : "Record a new emergency encounter to get started"}
+                </p>
+              </div>
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="mt-3 text-sm text-[#00968a] hover:text-[#007a70] font-medium cursor-pointer"
+                  className="text-xs font-semibold text-red-600 cursor-pointer"
                 >
-                  Clear all filters
+                  Clear filters
                 </button>
               )}
             </div>
@@ -1349,52 +1442,64 @@ export default function EmergencyEncountersView() {
             paginatedEncounters.map((encounter) => (
               <div
                 key={encounter.id}
-                className="bg-white rounded-xl border border-gray-200 p-4"
+                className="border border-gray-200 rounded-xl overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
+                {/* Card top accent */}
+                <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-red-700">
+                      {getInitials(encounter.patient_name)}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 text-sm truncate">
                       {encounter.patient_name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs text-gray-400 font-mono">
                       {encounter.id_number || "No ID"}
                     </p>
                   </div>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wide">
                     Emergency
                   </span>
                 </div>
-                <div className="space-y-1 text-sm text-gray-600 mb-3">
-                  <div className="flex items-center gap-2">
+                <div className="px-4 pb-3 space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Phone className="w-3.5 h-3.5 text-gray-400" />
-                    {encounter.contact_number}
+                    <span className="font-medium text-gray-700">
+                      {encounter.contact_number}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    {formatDate(encounter.date)} at {formatTime(encounter.time)}
+                    <span>{formatDate(encounter.date)}</span>
+                    <Clock className="w-3.5 h-3.5 text-gray-400 ml-1" />
+                    <span>{formatTime(encounter.time)}</span>
                   </div>
+                  {encounter.details && (
+                    <p className="text-xs text-gray-500 line-clamp-2 pt-0.5 pl-0.5">
+                      {encounter.details}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                  {encounter.details}
-                </p>
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                <div className="flex items-center border-t border-gray-100 divide-x divide-gray-100">
                   <button
                     onClick={() => setViewEncounter(encounter)}
-                    className="flex-1 py-2 text-sm font-medium text-[#00968a] hover:bg-[#00968a]/10 rounded-lg transition-colors cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
-                    View
+                    <Eye className="w-3.5 h-3.5" /> View
                   </button>
                   <button
                     onClick={() => setEditEncounter(encounter)}
-                    className="flex-1 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
-                    Edit
+                    <Pencil className="w-3.5 h-3.5" /> Edit
                   </button>
                   <button
                     onClick={() => setDeleteEncounter(encounter)}
-                    className="flex-1 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
-                    Delete
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
                   </button>
                 </div>
               </div>
