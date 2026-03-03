@@ -122,7 +122,7 @@ function CardSkeleton() {
 }
 
 // View Modal Component
-function ViewModal({ queue, user, onClose }) {
+function ViewModal({ queue, user, reasonCategoryMap, onClose }) {
   if (!queue) return null;
 
   const statusConfig = {
@@ -241,7 +241,7 @@ function ViewModal({ queue, user, onClose }) {
                 </span>
               </div>
               <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-                {queue.reason || "No reason provided"}
+                {reasonCategoryMap?.[queue.reason_category_id] || queue.reason || "No reason provided"}
               </p>
             </div>
           </div>
@@ -309,6 +309,7 @@ export default function QueueHistoryView() {
   // Data state
   const [queues, setQueues] = useState([]);
   const [users, setUsers] = useState([]);
+  const [reasonCategories, setReasonCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter state
@@ -354,9 +355,10 @@ export default function QueueHistoryView() {
         "ngrok-skip-browser-warning": true,
       };
 
-      const [queuesResponse, usersResponse] = await Promise.all([
+      const [queuesResponse, usersResponse, categoriesResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/queues`, { headers }),
         fetch(`${API_BASE_URL}/users`, { headers }),
+        fetch(`${API_BASE_URL}/reason-categories`, { headers }),
       ]);
 
       if (!queuesResponse.ok || !usersResponse.ok) {
@@ -368,6 +370,13 @@ export default function QueueHistoryView() {
 
       setQueues(Array.isArray(queuesData) ? queuesData : queuesData.data || []);
       setUsers(Array.isArray(usersData) ? usersData : usersData.data || []);
+
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json();
+        setReasonCategories(
+          Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [],
+        );
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       sileo.error({
@@ -387,6 +396,15 @@ export default function QueueHistoryView() {
     });
     return map;
   }, [users]);
+
+  // Create reason category lookup map  (id → name)
+  const reasonCategoryMap = useMemo(() => {
+    const map = {};
+    reasonCategories.forEach((cat) => {
+      map[cat.reason_category_id] = cat.name;
+    });
+    return map;
+  }, [reasonCategories]);
 
   // Filter queues - only completed and cancelled
   const filteredQueues = useMemo(() => {
@@ -420,7 +438,8 @@ export default function QueueHistoryView() {
         return (
           fullName.includes(query) ||
           queueNum.includes(query) ||
-          q.reason?.toLowerCase().includes(query)
+          q.reason?.toLowerCase().includes(query) ||
+          reasonCategoryMap[q.reason_category_id]?.toLowerCase().includes(query)
         );
       });
     }
@@ -819,7 +838,7 @@ export default function QueueHistoryView() {
                       {/* Reason */}
                       <td className="px-5 py-4 max-w-[220px]">
                         <p className="text-sm text-gray-600 line-clamp-2 leading-snug">
-                          {queue.reason || "—"}
+                          {reasonCategoryMap[queue.reason_category_id] || queue.reason || "\u2014"}
                         </p>
                       </td>
                       {/* Actions */}
@@ -908,10 +927,10 @@ export default function QueueHistoryView() {
                       <Clock className="w-3.5 h-3.5 text-gray-400 ml-1" />
                       <span>{formatTime(queue.created_at)}</span>
                     </div>
-                    {queue.reason && (
+                    {(reasonCategoryMap[queue.reason_category_id] || queue.reason) && (
                       <div className="flex items-start gap-2 text-xs text-gray-500">
                         <FileText className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-                        <p className="line-clamp-2">{queue.reason}</p>
+                        <p className="line-clamp-2">{reasonCategoryMap[queue.reason_category_id] || queue.reason}</p>
                       </div>
                     )}
                   </div>
@@ -946,6 +965,7 @@ export default function QueueHistoryView() {
         <ViewModal
           queue={viewQueue}
           user={userMap[viewQueue.user_id]}
+          reasonCategoryMap={reasonCategoryMap}
           onClose={() => setViewQueue(null)}
         />
       )}
