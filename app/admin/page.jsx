@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { sileo } from "sileo";
 import { SyncLoader } from "react-spinners";
 import { Menu } from "lucide-react";
@@ -141,7 +140,10 @@ export default function AdminPortal() {
         console.error("Error fetching data:", error);
         // Only show error toast on initial load to avoid spamming
         if (isInitialLoad && isMounted) {
-          toast.error("Failed to load queue data");
+          sileo.error({
+            title: "Failed to load data",
+            description: "Could not fetch queue data. Please refresh.",
+          });
         }
       } finally {
         if (isInitialLoad && isMounted) {
@@ -232,36 +234,45 @@ export default function AdminPortal() {
     }
   }, [queues, todayDate]);
 
-  const handleToggleSystemStatus = async () => {
+  const handleToggleSystemStatus = () => {
     if (isTogglingStatus) return;
 
     setIsTogglingStatus(true);
     const newStatus = !systemStatus;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/system-status`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": true,
-        },
-        body: JSON.stringify({ is_online: newStatus ? 1 : 0 }),
+    const promise = fetch(`${API_BASE_URL}/system-status`, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": true,
+      },
+      body: JSON.stringify({ is_online: newStatus ? 1 : 0 }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to update system status");
+        setSystemStatus(newStatus);
+      })
+      .finally(() => {
+        setIsTogglingStatus(false);
       });
 
-      if (!response.ok) throw new Error("Failed to update system status");
-
-      setSystemStatus(newStatus);
-      toast.success(
-        newStatus
-          ? "System is now online. Patients can register and join the queue."
-          : "System is now offline. New registrations are temporarily disabled.",
-      );
-    } catch (error) {
-      toast.error("Failed to update system status");
-    } finally {
-      setIsTogglingStatus(false);
-    }
+    sileo.promise(promise, {
+      loading: {
+        title: newStatus ? "Going online\u2026" : "Going offline\u2026",
+        description: "Updating system status, please wait.",
+      },
+      success: {
+        title: newStatus ? "System is now online" : "System is now offline",
+        description: newStatus
+          ? "Patients can now register and join the queue."
+          : "New registrations are temporarily disabled.",
+      },
+      error: {
+        title: "Update failed",
+        description: "Could not update system status. Please try again.",
+      },
+    });
   };
 
   const handleLogin = async (e) => {

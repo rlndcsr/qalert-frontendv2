@@ -17,15 +17,12 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { toast } from "sonner";
+import { sileo } from "sileo";
 import {
   Download,
   FileSpreadsheet,
   FileText,
-  Filter,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   Users,
   Calendar,
   AlertTriangle,
@@ -35,18 +32,10 @@ import {
 } from "lucide-react";
 import MonthSelector from "./MonthSelector";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   generateReportData,
   convertToCSV,
   downloadCSV,
   downloadPDFReport,
-  getDoctors,
 } from "../services/reportsService";
 
 export default function AnalyticsTab({
@@ -64,25 +53,6 @@ export default function AnalyticsTab({
   // State for report generation
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportPreview, setReportPreview] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [doctors, setDoctors] = useState([]);
-
-  // Filter states
-  const [selectedDoctor, setSelectedDoctor] = useState("all");
-  const [selectedQueueStatus, setSelectedQueueStatus] = useState("all");
-
-  // Fetch doctors on mount
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const doctorsData = await getDoctors();
-        setDoctors(doctorsData);
-      } catch (error) {
-        console.warn("Could not fetch doctors:", error);
-      }
-    };
-    fetchDoctors();
-  }, []);
 
   // Fetch reason categories on component mount
   useEffect(() => {
@@ -336,94 +306,7 @@ export default function AnalyticsTab({
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-          >
-            <Filter className="w-3.5 h-3.5" />
-            Filters
-            {showFilters ? (
-              <ChevronUp className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
-            )}
-          </button>
         </div>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-gray-100 pt-4 mb-4"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Doctor Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Filter by Doctor
-                </label>
-                <Select
-                  value={selectedDoctor}
-                  onValueChange={setSelectedDoctor}
-                >
-                  <SelectTrigger className="w-full h-9 text-sm">
-                    <SelectValue placeholder="All Doctors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Doctors</SelectItem>
-                    {doctors.map((doctor) => (
-                      <SelectItem
-                        key={doctor.doctor_id || doctor.id}
-                        value={String(doctor.doctor_id || doctor.id)}
-                      >
-                        {doctor.name || doctor.doctor_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Queue Status Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Queue Status
-                </label>
-                <Select
-                  value={selectedQueueStatus}
-                  onValueChange={setSelectedQueueStatus}
-                >
-                  <SelectTrigger className="w-full h-9 text-sm">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="waiting">Waiting</SelectItem>
-                    <SelectItem value="called">Called</SelectItem>
-                    <SelectItem value="now_serving">Now Serving</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Reset Filters */}
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setSelectedDoctor("all");
-                    setSelectedQueueStatus("all");
-                    setReportPreview(null);
-                  }}
-                  className="px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
-                >
-                  Reset Filters
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* Report Preview */}
         {reportPreview && (
@@ -511,24 +394,32 @@ export default function AnalyticsTab({
           <button
             onClick={async () => {
               if (!selectedMonth || !selectedYear) {
-                toast.error("Please select a month first");
+                sileo.error({
+                  title: "No month selected",
+                  description:
+                    "Please select a month before generating a report.",
+                });
                 return;
               }
 
               setIsGeneratingReport(true);
               try {
                 const yearMonth = `${selectedYear}-${selectedMonth}`;
-                const filters = {
-                  doctorId: selectedDoctor,
-                  queueStatus: selectedQueueStatus,
-                };
-
-                const reportData = await generateReportData(yearMonth, filters);
+                const reportData = await generateReportData(yearMonth, {
+                  doctorId: "all",
+                  queueStatus: "all",
+                });
                 setReportPreview(reportData);
-                toast.success("Report preview generated successfully");
+                sileo.success({
+                  title: "Preview ready",
+                  description: "Report preview generated successfully.",
+                });
               } catch (error) {
                 console.error("Error generating report:", error);
-                toast.error(error.message || "Failed to generate report");
+                sileo.error({
+                  title: "Generation failed",
+                  description: error.message || "Failed to generate report.",
+                });
               } finally {
                 setIsGeneratingReport(false);
               }
@@ -551,15 +442,23 @@ export default function AnalyticsTab({
 
           {reportPreview && (
             <button
-              onClick={async () => {
-                try {
-                  const yearMonth = `${selectedYear}-${selectedMonth}`;
-                  await downloadPDFReport(yearMonth);
-                  toast.success("Report downloaded successfully");
-                } catch (error) {
-                  console.error("Error downloading report:", error);
-                  toast.error(error.message || "Failed to download report");
-                }
+              onClick={() => {
+                const yearMonth = `${selectedYear}-${selectedMonth}`;
+                const promise = downloadPDFReport(yearMonth);
+                sileo.promise(promise, {
+                  loading: {
+                    title: "Generating PDF\u2026",
+                    description: "Preparing your report, please wait.",
+                  },
+                  success: {
+                    title: "Report downloaded",
+                    description: "Your PDF report has been saved successfully.",
+                  },
+                  error: {
+                    title: "Download failed",
+                    description: "Could not generate the PDF. Please try again.",
+                  },
+                });
               }}
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-indigo-600 hover:to-indigo-700 transition-all"
             >
