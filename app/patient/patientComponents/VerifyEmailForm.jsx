@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import { sileo } from "sileo";
 import { Mail, RefreshCw, CheckCircle, ArrowLeft } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -98,7 +97,10 @@ export default function VerifyEmailForm({ email, onVerified, onBack }) {
       const result = await resendVerificationCode(email);
 
       if (result.success) {
-        toast.success("Verification code sent! Please check your email.");
+        sileo.success({
+          title: "Verification code sent",
+          description: "Please check your email.",
+        });
         setResendCooldown(60); // 60 seconds cooldown
         setCode(["", "", "", "", "", ""]); // Clear the code inputs
         inputRefs.current[0]?.focus();

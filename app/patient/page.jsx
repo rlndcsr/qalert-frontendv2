@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { sileo } from "sileo";
 import { Menu, ArrowLeft } from "lucide-react";
 import LoginForm from "./patientComponents/LoginForm";
@@ -183,13 +182,19 @@ export default function PatientPage() {
 
     const token = getAuthToken();
     if (!token) {
-      toast.error("You are not authenticated. Please log in again.");
+      sileo.error({
+        title: "Not authenticated",
+        description: "You are not authenticated. Please log in again.",
+      });
       return;
     }
 
     const userId = user?.id || user?.user_id || user?.uid;
     if (!userId) {
-      toast.error("Unable to determine your user ID.");
+      sileo.error({
+        title: "Error",
+        description: "Unable to determine your user ID.",
+      });
       return;
     }
 
@@ -264,7 +269,10 @@ export default function PatientPage() {
           setJoinReasonError(message);
           return;
         } else {
-          toast.error(message);
+          sileo.error({
+            title: "Failed to join queue",
+            description: message,
+          });
           return;
         }
       }
@@ -274,13 +282,19 @@ export default function PatientPage() {
       setJoinReasonCategory("");
       setJoinReasonError("");
       setJoinReasonCategoryError("");
-      toast.success("You've joined the queue.");
+      sileo.success({
+        title: "Joined queue",
+        description: "You've successfully joined the queue.",
+      });
       fetchUserQueue();
       fetchQueuePosition();
     } catch (err) {
       let errorMessage =
         err.message || "An error occurred while joining the queue.";
-      toast.error(errorMessage);
+      sileo.error({
+        title: "Error",
+        description: errorMessage,
+      });
     } finally {
       setIsJoining(false);
     }
@@ -291,7 +305,10 @@ export default function PatientPage() {
 
     const token = getAuthToken();
     if (!token) {
-      toast.error("You are not authenticated. Please log in again.");
+      sileo.error({
+        title: "Not authenticated",
+        description: "You are not authenticated. Please log in again.",
+      });
       return;
     }
 
@@ -314,15 +331,19 @@ export default function PatientPage() {
       if (!response.ok) throw new Error("Failed to cancel queue entry");
 
       setIsCancelOpen(false);
-      toast.success("Queue entry cancelled successfully");
+      sileo.success({
+        title: "Queue cancelled",
+        description: "Your queue entry has been cancelled.",
+      });
       setQueueEntry(null);
       setQueuePosition(null);
       fetchUserQueue();
       fetchQueuePosition();
     } catch (error) {
-      toast.error(
-        error.message || "An error occurred while cancelling the queue entry",
-      );
+      sileo.error({
+        title: "Cancellation failed",
+        description: error.message || "An error occurred while cancelling the queue entry",
+      });
     } finally {
       setIsCancelling(false);
     }
@@ -332,13 +353,19 @@ export default function PatientPage() {
     if (!queueEntry?.queue_entry_id || isUpdating) return;
 
     if (!updatedReason.trim()) {
-      toast.error("Please enter a valid reason for your visit.");
+      sileo.error({
+        title: "Invalid reason",
+        description: "Please enter a valid reason for your visit.",
+      });
       return;
     }
 
     const token = getAuthToken();
     if (!token) {
-      toast.error("You are not authenticated. Please log in again.");
+      sileo.error({
+        title: "Not authenticated",
+        description: "You are not authenticated. Please log in again.",
+      });
       return;
     }
 
@@ -364,12 +391,16 @@ export default function PatientPage() {
       }
 
       setIsUpdateOpen(false);
-      toast.success("Queue reason updated successfully");
+      sileo.success({
+        title: "Reason updated",
+        description: "Your queue reason has been updated.",
+      });
       fetchUserQueue();
     } catch (error) {
-      toast.error(
-        error.message || "An error occurred while updating the reason",
-      );
+      sileo.error({
+        title: "Update failed",
+        description: error.message || "An error occurred while updating the reason",
+      });
     } finally {
       setIsUpdating(false);
     }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
 import { sileo } from "sileo";
 
 const API_BASE_URL =
@@ -215,19 +214,26 @@ export function useAuth() {
       if (response.ok) {
         return { success: true, data };
       } else {
-        toast.error(data.message || "Failed to resend verification code");
+        sileo.error({
+          title: "Resend failed",
+          description: data.message || "Failed to resend verification code",
+        });
         return { success: false, error: data.message };
       }
     } catch (error) {
       if (error.name === "TypeError" || error.name === "SyntaxError") {
-        toast.error("Network error. Please check your connection.");
+        sileo.error({
+          title: "Resend failed",
+          description: "Network error. Please check your connection.",
+        });
         return { success: false, error: error.message };
       }
 
-      toast.error(
-        error.message ||
-          "Failed to resend verification code. Please try again.",
-      );
+      sileo.error({
+        title: "Resend failed",
+        description:
+          error.message || "Failed to resend verification code. Please try again.",
+      });
       return { success: false, error: error.message };
     }
   };
