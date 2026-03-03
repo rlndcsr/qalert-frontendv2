@@ -1,7 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, Clock, User, CheckCircle, X } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Stethoscope,
+  CheckCircle2,
+  XCircle,
+  CalendarDays,
+  AlertCircle,
+} from "lucide-react";
 import { ClipLoader } from "react-spinners";
 
 // Day abbreviation to full name mapping
@@ -22,18 +30,19 @@ const getShiftTimeRange = (shift) => {
   return shift;
 };
 
-// Format date to readable string (e.g., "February 15, 2026")
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
+// Format date components
+const getDateComponents = (dateStr) => {
+  if (!dateStr) return { day: "", month: "", year: "", weekday: "" };
   const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return {
+    day: date.getDate(),
+    month: date.toLocaleDateString("en-US", { month: "short" }),
+    year: date.getFullYear(),
+    weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
+  };
 };
 
-// Format time to readable string (e.g., "10:00 AM")
+// Format time to readable string
 const formatTime = (timeStr) => {
   if (!timeStr) return "";
   const [hours, minutes] = timeStr.split(":");
@@ -43,42 +52,61 @@ const formatTime = (timeStr) => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
-// Get status badge styling
-const getStatusBadge = (status) => {
-  const statusLower = (status || "").toLowerCase();
-  switch (statusLower) {
-    case "confirmed":
-    case "scheduled":
-      return {
-        bg: "bg-green-100",
-        text: "text-green-700",
-        label: "Confirmed",
-      };
-    case "pending":
-      return {
-        bg: "bg-amber-100",
-        text: "text-amber-700",
-        label: "Pending",
-      };
-    case "completed":
-      return {
-        bg: "bg-blue-100",
-        text: "text-blue-700",
-        label: "Completed",
-      };
-    case "cancelled":
-      return {
-        bg: "bg-red-100",
-        text: "text-red-700",
-        label: "Cancelled",
-      };
-    default:
-      return {
-        bg: "bg-gray-100",
-        text: "text-gray-700",
-        label: status || "Unknown",
-      };
-  }
+// Status configuration
+const STATUS_CONFIG = {
+  confirmed: {
+    gradient: "from-emerald-500 to-teal-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    text: "text-emerald-700",
+    icon: CheckCircle2,
+    label: "Confirmed",
+  },
+  scheduled: {
+    gradient: "from-emerald-500 to-teal-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    text: "text-emerald-700",
+    icon: CheckCircle2,
+    label: "Confirmed",
+  },
+  pending: {
+    gradient: "from-amber-500 to-orange-500",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    icon: AlertCircle,
+    label: "Pending",
+  },
+  completed: {
+    gradient: "from-slate-500 to-slate-600",
+    bg: "bg-slate-50",
+    border: "border-slate-200",
+    text: "text-slate-600",
+    icon: CheckCircle2,
+    label: "Completed",
+  },
+  cancelled: {
+    gradient: "from-rose-500 to-red-600",
+    bg: "bg-rose-50",
+    border: "border-rose-200",
+    text: "text-rose-700",
+    icon: XCircle,
+    label: "Cancelled",
+  },
+  default: {
+    gradient: "from-gray-500 to-gray-600",
+    bg: "bg-gray-50",
+    border: "border-gray-200",
+    text: "text-gray-600",
+    icon: AlertCircle,
+    label: "Unknown",
+  },
+};
+
+const getStatusConfig = (status) => {
+  const key = (status || "").toLowerCase();
+  return STATUS_CONFIG[key] || STATUS_CONFIG.default;
 };
 
 export default function AppointmentCard({
@@ -89,117 +117,142 @@ export default function AppointmentCard({
 }) {
   if (!appointment) return null;
 
-  const statusBadge = getStatusBadge(appointment.status);
+  const statusConfig = getStatusConfig(appointment.status);
+  const StatusIcon = statusConfig.icon;
   const fullDay = schedule
     ? DAY_ABBREV_TO_FULL[schedule.day] || schedule.day
     : "";
   const shiftTime = schedule ? getShiftTimeRange(schedule.shift) : "";
+  const dateComponents = getDateComponents(appointment.appointment_date);
 
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 max-w-lg mx-auto"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden max-w-md mx-auto mt-6"
+      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      {/* Header with Icon */}
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-[#D4F4E6] rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-[#4ad294]" />
+      {/* Status Header */}
+      <div
+        className={`bg-gradient-to-r ${statusConfig.gradient} px-6 py-4 relative overflow-hidden`}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-white rounded-full" />
+          <div className="absolute -right-8 top-8 w-16 h-16 bg-white rounded-full" />
         </div>
-        <h2 className="text-xl font-semibold text-[#25323A] mb-2">
-          Appointment Confirmed
-        </h2>
-      </div>
-
-      {/* Appointment Details */}
-      <div className="space-y-4 mb-6">
-        {/* Doctor */}
-        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 bg-[#4ad294]/10 rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-[#4ad294]" />
+        <div className="relative flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+            <StatusIcon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-0.5">Doctor</p>
-            <p className="text-sm font-medium text-[#25323A]">
+            <p className="text-white/80 text-xs font-medium uppercase tracking-wide">
+              Appointment Status
+            </p>
+            <h2 className="text-white text-lg font-semibold">
+              {statusConfig.label}
+            </h2>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        {/* Doctor Section */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl flex items-center justify-center border border-slate-200/60 shadow-sm">
+            <Stethoscope className="w-6 h-6 text-slate-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-0.5">
+              Your Doctor
+            </p>
+            <p className="text-base font-semibold text-slate-800 truncate">
               {schedule?.doctor_name || "Dr. Unknown"}
             </p>
           </div>
         </div>
 
-        {/* Schedule */}
-        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 bg-[#4ad294]/10 rounded-full flex items-center justify-center flex-shrink-0">
-            <Calendar className="w-5 h-5 text-[#4ad294]" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Schedule</p>
-            <p className="text-sm font-medium text-[#25323A]">
-              {fullDay} | {shiftTime}
-            </p>
-          </div>
-        </div>
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-6" />
 
-        {/* Date */}
-        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 bg-[#4ad294]/10 rounded-full flex items-center justify-center flex-shrink-0">
-            <Calendar className="w-5 h-5 text-[#4ad294]" />
+        {/* Date & Time Grid */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Date Card */}
+          <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays className="w-4 h-4 text-slate-400" />
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Date
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-800">
+                {dateComponents.day}
+              </span>
+              <span className="text-sm font-medium text-slate-500">
+                {dateComponents.month}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">{dateComponents.year}</p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Date</p>
-            <p className="text-sm font-medium text-[#25323A]">
-              {formatDate(appointment.appointment_date)}
-            </p>
-          </div>
-        </div>
 
-        {/* Time */}
-        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 bg-[#4ad294]/10 rounded-full flex items-center justify-center flex-shrink-0">
-            <Clock className="w-5 h-5 text-[#4ad294]" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Time</p>
-            <p className="text-sm font-medium text-[#25323A]">
+          {/* Time Card */}
+          <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Time
+              </span>
+            </div>
+            <p className="text-xl font-bold text-slate-800">
               {formatTime(appointment.appointment_time)}
             </p>
+            <p className="text-xs text-slate-400 mt-1">
+              {dateComponents.weekday}
+            </p>
           </div>
         </div>
 
-        {/* Status Badge */}
-        <div className="flex items-center justify-center pt-2">
-          <span
-            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium ${statusBadge.bg} ${statusBadge.text}`}
-          >
-            <CheckCircle className="w-4 h-4" />
-            Status: {statusBadge.label}
-          </span>
-        </div>
-      </div>
-
-      {/* Cancel Button */}
-      <button
-        type="button"
-        onClick={() => onCancel(appointment.appointment_id || appointment.id)}
-        disabled={isCancelling}
-        className={`w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-md shadow-sm transition-all duration-200 font-medium ${
-          isCancelling
-            ? "opacity-70 cursor-not-allowed"
-            : "cursor-pointer hover:shadow-md"
-        }`}
-      >
-        {isCancelling ? (
-          <>
-            <ClipLoader size={18} color="#ffffff" />
-            <span>Cancelling...</span>
-          </>
-        ) : (
-          <>
-            <X className="w-5 h-5" />
-            <span>Cancel Appointment</span>
-          </>
+        {/* Schedule Info */}
+        {schedule && (
+          <div className="flex items-center gap-3 bg-blue-50/60 rounded-xl px-4 py-3 mb-6 border border-blue-100/60">
+            <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">{fullDay}</span>
+                <span className="text-blue-400 mx-2">•</span>
+                <span className="text-blue-600">{shiftTime}</span>
+              </p>
+            </div>
+          </div>
         )}
-      </button>
+
+        {/* Cancel Button */}
+        <motion.button
+          type="button"
+          onClick={() => onCancel(appointment.appointment_id || appointment.id)}
+          disabled={isCancelling}
+          whileHover={{ scale: isCancelling ? 1 : 1.01 }}
+          whileTap={{ scale: isCancelling ? 1 : 0.99 }}
+          className={`w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            isCancelling
+              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+              : "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60 hover:border-rose-300"
+          }`}
+        >
+          {isCancelling ? (
+            <>
+              <ClipLoader size={16} color="#94a3b8" />
+              <span>Cancelling appointment...</span>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-4.5 h-4.5" />
+              <span>Cancel Appointment</span>
+            </>
+          )}
+        </motion.button>
+      </div>
     </motion.div>
   );
 }
