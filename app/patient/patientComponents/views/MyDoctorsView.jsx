@@ -33,21 +33,35 @@ const DAY_ABBREV_TO_FULL = {
 // Skeleton card component for loading state
 function DoctorCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 animate-pulse">
-      <div className="flex flex-col items-center">
-        {/* Avatar skeleton */}
-        <div className="w-24 h-24 rounded-full bg-gray-200 mb-4" />
-        {/* Name skeleton */}
-        <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
+    <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden">
+      {/* Decorative gradient header */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-[#4ad294]/10 via-[#3bb882]/10 to-[#2fa872]/10" />
+
+      <div className="relative p-6 animate-pulse">
+        {/* Doctor info header */}
+        <div className="flex items-start gap-4 mb-6">
+          {/* Avatar skeleton */}
+          <div className="flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-gray-200" />
+          </div>
+
+          {/* Doctor details skeleton */}
+          <div className="flex-1 pt-1 space-y-2">
+            <div className="h-5 w-32 bg-gray-200 rounded" />
+            <div className="h-6 w-40 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+
         {/* Divider */}
-        <div className="w-full h-px bg-gray-100 mb-4" />
-        {/* Schedule label skeleton */}
-        <div className="h-3 w-16 bg-gray-200 rounded mb-3" />
-        {/* Schedule items skeleton */}
-        <div className="flex flex-col items-center gap-2 w-full">
-          <div className="h-4 w-48 bg-gray-200 rounded" />
-          <div className="h-4 w-44 bg-gray-200 rounded" />
-          <div className="h-4 w-40 bg-gray-200 rounded" />
+        <div className="h-px bg-gray-100 mb-4" />
+
+        {/* Schedule section skeleton */}
+        <div>
+          <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
+          <div className="space-y-2">
+            <div className="h-14 bg-gray-100 rounded-lg" />
+            <div className="h-14 bg-gray-100 rounded-lg" />
+          </div>
         </div>
       </div>
     </div>
@@ -57,21 +71,31 @@ function DoctorCardSkeleton() {
 // Filter pills component
 function DayFilter({ activeFilter, onFilterChange }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {FILTER_OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            onClick={() => onFilterChange(option.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
-              activeFilter === option.id
-                ? "bg-[#4ad294] text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
+    <div className="mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {FILTER_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => onFilterChange(option.id)}
+              className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                activeFilter === option.id
+                  ? "bg-gradient-to-r from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30 scale-105"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800 hover:scale-102"
+              }`}
+            >
+              {activeFilter === option.id && (
+                <motion.div
+                  layoutId="activeFilter"
+                  className="absolute inset-0 bg-gradient-to-r from-[#4ad294] to-[#3bb882] rounded-xl"
+                  style={{ zIndex: -1 }}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className="relative z-10">{option.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -149,14 +173,14 @@ export default function MyDoctorsView() {
   const getDoctorWithSchedules = (doctor) => {
     // Find all doctor_schedule entries for this doctor
     const doctorScheduleEntries = doctorSchedules.filter(
-      (ds) => ds.doctor_id === doctor.doctor_id
+      (ds) => ds.doctor_id === doctor.doctor_id,
     );
 
     // Map to actual schedule details
     const doctorScheduleDetails = doctorScheduleEntries
       .map((ds) => {
         const schedule = schedules.find(
-          (s) => s.schedule_id === ds.schedule_id
+          (s) => s.schedule_id === ds.schedule_id,
         );
         return schedule;
       })
@@ -174,7 +198,7 @@ export default function MyDoctorsView() {
   const doctorHasScheduleOnDay = (doctor, dayFilter) => {
     // Find all doctor_schedule entries for this doctor
     const doctorScheduleEntries = doctorSchedules.filter(
-      (ds) => ds.doctor_id === doctor.doctor_id
+      (ds) => ds.doctor_id === doctor.doctor_id,
     );
 
     // Check if any of those schedules match the selected day
@@ -197,7 +221,7 @@ export default function MyDoctorsView() {
     }
 
     return activeDoctors.filter((doctor) =>
-      doctorHasScheduleOnDay(doctor, activeFilter)
+      doctorHasScheduleOnDay(doctor, activeFilter),
     );
   }, [activeDoctors, activeFilter, doctorSchedules, schedules]);
 
@@ -210,33 +234,44 @@ export default function MyDoctorsView() {
       transition={{ duration: 0.2 }}
       className="w-full max-w-4xl mx-auto"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
-            <Stethoscope className="w-5 h-5 text-[#4ad294]" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Doctors</h1>
-            <p className="text-sm text-gray-500">
-              View available doctors and their schedules
-            </p>
-          </div>
-        </div>
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#4ad294]/10 to-[#3bb882]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-[#3bb882]/10 to-[#2fa872]/10 rounded-full blur-3xl" />
+      </div>
 
-        {/* Refresh button */}
-        <button
-          onClick={fetchDoctorsData}
-          disabled={isLoading}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-          title="Refresh"
-        >
-          <RefreshCw
-            className={`w-5 h-5 text-gray-500 ${
-              isLoading ? "animate-spin" : ""
-            }`}
-          />
-        </button>
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-lg shadow-[#4ad294]/30">
+              <Stethoscope className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                My Doctors
+              </h1>
+              <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-[#4ad294] rounded-full animate-pulse"></span>
+                View available doctors and their schedules
+              </p>
+            </div>
+          </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={fetchDoctorsData}
+            disabled={isLoading}
+            className="group p-3 rounded-xl bg-gray-50 hover:bg-gradient-to-br hover:from-[#4ad294]/10 hover:to-[#3bb882]/10 border border-gray-200 hover:border-[#4ad294]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh"
+          >
+            <RefreshCw
+              className={`w-5 h-5 text-gray-600 group-hover:text-[#4ad294] transition-colors ${
+                isLoading ? "animate-spin" : ""
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Day Filter */}
@@ -249,49 +284,54 @@ export default function MyDoctorsView() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <DoctorCardSkeleton key={i} />
           ))}
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-          <p className="text-red-600 font-medium mb-2">Error loading doctors</p>
-          <p className="text-red-500 text-sm mb-4">{error}</p>
+        <div className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200/60 rounded-2xl p-10 text-center shadow-sm">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-bold text-red-700 mb-2">
+            Error Loading Doctors
+          </h3>
+          <p className="text-red-600 text-sm mb-6 max-w-md mx-auto">{error}</p>
           <button
             onClick={fetchDoctorsData}
-            className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-red-500/30 transition-all duration-300 hover:scale-105"
           >
             Try Again
           </button>
         </div>
       ) : activeDoctors.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <Stethoscope className="w-8 h-8 text-gray-400" />
+        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#4ad294]/20 to-[#3bb882]/20 flex items-center justify-center">
+            <Stethoscope className="w-10 h-10 text-[#4ad294]" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
             No Doctors Available
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-600 text-sm max-w-sm mx-auto">
             There are currently no active doctors in the system.
           </p>
         </div>
       ) : filteredDoctors.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <Calendar className="w-8 h-8 text-gray-400" />
+        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+            <Calendar className="w-10 h-10 text-amber-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
             No Doctors Available on {activeFilter}
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-600 text-sm max-w-sm mx-auto">
             There are no doctors scheduled on this day. Try selecting a
             different day.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
           {filteredDoctors.map((doctor) => (
             <DoctorCard
               key={doctor.doctor_id}
