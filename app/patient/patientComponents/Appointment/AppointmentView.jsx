@@ -213,11 +213,14 @@ function BookingPanel({
   isBooking,
   onSubmit,
   getSchedulesForDate,
+  fetchBookedSlotsForDate,
 }) {
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
   const [appointmentTime, setAppointmentTime] = useState("");
   const [errors, setErrors] = useState({});
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [isLoadingBookedSlots, setIsLoadingBookedSlots] = useState(false);
 
   // Day abbreviation to full name mapping
   const DAY_ABBREV_TO_FULL = {
@@ -242,7 +245,7 @@ function BookingPanel({
     return getSchedulesForDate(selectedDate);
   }, [selectedDate, getSchedulesForDate]);
 
-  // Generate time options based on selected schedule
+  // Generate time options based on selected schedule (20-min intervals)
   const timeOptions = useMemo(() => {
     const schedule = availableSchedules.find(
       (s) => s.schedule_id?.toString() === selectedSchedule,
@@ -252,32 +255,41 @@ function BookingPanel({
 
     const times = [];
     if (schedule.shift === "AM") {
-      for (let hour = 8; hour < 12; hour++) {
+      // Morning shift: 8:00 AM to 11:40 AM (20-min intervals)
+      for (let totalMin = 8 * 60; totalMin < 12 * 60; totalMin += 20) {
+        const hour = Math.floor(totalMin / 60);
+        const minute = totalMin % 60;
         times.push({
-          value: `${hour.toString().padStart(2, "0")}:00`,
-          label: `${hour}:00 AM`,
-        });
-        times.push({
-          value: `${hour.toString().padStart(2, "0")}:30`,
-          label: `${hour}:30 AM`,
+          value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+          label: `${hour}:${minute.toString().padStart(2, "0")} AM`,
         });
       }
     } else if (schedule.shift === "PM") {
-      // Afternoon shift: 1:00 PM to 4:30 PM
-      for (let hour = 13; hour < 17; hour++) {
+      // Afternoon shift: 1:00 PM to 4:40 PM (20-min intervals)
+      for (let totalMin = 13 * 60; totalMin < 17 * 60; totalMin += 20) {
+        const hour = Math.floor(totalMin / 60);
+        const minute = totalMin % 60;
         const displayHour = hour > 12 ? hour - 12 : hour;
         times.push({
-          value: `${hour.toString().padStart(2, "0")}:00`,
-          label: `${displayHour}:00 PM`,
-        });
-        times.push({
-          value: `${hour.toString().padStart(2, "0")}:30`,
-          label: `${displayHour}:30 PM`,
+          value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+          label: `${displayHour}:${minute.toString().padStart(2, "0")} PM`,
         });
       }
     }
     return times;
   }, [selectedSchedule, availableSchedules]);
+
+  // Fetch booked slots whenever date + schedule combination changes
+  useEffect(() => {
+    if (!selectedDate || !selectedSchedule || !fetchBookedSlotsForDate) {
+      setBookedSlots([]);
+      return;
+    }
+    setIsLoadingBookedSlots(true);
+    fetchBookedSlotsForDate(selectedDate, selectedSchedule)
+      .then((slots) => setBookedSlots(slots))
+      .finally(() => setIsLoadingBookedSlots(false));
+  }, [selectedDate, selectedSchedule, fetchBookedSlotsForDate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -305,6 +317,7 @@ function BookingPanel({
     setSelectedPurpose("");
     setAppointmentTime("");
     setErrors({});
+    setBookedSlots([]);
   }, [selectedDate]);
 
   const formatDate = (dateStr) => {
@@ -522,11 +535,27 @@ function BookingPanel({
                 />
               </SelectTrigger>
               <SelectContent>
-                {timeOptions.map((time) => (
-                  <SelectItem key={time.value} value={time.value}>
-                    {time.label}
-                  </SelectItem>
-                ))}
+                {isLoadingBookedSlots ? (
+                  <div className="flex items-center justify-center py-4">
+                    <ClipLoader size={16} color="#4ad294" />
+                  </div>
+                ) : (
+                  timeOptions.map((time) => {
+                    const isBooked = bookedSlots.includes(time.value);
+                    return (
+                      <SelectItem
+                        key={time.value}
+                        value={time.value}
+                        disabled={isBooked}
+                        className={isBooked ? "text-gray-400" : ""}
+                      >
+                        {isBooked
+                          ? `${time.label} — Already booked`
+                          : time.label}
+                      </SelectItem>
+                    );
+                  })
+                )}
               </SelectContent>
             </Select>
             {errors.time && (
@@ -566,6 +595,7 @@ export default function AppointmentView() {
     cancelAppointment,
     getSchedulesForDate,
     isWeekday,
+    fetchBookedSlotsForDate,
   } = useAppointment();
 
   const isLoading = isLoadingAppointments || isLoadingSchedules;
@@ -727,6 +757,7 @@ export default function AppointmentView() {
           isBooking={isBooking}
           onSubmit={bookAppointment}
           getSchedulesForDate={getSchedulesForDate}
+          fetchBookedSlotsForDate={fetchBookedSlotsForDate}
         />
       </div>
     </motion.div>

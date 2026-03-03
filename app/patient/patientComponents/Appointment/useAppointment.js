@@ -322,6 +322,46 @@ export function useAppointment() {
     return dayIndex !== 0 && dayIndex !== 6;
   }, []);
 
+  // Fetch all booked (non-cancelled) time slots for a given date + schedule
+  const fetchBookedSlotsForDate = useCallback(async (date, scheduleId) => {
+    const token = getAuthToken();
+    if (!token || !date || !scheduleId) return [];
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/appointments`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      const list = Array.isArray(data)
+        ? data
+        : data?.data || data?.appointments || data?.items || [];
+
+      return list
+        .filter((apt) => {
+          const aptDate = toYMD(apt?.appointment_date);
+          const status = (apt?.status || "").toLowerCase();
+          return (
+            aptDate === date &&
+            apt?.schedule_id?.toString() === scheduleId?.toString() &&
+            status !== "cancelled"
+          );
+        })
+        .map((apt) => (apt?.appointment_time || "").substring(0, 5));
+    } catch (err) {
+      console.error("[fetchBookedSlotsForDate] Error:", err);
+      return [];
+    }
+  }, []);
+
   // Book an appointment
   const bookAppointment = useCallback(
     async (scheduleId, appointmentDate, appointmentTime, reasonCategoryId) => {
@@ -485,6 +525,7 @@ export function useAppointment() {
     cancelAppointment,
     getSchedulesForDate,
     isWeekday,
+    fetchBookedSlotsForDate,
     refreshAppointments: fetchAppointments,
     refreshSchedules: fetchSchedules,
     refreshReasonCategories: fetchReasonCategories,

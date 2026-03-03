@@ -45,6 +45,7 @@ export default function AppointmentForm({
   onSubmit,
   getSchedulesForDate,
   isWeekday,
+  bookedSlots = [],
 }) {
   const [appointmentDate, setAppointmentDate] = useState("");
   const [selectedSchedule, setSelectedSchedule] = useState("");
@@ -126,7 +127,7 @@ export default function AppointmentForm({
     onSubmit(selectedSchedule, appointmentDate, formattedTime, selectedPurpose);
   };
 
-  // Generate time options based on selected schedule
+  // Generate time options based on selected schedule (20-min intervals)
   const getTimeOptions = () => {
     const schedule = filteredSchedules.find(
       (s) => s.schedule_id?.toString() === selectedSchedule,
@@ -136,28 +137,24 @@ export default function AppointmentForm({
 
     const times = [];
     if (schedule.shift === "AM") {
-      // Morning shift: 8:00 AM to 11:30 AM (30 min intervals)
-      for (let hour = 8; hour < 12; hour++) {
+      // Morning shift: 8:00 AM to 11:40 AM (20-min intervals)
+      for (let totalMin = 8 * 60; totalMin < 12 * 60; totalMin += 20) {
+        const hour = Math.floor(totalMin / 60);
+        const minute = totalMin % 60;
         times.push({
-          value: `${hour.toString().padStart(2, "0")}:00`,
-          label: `${hour}:00 AM`,
-        });
-        times.push({
-          value: `${hour.toString().padStart(2, "0")}:30`,
-          label: `${hour}:30 AM`,
+          value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+          label: `${hour}:${minute.toString().padStart(2, "0")} AM`,
         });
       }
     } else if (schedule.shift === "PM") {
-      // Afternoon shift: 1:00 PM to 4:30 PM (30 min intervals)
-      for (let hour = 13; hour < 17; hour++) {
+      // Afternoon shift: 1:00 PM to 4:40 PM (20-min intervals)
+      for (let totalMin = 13 * 60; totalMin < 17 * 60; totalMin += 20) {
+        const hour = Math.floor(totalMin / 60);
+        const minute = totalMin % 60;
         const displayHour = hour > 12 ? hour - 12 : hour;
         times.push({
-          value: `${hour.toString().padStart(2, "0")}:00`,
-          label: `${displayHour}:00 PM`,
-        });
-        times.push({
-          value: `${hour.toString().padStart(2, "0")}:30`,
-          label: `${displayHour}:30 PM`,
+          value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+          label: `${displayHour}:${minute.toString().padStart(2, "0")} PM`,
         });
       }
     }
@@ -371,11 +368,19 @@ export default function AppointmentForm({
               />
             </SelectTrigger>
             <SelectContent>
-              {timeOptions.map((time) => (
-                <SelectItem key={time.value} value={time.value}>
-                  {time.label}
-                </SelectItem>
-              ))}
+              {timeOptions.map((time) => {
+                const isBooked = bookedSlots.includes(time.value);
+                return (
+                  <SelectItem
+                    key={time.value}
+                    value={time.value}
+                    disabled={isBooked}
+                    className={isBooked ? "text-gray-400" : ""}
+                  >
+                    {isBooked ? `${time.label} — Already booked` : time.label}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           {errors.time && (
