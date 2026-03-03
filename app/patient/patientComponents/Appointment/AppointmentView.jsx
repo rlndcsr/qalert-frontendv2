@@ -107,7 +107,7 @@ function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6">
-      {/* Calendar Header */}
+      {/* Calendar Navigation */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-gray-900">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -323,8 +323,8 @@ function BookingPanel({
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-md">
-            <CalendarDays className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-[#4ad294]" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">
@@ -587,21 +587,21 @@ export default function AppointmentView() {
 
     return (
       <motion.div
-        className="w-full max-w-4xl mx-auto"
+        className="w-full max-w-md mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-md">
-              <CalendarDays className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+              <CalendarDays className="w-5 h-5 text-[#4ad294]" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 My Appointment
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-500">
                 View your scheduled appointment
               </p>
             </div>
@@ -621,30 +621,33 @@ export default function AppointmentView() {
   if (isLoading) {
     return (
       <motion.div
-        className="w-full max-w-7xl mx-auto"
+        className="w-full max-w-4xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="mb-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-md">
-              <CalendarDays className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+              <CalendarDays className="w-5 h-5 text-[#4ad294]" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Book Appointment
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-500">
                 Schedule your healthcare visit
               </p>
             </div>
           </div>
         </div>
-        <div className="grid lg:grid-cols-[1.2fr,1fr] gap-6">
+
+        {/* Content Skeleton */}
+        <div className="space-y-6">
           {/* Calendar Skeleton */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6 animate-pulse">
-            <div className="h-8 w-48 bg-gray-200 rounded mb-6" />
+            <div className="h-7 w-40 bg-gray-200 rounded mb-6" />
             <div className="grid grid-cols-7 gap-2">
               {[...Array(35)].map((_, i) => (
                 <div key={i} className="aspect-square bg-gray-100 rounded-xl" />
@@ -689,30 +692,30 @@ export default function AppointmentView() {
   // Main calendar view
   return (
     <motion.div
-      className="w-full max-w-7xl mx-auto"
+      className="w-full max-w-4xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-md">
-            <CalendarDays className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-[#4ad294]" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               Book Appointment
             </h2>
-            <p className="text-sm text-gray-600">
-              Select a date and schedule your healthcare visit
+            <p className="text-sm text-gray-500">
+              Select a date and schedule your visit
             </p>
           </div>
         </div>
       </div>
 
-      {/* Calendar and Booking Panel Grid */}
-      <div className="grid lg:grid-cols-[1.2fr,1fr] gap-6">
+      {/* Content */}
+      <div className="space-y-6">
         {/* Calendar */}
         <Calendar
           selectedDate={selectedDate}

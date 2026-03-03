@@ -241,37 +241,32 @@ export default function MyDoctorsView() {
       </div>
 
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-lg shadow-[#4ad294]/30">
-              <Stethoscope className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                My Doctors
-              </h1>
-              <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-[#4ad294] rounded-full animate-pulse"></span>
-                View available doctors and their schedules
-              </p>
-            </div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+            <Stethoscope className="w-5 h-5 text-[#4ad294]" />
           </div>
-
-          {/* Refresh button */}
-          <button
-            onClick={fetchDoctorsData}
-            disabled={isLoading}
-            className="group p-3 rounded-xl bg-gray-50 hover:bg-gradient-to-br hover:from-[#4ad294]/10 hover:to-[#3bb882]/10 border border-gray-200 hover:border-[#4ad294]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refresh"
-          >
-            <RefreshCw
-              className={`w-5 h-5 text-gray-600 group-hover:text-[#4ad294] transition-colors ${
-                isLoading ? "animate-spin" : ""
-              }`}
-            />
-          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">My Doctors</h1>
+            <p className="text-sm text-gray-500">
+              View available doctors and their schedules
+            </p>
+          </div>
         </div>
+
+        {/* Refresh button */}
+        <button
+          onClick={fetchDoctorsData}
+          disabled={isLoading}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+          title="Refresh"
+        >
+          <RefreshCw
+            className={`w-5 h-5 text-gray-500 ${
+              isLoading ? "animate-spin" : ""
+            }`}
+          />
+        </button>
       </div>
 
       {/* Day Filter */}
