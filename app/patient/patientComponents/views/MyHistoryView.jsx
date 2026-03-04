@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   History,
   RefreshCw,
-  FileText,
   Calendar,
   Tag,
   Stethoscope,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Filter,
+  Search,
 } from "lucide-react";
 import { getAuthToken } from "../patientUtils";
 
@@ -16,23 +20,39 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
-// Skeleton card component for loading state
+// ─── Filter Tabs ────────────────────────────────────────────────────────────
+const FILTER_OPTIONS = [
+  { id: "all", label: "All" },
+  { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
+// ─── Skeleton ───────────────────────────────────────────────────────────────
 function HistoryCardSkeleton() {
   return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
+    <div className="space-y-3">
+      {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 animate-pulse"
+          className="relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden animate-pulse"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-5 w-32 bg-gray-200 rounded" />
-            <div className="h-6 w-20 bg-gray-200 rounded-full" />
-          </div>
-          <div className="h-4 w-3/4 bg-gray-200 rounded mb-4" />
-          <div className="flex items-center gap-4">
-            <div className="h-4 w-28 bg-gray-200 rounded" />
-            <div className="h-4 w-24 bg-gray-200 rounded" />
+          <div className="absolute top-0 left-0 w-1 h-full bg-gray-200 rounded-l-2xl" />
+          <div className="pl-5 pr-5 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gray-100" />
+                <div className="space-y-2">
+                  <div className="h-4 w-36 bg-gray-100 rounded" />
+                  <div className="h-3 w-24 bg-gray-100 rounded" />
+                </div>
+              </div>
+              <div className="h-6 w-24 bg-gray-100 rounded-full" />
+            </div>
+            <div className="h-3 w-2/3 bg-gray-50 rounded mb-4" />
+            <div className="flex items-center gap-6">
+              <div className="h-3 w-28 bg-gray-50 rounded" />
+              <div className="h-3 w-20 bg-gray-50 rounded" />
+            </div>
           </div>
         </div>
       ))}
@@ -40,43 +60,66 @@ function HistoryCardSkeleton() {
   );
 }
 
-// Status badge component
+// ─── Status Badge ───────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
-  const getStatusConfig = (status) => {
-    switch (status) {
-      case "completed":
-        return {
-          label: "Completed",
-          className: "bg-green-100 text-green-700",
-        };
-      case "cancelled":
-        return { label: "Cancelled", className: "bg-red-100 text-red-700" };
-      default:
-        return {
-          label: status || "Unknown",
-          className: "bg-gray-100 text-gray-700",
-        };
-    }
+  const config = {
+    completed: {
+      label: "Completed",
+      icon: CheckCircle2,
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      dot: "bg-emerald-500",
+    },
+    cancelled: {
+      label: "Cancelled",
+      icon: XCircle,
+      bg: "bg-red-50",
+      text: "text-red-600",
+      border: "border-red-200",
+      dot: "bg-red-400",
+    },
+  }[status] || {
+    label: status || "Unknown",
+    icon: Clock,
+    bg: "bg-gray-50",
+    text: "text-gray-600",
+    border: "border-gray-200",
+    dot: "bg-gray-400",
   };
 
-  const config = getStatusConfig(status);
+  const Icon = config.icon;
 
   return (
     <span
-      className={`text-xs font-semibold px-3 py-1 rounded-full ${config.className}`}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold pl-2.5 pr-3 py-1 rounded-full border ${config.bg} ${config.text} ${config.border}`}
     >
+      <Icon className="w-3 h-3" />
       {config.label}
     </span>
   );
 }
 
-// History card component for individual queue entry
-function HistoryCard({ entry, reasonCategories, doctorName }) {
+// ─── Date Group Label ───────────────────────────────────────────────────────
+function DateGroupLabel({ label }) {
+  return (
+    <div className="flex items-center gap-3 pt-2 pb-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+        {label}
+      </span>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
+  );
+}
+
+// ─── History Card ───────────────────────────────────────────────────────────
+function HistoryCard({ entry, reasonCategories, doctorName, index }) {
   const formattedQueueNumber = entry.queue_number
     ? String(entry.queue_number).padStart(3, "0")
     : "—";
 
-  // Format date for display
+  const isCompleted = entry.queue_status === "completed";
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
     const date = new Date(dateStr);
@@ -88,67 +131,93 @@ function HistoryCard({ entry, reasonCategories, doctorName }) {
     });
   };
 
-  // Get reason category name from ID
-  const getReasonCategoryName = (categoryId) => {
-    if (!categoryId || !reasonCategories || reasonCategories.length === 0) {
-      return "—";
-    }
-    // Handle both string and number comparison
-    const category = reasonCategories.find(
-      (cat) => String(cat.reason_category_id) === String(categoryId)
-    );
-    return category?.name || category?.category_name || "—";
+  const formatTime = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    if (isNaN(date)) return null;
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
-  // Get the reason category ID - check multiple possible field names
+  const getReasonCategoryName = (categoryId) => {
+    if (!categoryId || !reasonCategories || reasonCategories.length === 0)
+      return "General Visit";
+    const category = reasonCategories.find(
+      (cat) => String(cat.reason_category_id) === String(categoryId),
+    );
+    return category?.name || category?.category_name || "General Visit";
+  };
+
   const reasonCategoryId =
     entry.reason_category_id || entry.reason_id || entry.category_id;
 
+  const accentColor = isCompleted ? "#4ad294" : "#f87171";
+  const accentBg = isCompleted ? "bg-[#4ad294]/8" : "bg-red-400/8";
+  const accentText = isCompleted ? "text-[#4ad294]" : "text-red-400";
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow duration-200"
+      transition={{ duration: 0.3, delay: index * 0.04, ease: "easeOut" }}
+      className="group relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden hover:shadow-md hover:border-gray-300/60 transition-all duration-300"
     >
-      {/* Header with Queue Number and Status */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-[#4ad294]">
-            #{formattedQueueNumber}
-          </span>
-        </div>
-        <StatusBadge status={entry.queue_status} />
-      </div>
+      {/* Left accent bar */}
+      <div
+        className="absolute top-0 left-0 w-1 h-full rounded-l-2xl transition-all duration-300 group-hover:w-1.5"
+        style={{ backgroundColor: accentColor }}
+      />
 
-      {/* Reason Category (Main Label) */}
-      <div className="mb-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Tag className="w-4 h-4 text-[#4ad294]" />
-          <span className="text-base font-semibold text-gray-900">
-            {getReasonCategoryName(reasonCategoryId)}
-          </span>
-        </div>
-      </div>
+      <div className="pl-5 pr-5 py-4 sm:py-5">
+        {/* Top row: Queue number + category + status */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Queue number badge */}
+            <div
+              className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl ${accentBg} transition-colors duration-200`}
+            >
+              <span className={`text-sm font-bold ${accentText}`}>
+                {formattedQueueNumber}
+              </span>
+            </div>
 
-      {/* Reason Description (Secondary Text) */}
-      {entry.reason && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 pl-6">{entry.reason}</p>
-        </div>
-      )}
-
-      {/* Metadata Row: Doctor and Date */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100">
-        {doctorName && (
-          <div className="flex items-center gap-1.5">
-            <Stethoscope className="w-3.5 h-3.5 text-gray-400" />
-            <span>{doctorName}</span>
+            {/* Category + reason */}
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-[#25323A] leading-snug truncate">
+                {getReasonCategoryName(reasonCategoryId)}
+              </h4>
+              {entry.reason && (
+                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                  {entry.reason}
+                </p>
+              )}
+            </div>
           </div>
-        )}
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-gray-400" />
-          <span>{formatDate(entry.date || entry.created_at)}</span>
+
+          <StatusBadge status={entry.queue_status} />
+        </div>
+
+        {/* Metadata row */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pl-[52px]">
+          {doctorName && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Stethoscope className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <span className="truncate">{doctorName}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span>{formatDate(entry.date || entry.created_at)}</span>
+          </div>
+          {formatTime(entry.updated_at || entry.created_at) && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <span>{formatTime(entry.updated_at || entry.created_at)}</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -234,14 +303,14 @@ const resolveDoctorName = (scheduleId, doctorSchedules, doctors) => {
 
   // Find the doctor-schedule entry that matches this schedule_id
   const doctorSchedule = doctorSchedules.find(
-    (ds) => ds.schedule_id === scheduleId
+    (ds) => ds.schedule_id === scheduleId,
   );
 
   if (!doctorSchedule) return null;
 
   // Find the doctor that matches the doctor_id
   const doctor = doctors.find(
-    (doc) => doc.doctor_id === doctorSchedule.doctor_id
+    (doc) => doc.doctor_id === doctorSchedule.doctor_id,
   );
 
   return doctor?.doctor_name || null;
@@ -314,6 +383,29 @@ const fetchUserHistory = async () => {
   return { history: sortedEntries, reasonCategories, doctors, doctorSchedules };
 };
 
+// ─── Date grouping helper ───────────────────────────────────────────────────
+function getDateGroup(dateStr) {
+  if (!dateStr) return "Unknown";
+  const date = new Date(dateStr);
+  if (isNaN(date)) return "Unknown";
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const entryDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const diffDays = Math.floor((today - entryDate) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays <= 7) return "This Week";
+  if (diffDays <= 30) return "This Month";
+  if (diffDays <= 90) return "Last 3 Months";
+  return "Older";
+}
+
 export default function MyHistoryView() {
   const [history, setHistory] = useState([]);
   const [reasonCategories, setReasonCategories] = useState([]);
@@ -321,6 +413,8 @@ export default function MyHistoryView() {
   const [doctorSchedules, setDoctorSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -345,90 +439,294 @@ export default function MyHistoryView() {
     fetchData();
   }, []);
 
+  // Filtered + searched entries
+  const filteredHistory = useMemo(() => {
+    let entries = history;
+
+    // Filter by status
+    if (activeFilter !== "all") {
+      entries = entries.filter((e) => e.queue_status === activeFilter);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      entries = entries.filter((entry) => {
+        const reason = entry.reason?.toLowerCase() || "";
+        const queueNum = String(entry.queue_number || "");
+        const doctor =
+          resolveDoctorName(
+            entry.schedule_id,
+            doctorSchedules,
+            doctors,
+          )?.toLowerCase() || "";
+
+        // Resolve the reason category name from its ID
+        const categoryId =
+          entry.reason_category_id || entry.reason_id || entry.category_id;
+        let categoryName = "";
+        if (categoryId && reasonCategories.length > 0) {
+          const cat = reasonCategories.find(
+            (c) => String(c.reason_category_id) === String(categoryId),
+          );
+          categoryName = (cat?.name || cat?.category_name || "").toLowerCase();
+        }
+
+        return (
+          reason.includes(q) ||
+          queueNum.includes(q) ||
+          doctor.includes(q) ||
+          categoryName.includes(q)
+        );
+      });
+    }
+
+    return entries;
+  }, [
+    history,
+    activeFilter,
+    searchQuery,
+    doctorSchedules,
+    doctors,
+    reasonCategories,
+  ]);
+
+  // Group entries by date
+  const groupedHistory = useMemo(() => {
+    const groups = [];
+    const groupMap = new Map();
+
+    filteredHistory.forEach((entry) => {
+      const label = getDateGroup(entry.date || entry.created_at);
+      if (!groupMap.has(label)) {
+        groupMap.set(label, []);
+        groups.push(label);
+      }
+      groupMap.get(label).push(entry);
+    });
+
+    return groups.map((label) => ({ label, entries: groupMap.get(label) }));
+  }, [filteredHistory]);
+
+  // Summary stats
+  const stats = useMemo(() => {
+    const completed = history.filter(
+      (e) => e.queue_status === "completed",
+    ).length;
+    const cancelled = history.filter(
+      (e) => e.queue_status === "cancelled",
+    ).length;
+    return { total: history.length, completed, cancelled };
+  }, [history]);
+
   return (
     <motion.div
       key="history"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       className="w-full max-w-4xl mx-auto"
     >
-      {/* Header */}
+      {/* ─── Page Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
-            <History className="w-5 h-5 text-[#4ad294]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-sm shadow-[#4ad294]/20">
+            <History className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My History</h1>
-            <p className="text-sm text-gray-500">
-              View your completed and cancelled visits
+            <h1 className="text-xl font-bold text-[#25323A] tracking-tight">
+              Visit History
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Your completed and cancelled queue records
             </p>
           </div>
         </div>
 
-        {/* Refresh button */}
         <button
           onClick={fetchData}
           disabled={isLoading}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
-          title="Refresh"
+          className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-sm"
+          title="Refresh history"
         >
           <RefreshCw
-            className={`w-5 h-5 text-gray-500 ${
-              isLoading ? "animate-spin" : ""
-            }`}
+            className={`w-4 h-4 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
           />
         </button>
       </div>
 
-      {/* Content */}
+      {/* ─── Stats Summary ───────────────────────────────────────────── */}
+      {!isLoading && !error && history.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            {
+              label: "Total Visits",
+              value: stats.total,
+              color: "text-[#25323A]",
+              bg: "bg-gray-50",
+              border: "border-gray-200/60",
+            },
+            {
+              label: "Completed",
+              value: stats.completed,
+              color: "text-emerald-700",
+              bg: "bg-emerald-50/60",
+              border: "border-emerald-200/60",
+            },
+            {
+              label: "Cancelled",
+              value: stats.cancelled,
+              color: "text-red-600",
+              bg: "bg-red-50/60",
+              border: "border-red-200/60",
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={`${stat.bg} border ${stat.border} rounded-xl px-4 py-3 text-center`}
+            >
+              <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+              <p className="text-[11px] font-medium text-gray-500 mt-0.5">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─── Filters + Search ────────────────────────────────────────── */}
+      {!isLoading && !error && history.length > 0 && (
+        <div className="mb-5 space-y-3">
+          {/* Filter pills */}
+          <div className="bg-white rounded-xl border border-gray-200/60 p-1.5 shadow-sm">
+            <div className="flex items-center gap-1.5">
+              {FILTER_OPTIONS.map((option) => {
+                const isActive = activeFilter === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => setActiveFilter(option.id)}
+                    className={`relative flex-1 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#4ad294] to-[#3bb882] text-white shadow-sm shadow-[#4ad294]/25"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {option.label}
+                    {option.id !== "all" && (
+                      <span
+                        className={`ml-1.5 text-[10px] font-bold ${
+                          isActive ? "text-white/80" : "text-gray-400"
+                        }`}
+                      >
+                        {option.id === "completed"
+                          ? stats.completed
+                          : stats.cancelled}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by reason, queue number, or doctor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200/60 rounded-xl shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4ad294]/30 focus:border-[#4ad294]/50 transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Content ─────────────────────────────────────────────────── */}
       {isLoading ? (
         <HistoryCardSkeleton />
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-          <p className="text-red-600 font-medium mb-2">Error loading history</p>
-          <p className="text-red-500 text-sm mb-4">{error}</p>
+        <div className="bg-white border border-red-200/80 rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+            <XCircle className="w-7 h-7 text-red-400" />
+          </div>
+          <h3 className="text-base font-semibold text-[#25323A] mb-1">
+            Unable to load history
+          </h3>
+          <p className="text-sm text-gray-500 mb-5 max-w-xs mx-auto">{error}</p>
           <button
             onClick={fetchData}
-            className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#4ad294] to-[#3bb882] hover:from-[#3bb882] hover:to-[#2fa872] text-white rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm shadow-[#4ad294]/20 cursor-pointer"
           >
+            <RefreshCw className="w-4 h-4" />
             Try Again
           </button>
         </div>
       ) : history.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <History className="w-8 h-8 text-gray-400" />
+        <div className="bg-white border border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gray-50 flex items-center justify-center">
+            <History className="w-8 h-8 text-gray-300" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            No Visit History Yet
+          <h3 className="text-base font-semibold text-[#25323A] mb-1">
+            No visit history yet
           </h3>
-          <p className="text-gray-500 text-sm">
-            Your completed and cancelled visits will appear here.
+          <p className="text-sm text-gray-500 max-w-[280px] mx-auto leading-relaxed">
+            Once you complete or cancel a queue visit, it will be recorded here.
+          </p>
+        </div>
+      ) : filteredHistory.length === 0 ? (
+        <div className="bg-white border border-gray-200/60 rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gray-50 flex items-center justify-center">
+            <Search className="w-6 h-6 text-gray-300" />
+          </div>
+          <h3 className="text-sm font-semibold text-[#25323A] mb-1">
+            No matching records
+          </h3>
+          <p className="text-xs text-gray-500">
+            Try adjusting your filters or search terms.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {history.map((entry, index) => (
-            <HistoryCard
-              key={entry.queue_entry_id || index}
-              entry={entry}
-              reasonCategories={reasonCategories}
-              doctorName={resolveDoctorName(
-                entry.schedule_id,
-                doctorSchedules,
-                doctors
-              )}
-            />
-          ))}
+        <div className="space-y-2">
+          <AnimatePresence mode="popLayout">
+            {groupedHistory.map((group) => (
+              <div key={group.label}>
+                <DateGroupLabel label={group.label} />
+                <div className="space-y-2.5 mb-4">
+                  {group.entries.map((entry, index) => (
+                    <HistoryCard
+                      key={entry.queue_entry_id || `${group.label}-${index}`}
+                      entry={entry}
+                      index={index}
+                      reasonCategories={reasonCategories}
+                      doctorName={resolveDoctorName(
+                        entry.schedule_id,
+                        doctorSchedules,
+                        doctors,
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </AnimatePresence>
 
-          {/* Stats footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
-              Showing {history.length} visit{history.length !== 1 ? "s" : ""} in
-              your history
+          {/* Footer summary */}
+          <div className="pt-4 pb-2 text-center">
+            <p className="text-xs text-gray-400">
+              Showing {filteredHistory.length} of {history.length} visit
+              {history.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
