@@ -116,7 +116,9 @@ export default function AppointmentCard({
 }) {
   if (!appointment) return null;
 
-  const statusConfig = getStatusConfig(appointment.status);
+  const appointmentStatus =
+    appointment.status || appointment.appointment_status || "";
+  const statusConfig = getStatusConfig(appointmentStatus);
   const StatusIcon = statusConfig.icon;
   const fullDay = schedule
     ? DAY_ABBREV_TO_FULL[schedule.day] || schedule.day

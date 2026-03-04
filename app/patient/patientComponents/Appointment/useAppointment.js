@@ -99,7 +99,37 @@ export function useAppointment() {
 
       setAppointments(userAppointments);
 
-      // Find active appointment (today or future, not cancelled or completed)
+      // Fetch queue entries to check their actual status
+      let userQueueEntries = [];
+      try {
+        const queueResponse = await fetch(`${API_BASE_URL}/queues`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
+        if (queueResponse.ok) {
+          const queueData = await queueResponse.json();
+          const queueList = Array.isArray(queueData)
+            ? queueData
+            : queueData?.data || queueData?.queues || queueData?.items || [];
+          userQueueEntries = queueList.filter((q) => {
+            const qUserId = q?.user_id ?? q?.user?.id;
+            return qUserId == userId;
+          });
+        }
+      } catch (qErr) {
+        console.warn(
+          "[fetchAppointments] Could not fetch queue entries:",
+          qErr,
+        );
+      }
+
+      // Find active appointment (today or future, not cancelled/completed,
+      // and whose linked queue entry is not completed)
       const today = getTodayDateString();
       const activeApt = userAppointments.find((apt) => {
         const aptDate = toYMD(apt?.appointment_date);
@@ -108,11 +138,32 @@ export function useAppointment() {
         // Check if date is today or in the future
         const isValidDate = aptDate >= today;
 
-        // Check if status is not cancelled or completed
-        const status = (apt?.status || "").toLowerCase();
-        const isActive = status !== "cancelled" && status !== "completed";
+        // Check appointment status
+        const status = (
+          apt?.status ||
+          apt?.appointment_status ||
+          ""
+        ).toLowerCase();
+        if (status === "cancelled" || status === "completed") return false;
 
-        return isValidDate && isActive;
+        // Check if any linked queue entry (same date + schedule) is completed/cancelled
+        const linkedQueueEntry = userQueueEntries.find((q) => {
+          const qDate = toYMD(q?.date ?? q?.created_at);
+          const qStatus = (q?.queue_status || "").toLowerCase();
+          const matchesSchedule =
+            apt?.schedule_id &&
+            q?.schedule_id &&
+            apt.schedule_id.toString() === q.schedule_id.toString();
+          return (
+            qDate === aptDate &&
+            matchesSchedule &&
+            (qStatus === "completed" || qStatus === "cancelled")
+          );
+        });
+
+        if (linkedQueueEntry) return false;
+
+        return isValidDate;
       });
 
       setActiveAppointment(activeApt || null);
