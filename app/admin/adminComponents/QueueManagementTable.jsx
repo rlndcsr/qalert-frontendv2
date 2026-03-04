@@ -78,7 +78,7 @@ export default function QueueManagementTable({
         ).padStart(
           3,
           "0",
-        )}. Your position: ${position}. Please proceed to the clinic. Thank you.`;
+        )}. Your position is ${position}. Please proceed to the clinic immediately. You have 10-15 minutes before the next patient is called. We encourage you to arrive as early as possible. Thank you.`;
 
         await fetch("/api/sms", {
           method: "POST",
