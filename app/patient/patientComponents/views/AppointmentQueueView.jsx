@@ -615,14 +615,14 @@ export default function AppointmentQueueView() {
       {/* ─── Page Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-sm shadow-[#4ad294]/20">
-            <ClipboardList className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-[#4ad294]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#25323A] tracking-tight">
+            <h1 className="text-2xl font-bold text-gray-900">
               Appointment Queue
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-sm text-gray-500">
               Your current queue status for today
             </p>
           </div>
@@ -631,11 +631,11 @@ export default function AppointmentQueueView() {
         <button
           onClick={fetchData}
           disabled={isLoading}
-          className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-sm"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
           title="Refresh queue"
         >
           <RefreshCw
-            className={`w-4 h-4 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
+            className={`w-5 h-5 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
           />
         </button>
       </div>
