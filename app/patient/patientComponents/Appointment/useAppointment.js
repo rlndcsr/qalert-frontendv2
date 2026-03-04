@@ -99,7 +99,7 @@ export function useAppointment() {
 
       setAppointments(userAppointments);
 
-      // Find active appointment (today or future, not cancelled)
+      // Find active appointment (today or future, not cancelled or completed)
       const today = getTodayDateString();
       const activeApt = userAppointments.find((apt) => {
         const aptDate = toYMD(apt?.appointment_date);
@@ -108,11 +108,11 @@ export function useAppointment() {
         // Check if date is today or in the future
         const isValidDate = aptDate >= today;
 
-        // Check if status is not cancelled
+        // Check if status is not cancelled or completed
         const status = (apt?.status || "").toLowerCase();
-        const isNotCancelled = status !== "cancelled";
+        const isActive = status !== "cancelled" && status !== "completed";
 
-        return isValidDate && isNotCancelled;
+        return isValidDate && isActive;
       });
 
       setActiveAppointment(activeApt || null);
