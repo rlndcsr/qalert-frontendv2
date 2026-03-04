@@ -6,13 +6,17 @@ import {
   ClipboardList,
   RefreshCw,
   Hash,
-  FileText,
   Activity,
   Users,
   Tag,
   ExternalLink,
   CalendarClock,
   Calendar,
+  CheckCircle2,
+  Clock,
+  Phone,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -26,29 +30,44 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
-// Skeleton card component for loading state
+// ─── Skeleton ───────────────────────────────────────────────────────────────
 function QueueCardSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Now Serving Skeleton */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 animate-pulse">
-        <div className="flex items-center justify-between">
-          <div className="h-6 w-32 bg-gray-200 rounded" />
-          <div className="h-12 w-20 bg-gray-200 rounded-lg" />
+      <div className="relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden animate-pulse">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200" />
+        <div className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-gray-100" />
+              <div className="space-y-2">
+                <div className="h-4 w-24 bg-gray-100 rounded" />
+                <div className="h-3 w-36 bg-gray-50 rounded" />
+              </div>
+            </div>
+            <div className="h-12 w-16 bg-gray-100 rounded-xl" />
+          </div>
         </div>
       </div>
       {/* User Queue Skeleton */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 animate-pulse">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="h-6 w-40 bg-gray-200 rounded" />
-            <div className="h-6 w-20 bg-gray-200 rounded-full" />
+      <div className="relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden animate-pulse">
+        <div className="absolute top-0 left-0 w-1 h-full bg-gray-200" />
+        <div className="pl-5 pr-5 py-5">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100" />
+              <div className="space-y-2">
+                <div className="h-4 w-32 bg-gray-100 rounded" />
+                <div className="h-3 w-20 bg-gray-100 rounded" />
+              </div>
+            </div>
+            <div className="h-6 w-20 bg-gray-100 rounded-full" />
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div className="h-20 bg-gray-200 rounded-lg" />
-            <div className="h-20 bg-gray-200 rounded-lg" />
-            <div className="h-20 bg-gray-200 rounded-lg" />
-            <div className="h-20 bg-gray-200 rounded-lg" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="h-[72px] bg-gray-50 rounded-xl" />
+            <div className="h-[72px] bg-gray-50 rounded-xl" />
+            <div className="h-[72px] bg-gray-50 rounded-xl" />
           </div>
         </div>
       </div>
@@ -56,53 +75,88 @@ function QueueCardSkeleton() {
   );
 }
 
-// Status badge component
+// ─── Status Badge ───────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
-  const getStatusConfig = (status) => {
-    switch (status) {
-      case "now_serving":
-        return {
-          label: "Now Serving",
-          className: "bg-green-100 text-green-700",
-        };
-      case "called":
-        return { label: "Called", className: "bg-blue-100 text-blue-700" };
-      case "completed":
-        return {
-          label: "Completed",
-          className: "bg-gray-100 text-gray-700 border border-gray-300",
-        };
-      case "cancelled":
-        return { label: "Cancelled", className: "bg-red-100 text-red-700" };
-      case "waiting":
-      default:
-        return { label: "Waiting", className: "bg-amber-100 text-amber-700" };
-    }
+  const config = {
+    now_serving: {
+      label: "Now Serving",
+      icon: CheckCircle2,
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+    },
+    called: {
+      label: "Called",
+      icon: Phone,
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+    },
+    completed: {
+      label: "Completed",
+      icon: CheckCircle2,
+      bg: "bg-gray-50",
+      text: "text-gray-600",
+      border: "border-gray-200",
+    },
+    cancelled: {
+      label: "Cancelled",
+      icon: XCircle,
+      bg: "bg-red-50",
+      text: "text-red-600",
+      border: "border-red-200",
+    },
+    waiting: {
+      label: "Waiting",
+      icon: Clock,
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+    },
+  }[status] || {
+    label: "Waiting",
+    icon: Clock,
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
   };
 
-  const config = getStatusConfig(status);
+  const Icon = config.icon;
 
   return (
     <span
-      className={`text-xs font-semibold px-3 py-1 rounded-full ${config.className}`}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold pl-2.5 pr-3 py-1 rounded-full border ${config.bg} ${config.text} ${config.border}`}
     >
+      <Icon className="w-3 h-3" />
       {config.label}
     </span>
   );
 }
 
-// Queue info item component
-function QueueInfoItem({ icon: Icon, label, value }) {
+// ─── Queue Info Item ────────────────────────────────────────────────────────
+function QueueInfoItem({ icon: Icon, label, value, accent = false }) {
   return (
-    <div className="rounded-lg border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3">
-      <div className="mt-0.5 w-10 h-10 bg-[#4ad294] text-white rounded-full flex items-center justify-center">
-        <Icon className="w-5 h-5" />
+    <div
+      className={`rounded-xl border p-3.5 flex items-center gap-3 transition-colors duration-200 ${
+        accent
+          ? "border-[#4ad294]/25 bg-[#4ad294]/5"
+          : "border-gray-100 bg-gray-50/80"
+      }`}
+    >
+      <div
+        className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+          accent
+            ? "bg-[#4ad294]/15 text-[#4ad294]"
+            : "bg-white text-gray-500 border border-gray-100"
+        }`}
+      >
+        <Icon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
+        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold leading-none">
           {label}
         </p>
-        <p className="text-sm font-semibold text-[#25323A] mt-1 break-words">
+        <p className="text-sm font-semibold text-[#25323A] mt-1 break-words leading-snug">
           {value || "—"}
         </p>
       </div>
@@ -110,7 +164,7 @@ function QueueInfoItem({ icon: Icon, label, value }) {
   );
 }
 
-// Now Serving Card component
+// ─── Now Serving Card ───────────────────────────────────────────────────────
 function NowServingCard({ nowServingQueue }) {
   const formattedQueueNumber = nowServingQueue?.queue_number
     ? String(nowServingQueue.queue_number).padStart(3, "0")
@@ -118,30 +172,68 @@ function NowServingCard({ nowServingQueue }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="bg-gradient-to-r from-[#4ad294] to-[#3bc285] rounded-2xl shadow-md p-6 text-white"
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative overflow-hidden bg-gradient-to-br from-[#4ad294] via-[#3fbe8a] to-[#35a87a] rounded-2xl shadow-sm shadow-[#4ad294]/15 p-5"
     >
-      <div className="flex items-center justify-between">
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+      <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-            <Users className="w-6 h-6" />
+          <div className="w-11 h-11 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
+            <Users className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white/80">Now Serving</p>
-            <p className="text-xs text-white/60 mt-0.5">Current queue number</p>
+            <p className="text-sm font-semibold text-white">Now Serving</p>
+            <p className="text-xs text-white/65 mt-0.5">
+              Current queue number being attended
+            </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-4xl font-bold">{formattedQueueNumber}</p>
+        <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10">
+          <p className="text-3xl font-bold text-white tracking-tight">
+            {formattedQueueNumber}
+          </p>
         </div>
       </div>
     </motion.div>
   );
 }
 
-// User Queue Card component
+// ─── No Serving Placeholder ─────────────────────────────────────────────────
+function NoServingCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden p-5"
+    >
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200/80" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center">
+            <Users className="w-5 h-5 text-gray-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500">Now Serving</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              No one is being served yet
+            </p>
+          </div>
+        </div>
+        <div className="bg-gray-50 rounded-xl px-4 py-2 border border-gray-100">
+          <p className="text-3xl font-bold text-gray-300 tracking-tight">—</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── User Queue Card ────────────────────────────────────────────────────────
 function UserQueueCard({ userQueue, reasonCategories }) {
   const formattedQueueNumber = userQueue.queue_number
     ? String(userQueue.queue_number).padStart(3, "0")
@@ -158,53 +250,72 @@ function UserQueueCard({ userQueue, reasonCategories }) {
     return category?.name || "—";
   };
 
+  const status = userQueue.queue_status;
+  const isActive =
+    status === "waiting" || status === "called" || status === "now_serving";
+  const accentColor = isActive ? "#4ad294" : "#94a3b8";
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay: 0.1 }}
-      className="bg-white rounded-2xl shadow-md border border-gray-100 p-6"
+      transition={{ duration: 0.3, delay: 0.06, ease: "easeOut" }}
+      className="group relative bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Your Queue Entry
-        </h3>
-        <StatusBadge status={userQueue.queue_status} />
-      </div>
+      {/* Left accent bar */}
+      <div
+        className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
+        style={{ backgroundColor: accentColor }}
+      />
 
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <QueueInfoItem
-          icon={Hash}
-          label="Your Queue Number"
-          value={formattedQueueNumber}
-        />
-        <QueueInfoItem
-          icon={Activity}
-          label="Status"
-          value={
-            userQueue.queue_status === "now_serving"
-              ? "Now Serving"
-              : userQueue.queue_status === "called"
-                ? "Called"
-                : userQueue.queue_status === "completed"
-                  ? "Completed"
-                  : userQueue.queue_status === "cancelled"
-                    ? "Cancelled"
-                    : "Waiting"
-          }
-        />
-        <QueueInfoItem
-          icon={Tag}
-          label="Reason"
-          value={getReasonCategoryName(userQueue.reason_category_id)}
-        />
-        {/* <QueueInfoItem
-          icon={FileText}
-          label="Description"
-          value={userQueue.reason}
-        /> */}
+      <div className="pl-5 pr-5 py-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#4ad294]/8 flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-[#4ad294]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[#25323A]">
+                Your Queue Entry
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Today's appointment
+              </p>
+            </div>
+          </div>
+          <StatusBadge status={status} />
+        </div>
+
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <QueueInfoItem
+            icon={Hash}
+            label="Queue Number"
+            value={formattedQueueNumber}
+            accent
+          />
+          <QueueInfoItem
+            icon={Activity}
+            label="Status"
+            value={
+              status === "now_serving"
+                ? "Now Serving"
+                : status === "called"
+                  ? "Called"
+                  : status === "completed"
+                    ? "Completed"
+                    : status === "cancelled"
+                      ? "Cancelled"
+                      : "Waiting"
+            }
+          />
+          <QueueInfoItem
+            icon={Tag}
+            label="Category"
+            value={getReasonCategoryName(userQueue.reason_category_id)}
+          />
+        </div>
       </div>
     </motion.div>
   );
@@ -409,35 +520,47 @@ function FutureAppointmentCard({ appointment }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6"
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="relative bg-white rounded-2xl shadow-sm border border-blue-200/60 overflow-hidden"
     >
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-          <CalendarClock className="w-6 h-6 text-blue-600" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-blue-900 mb-1">
-            Upcoming Appointment
-          </h3>
-          <p className="text-sm text-blue-700 mb-3">
-            You have a scheduled appointment. Don't forget to come on time!
-          </p>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2 text-blue-800">
-              <Calendar className="w-4 h-4" />
-              <span className="font-medium">{formatDate(appointmentDate)}</span>
+      {/* Left accent bar */}
+      <div className="absolute top-0 left-0 w-1 h-full rounded-l-2xl bg-blue-500" />
+
+      <div className="pl-5 pr-5 py-5">
+        <div className="flex items-start gap-3.5">
+          <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100">
+            <CalendarClock className="w-5 h-5 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3 mb-1.5">
+              <h3 className="text-sm font-semibold text-[#25323A]">
+                Upcoming Appointment
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-0.5 flex-shrink-0">
+                Scheduled
+              </span>
             </div>
-            {appointmentTime && (
-              <div className="flex items-center gap-2 text-blue-800">
-                <CalendarClock className="w-4 h-4" />
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+              Don't forget to come on time for your scheduled visit.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Calendar className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                 <span className="font-medium">
-                  {formatTime(appointmentTime)}
+                  {formatDate(appointmentDate)}
                 </span>
               </div>
-            )}
+              {appointmentTime && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <Clock className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                  <span className="font-medium">
+                    {formatTime(appointmentTime)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -483,84 +606,87 @@ export default function AppointmentQueueView() {
   return (
     <motion.div
       key="queue"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       className="w-full max-w-4xl mx-auto"
     >
-      {/* Header */}
+      {/* ─── Page Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-[#4ad294]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4ad294] to-[#3bb882] flex items-center justify-center shadow-sm shadow-[#4ad294]/20">
+            <ClipboardList className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-[#25323A] tracking-tight">
               Appointment Queue
             </h1>
-            <p className="text-sm text-gray-500">
-              View your current queue status
+            <p className="text-xs text-gray-500 mt-0.5">
+              Your current queue status for today
             </p>
           </div>
         </div>
 
-        {/* Refresh button */}
         <button
           onClick={fetchData}
           disabled={isLoading}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
-          title="Refresh"
+          className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-sm"
+          title="Refresh queue"
         >
           <RefreshCw
-            className={`w-5 h-5 text-gray-500 ${
-              isLoading ? "animate-spin" : ""
-            }`}
+            className={`w-4 h-4 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
           />
         </button>
       </div>
 
-      {/* View Live Queue Link */}
+      {/* ─── Live Queue Link ─────────────────────────────────────────── */}
       <Link
         href="/queues"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 mb-6 px-4 py-2.5 bg-[#4ad294]/10 hover:bg-[#4ad294]/20 text-[#2a9d6e] font-medium text-sm rounded-lg transition-colors"
+        className="group inline-flex items-center gap-2 mb-5 px-4 py-2.5 bg-white border border-gray-200/60 hover:border-[#4ad294]/40 hover:bg-[#4ad294]/5 text-gray-600 hover:text-[#2a9d6e] font-medium text-xs rounded-xl transition-all duration-200 shadow-sm"
       >
-        <ExternalLink className="w-4 h-4" />
+        <ExternalLink className="w-3.5 h-3.5" />
         View Live Queue Display
       </Link>
 
-      {/* Content */}
+      {/* ─── Content ─────────────────────────────────────────────────── */}
       {isLoading ? (
         <QueueCardSkeleton />
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-          <p className="text-red-600 font-medium mb-2">Error loading queue</p>
-          <p className="text-red-500 text-sm mb-4">{error}</p>
+        <div className="bg-white border border-red-200/80 rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-red-400" />
+          </div>
+          <h3 className="text-base font-semibold text-[#25323A] mb-1">
+            Unable to load queue
+          </h3>
+          <p className="text-sm text-gray-500 mb-5 max-w-xs mx-auto">{error}</p>
           <button
             onClick={fetchData}
-            className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#4ad294] to-[#3bb882] hover:from-[#3bb882] hover:to-[#2fa872] text-white rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm shadow-[#4ad294]/20 cursor-pointer"
           >
+            <RefreshCw className="w-4 h-4" />
             Try Again
           </button>
         </div>
       ) : !userQueue ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Future Appointment Reminder */}
           {futureAppointment && (
             <FutureAppointmentCard appointment={futureAppointment} />
           )}
 
-          {/* No Queue Today Message */}
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <ClipboardList className="w-8 h-8 text-gray-400" />
+          {/* No Queue Today */}
+          <div className="bg-white border border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
+            <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gray-50 flex items-center justify-center">
+              <ClipboardList className="w-8 h-8 text-gray-300" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">
-              No Active Queue Today
+            <h3 className="text-base font-semibold text-[#25323A] mb-1">
+              No active queue today
             </h3>
-            <p className="text-gray-500 text-sm">
+            <p className="text-sm text-gray-500 max-w-[300px] mx-auto leading-relaxed">
               {futureAppointment
                 ? "Your appointment is scheduled for a future date. Come back on the day of your appointment."
                 : "You don't have any queue entries for today. Visit the Home page to book an appointment."}
@@ -568,36 +694,12 @@ export default function AppointmentQueueView() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Now Serving Card */}
           {nowServingQueue ? (
             <NowServingCard nowServingQueue={nowServingQueue} />
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="bg-gray-100 rounded-2xl p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Now Serving
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      No one is being served yet
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-4xl font-bold text-gray-300">—</p>
-                </div>
-              </div>
-            </motion.div>
+            <NoServingCard />
           )}
 
           {/* User Queue Card */}
