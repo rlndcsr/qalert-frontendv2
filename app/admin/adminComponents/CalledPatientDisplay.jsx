@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { toast } from "sonner";
+import { sileo } from "sileo";
 
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
@@ -17,7 +17,10 @@ export default function CalledPatientDisplay({
 
     const token = localStorage.getItem("adminToken");
     if (!token) {
-      toast.error("Authentication required");
+      sileo.error({
+        title: "Authentication required",
+        description: "Please log in again.",
+      });
       return;
     }
 
@@ -52,7 +55,10 @@ export default function CalledPatientDisplay({
       );
 
       if (newStatus === "now_serving") {
-        toast.success("Patient is now being served");
+        sileo.success({
+          title: "Now Serving",
+          description: "Patient is now being served.",
+        });
         setCalledPatients((prev) =>
           prev.map((p) =>
             p.queue_entry_id === patient.queue_entry_id
@@ -61,14 +67,20 @@ export default function CalledPatientDisplay({
           ),
         );
       } else if (newStatus === "completed") {
-        toast.success("Patient service completed");
+        sileo.success({
+          title: "Service Completed",
+          description: "Patient service has been completed.",
+        });
         setCalledPatients((prev) =>
           prev.filter((p) => p.queue_entry_id !== patient.queue_entry_id),
         );
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Failed to update patient status");
+      sileo.error({
+        title: "Update failed",
+        description: "Failed to update patient status.",
+      });
     }
   };
 

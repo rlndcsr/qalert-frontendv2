@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { toast } from "sonner";
+import { sileo } from "sileo";
 
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
@@ -17,7 +17,10 @@ export default function QueueManagementTable({
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
     if (!token) {
-      toast.error("Authentication required");
+      sileo.error({
+        title: "Authentication required",
+        description: "Please log in again.",
+      });
       return;
     }
 
@@ -83,22 +86,37 @@ export default function QueueManagementTable({
           body: JSON.stringify({ from: "QAlert", to: moceanTo, text }),
         });
 
-        toast.success("SMS sent to patient");
+        sileo.success({
+          title: "SMS sent",
+          description: "SMS notification sent to the patient.",
+        });
       } catch (smsError) {
         console.error("SMS send error:", smsError);
-        toast.error("Failed to send SMS notification");
+        sileo.error({
+          title: "SMS failed",
+          description: "Failed to send SMS notification.",
+        });
       }
 
-      toast.success(`Called patient at queue #${queue.queue_number}`);
+      sileo.success({
+        title: "Patient called",
+        description: `Called patient at queue #${queue.queue_number}`,
+      });
     } catch (error) {
       console.error("Error calling patient:", error);
-      toast.error("Failed to call patient");
+      sileo.error({
+        title: "Call failed",
+        description: "Failed to call patient. Please try again.",
+      });
     }
   };
 
   const handleCompletePatient = (queue) => {
     console.log("Complete patient:", queue);
-    toast.success(`Completed queue #${queue.queue_number}`);
+    sileo.success({
+      title: "Queue completed",
+      description: `Completed queue #${queue.queue_number}`,
+    });
   };
 
   return (
@@ -138,9 +156,6 @@ export default function QueueManagementTable({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Wait Time
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -169,9 +184,6 @@ export default function QueueManagementTable({
                       <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="h-4 w-12 bg-gray-200 rounded"></div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="h-7 w-16 bg-gray-200 rounded-md"></div>
                         <div className="h-7 w-16 bg-gray-200 rounded-md"></div>
@@ -183,7 +195,7 @@ export default function QueueManagementTable({
             ) : todayQueues.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   No queue entries for today (
@@ -236,12 +248,6 @@ export default function QueueManagementTable({
                     statusLabel = "Cancelled";
                   }
 
-                  // Calculate wait time using stored estimated_time_wait
-                  const waitTime =
-                    statusLower === "serving" || statusLower === "called"
-                      ? "Now"
-                      : queue.estimated_time_wait || `~${(index + 1) * 10}m`;
-
                   return (
                     <tr
                       key={queue.queue_entry_id}
@@ -288,9 +294,6 @@ export default function QueueManagementTable({
                         >
                           {statusLabel}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {waitTime}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
