@@ -464,7 +464,7 @@ export default function AdminPortal() {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
-            Data Visualization
+            Analytics & Reports
           </button>
         </div>
         {/* Compact System Status Toggle */}
