@@ -47,6 +47,10 @@ export default function PatientPage() {
   } = useSystemStatus();
   useSseEvents({
     "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+    "queue-updated": () => {
+      fetchQueuePosition();
+      fetchUserQueue();
+    },
   });
 
   useEffect(() => {

@@ -27,10 +27,38 @@ export async function POST(req) {
     const isJson = contentType.includes("application/json");
     const body = isJson ? await resp.json() : await resp.text();
 
+    // Log the full API response so we can see its exact shape
+    console.log(
+      "[smsapiph] HTTP status:",
+      resp.status,
+      "| body:",
+      JSON.stringify(body),
+    );
+
     if (!resp.ok) {
       return NextResponse.json(
         { error: "SMS API error", details: body },
         { status: resp.status },
+      );
+    }
+
+    // Some providers return HTTP 200 but with a failed status in the body
+    const deliveryStatus =
+      body?.status ?? body?.data?.status ?? body?.result?.status ?? "";
+    const isDeliveryFailure =
+      typeof deliveryStatus === "string" &&
+      ["failed", "error", "rejected", "undelivered"].includes(
+        deliveryStatus.toLowerCase(),
+      );
+
+    if (isDeliveryFailure) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `SMS delivery failed (status: ${deliveryStatus})`,
+          result: body,
+        },
+        { status: 200 },
       );
     }
 

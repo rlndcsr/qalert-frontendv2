@@ -155,49 +155,50 @@ export default function QueueManagementTable({
       ]);
 
       // Send SMS via new testing API
-      try {
-        const patient = userMap[queue.user_id] || {};
-        const rawPhone = patient.phone_number || "";
-        const recipient = rawPhone.startsWith("+")
-          ? rawPhone
-          : `+${rawPhone.replace(/^0/, "63")}`;
+      const patient = userMap[queue.user_id] || {};
+      const rawPhone = patient.phone_number || "";
+      const recipient = rawPhone.startsWith("+")
+        ? rawPhone
+        : `+${rawPhone.replace(/^0/, "63")}`;
 
-        const sortedQueues = [...todayQueues].sort(
-          (a, b) => a.queue_number - b.queue_number,
-        );
-        const position =
-          sortedQueues.findIndex(
-            (q) => q.queue_entry_id === queue.queue_entry_id,
-          ) + 1;
+      const sortedQueues = [...todayQueues].sort(
+        (a, b) => a.queue_number - b.queue_number,
+      );
+      const position =
+        sortedQueues.findIndex(
+          (q) => q.queue_entry_id === queue.queue_entry_id,
+        ) + 1;
 
-        const message = `CSU-UCHW: You are now called for queue #${String(
-          queue.queue_number,
-        ).padStart(
-          3,
-          "0",
-        )}. Your position is ${position}. Please proceed to the clinic immediately. You have 10-15 minutes before the next patient is called. We encourage you to arrive as early as possible. Thank you.`;
+      const message = `CSU-UCHW: You are now called for queue #${String(
+        queue.queue_number,
+      ).padStart(
+        3,
+        "0",
+      )}. Your position is ${position}. Please proceed to the clinic immediately. You have 10-15 minutes before the next patient is called. We encourage you to arrive as early as possible. Thank you.`;
 
-        await fetch("/api/testing", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ recipient, message }),
-        });
+      const smsPromise = fetch("/api/testing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient, message }),
+      }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || !data.success)
+          throw new Error(data?.error || "Failed to send SMS");
+      });
 
-        sileo.success({
-          title: "SMS sent (V2)",
-          description: "SMS notification sent via new API.",
-        });
-      } catch (smsError) {
-        console.error("SMS V2 send error:", smsError);
-        sileo.error({
+      sileo.promise(smsPromise, {
+        loading: {
+          title: "Sending SMS (V2)…",
+          description: `Sending notification to ${recipient}`,
+        },
+        success: {
+          title: "Patient called (V2)",
+          description: `SMS sent for queue #${String(queue.queue_number).padStart(3, "0")}`,
+        },
+        error: {
           title: "SMS V2 failed",
-          description: "Failed to send SMS via new API.",
-        });
-      }
-
-      sileo.success({
-        title: "Patient called (V2)",
-        description: `Called patient at queue #${queue.queue_number}`,
+          description: "Queue status updated but SMS could not be sent.",
+        },
       });
     } catch (error) {
       console.error("Error calling patient (V2):", error);
@@ -225,33 +226,31 @@ export default function QueueManagementTable({
 
     const message = `QAlert Test: Hello ${user.name || "Patient"}, this is a test message from QAlert SMS V2. If you received this, the new SMS service is working correctly. Thank you!`;
 
-    try {
-      const resp = await fetch("/api/testing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient, message }),
-      });
+    const smsPromise = fetch("/api/testing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient, message }),
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok || !data.success)
+        throw new Error(data?.error || "Failed to send test SMS");
+    });
 
-      const data = await resp.json();
-
-      if (resp.ok && data.success) {
-        sileo.success({
-          title: "Test SMS sent",
-          description: `Message sent to ${recipient}`,
-        });
-      } else {
-        sileo.error({
-          title: "Test SMS failed",
-          description: data?.error || "Failed to send test SMS.",
-        });
-      }
-    } catch (err) {
-      console.error("Test SMS error:", err);
-      sileo.error({
+    sileo.promise(smsPromise, {
+      loading: {
+        title: "Sending test SMS…",
+        description: `Sending to ${recipient}`,
+      },
+      success: {
+        title: "Test SMS sent",
+        description: `Message delivered to ${recipient}`,
+      },
+      error: {
         title: "Test SMS failed",
-        description: "An error occurred while sending the test SMS.",
-      });
-    }
+        description:
+          "Could not send the test SMS. Check the number and try again.",
+      },
+    });
   };
 
   const handleCompletePatient = (queue) => {
