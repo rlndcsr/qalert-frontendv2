@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { sileo } from "sileo";
 
@@ -282,6 +283,60 @@ export default function QueueManagementTable({
     });
   };
 
+  // Fetch reason categories and today's appointments for lookups
+  const [reasonCategoryMap, setReasonCategoryMap] = useState({});
+  // appointmentMap: keyed by appointment_id → appointment_time
+  const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    const headers = {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
+    };
+    Promise.all([
+      fetch(`${API_BASE_URL}/reason-categories`, { headers }).then((r) =>
+        r.ok ? r.json() : [],
+      ),
+      fetch(`${API_BASE_URL}/appointments`, { headers }).then((r) =>
+        r.ok ? r.json() : [],
+      ),
+    ])
+      .then(([catData, aptData]) => {
+        // Build reason category map
+        const catList = Array.isArray(catData)
+          ? catData
+          : catData?.data || catData?.reason_categories || [];
+        const catMap = {};
+        catList.forEach((c) => {
+          if (c.reason_category_id) catMap[c.reason_category_id] = c.name;
+        });
+        setReasonCategoryMap(catMap);
+
+        // Build appointment time map keyed by appointment_id
+        const aptList = Array.isArray(aptData)
+          ? aptData
+          : aptData?.data || aptData?.appointments || [];
+        const timeMap = {};
+        aptList.forEach((apt) => {
+          if (apt.appointment_id && apt.appointment_time)
+            timeMap[apt.appointment_id] = apt.appointment_time;
+        });
+        setAppointmentTimeMap(timeMap);
+      })
+      .catch((err) =>
+        console.error("[QueueManagementTable] lookup fetch:", err),
+      );
+  }, []);
+
+  const getAppointmentTime = (queue) => {
+    if (!queue.appointment_id) return "—";
+    const time = appointmentTimeMap[queue.appointment_id];
+    return time ? formatTime(time) : "—";
+  };
+
   return (
     <motion.div
       className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20"
@@ -313,7 +368,7 @@ export default function QueueManagementTable({
                 Contact
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Booked At
+                Scheduled Time
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Reason
@@ -455,10 +510,12 @@ export default function QueueManagementTable({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {formatTime(queue.created_at)}
+                        {getAppointmentTime(queue)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
-                        {queue.reason || "—"}
+                        {reasonCategoryMap[queue.reason_category_id] ||
+                          queue.reason ||
+                          "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
