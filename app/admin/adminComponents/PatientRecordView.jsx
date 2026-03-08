@@ -248,7 +248,7 @@ function Pagination({
   );
 }
 
-export default function PatientRecordView() {
+export default function PatientRecordView({ onViewPatient }) {
   const [patients, setPatients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -261,9 +261,8 @@ export default function PatientRecordView() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modal state
+  // Selected patient for navigation
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch patients data
   useEffect(() => {
@@ -348,16 +347,10 @@ export default function PatientRecordView() {
     setCurrentPage(1);
   }, [searchQuery, genderFilter]);
 
-  // Handle row click
+  // Handle row click — navigate to detail view
   const handleRowClick = (patient) => {
     setSelectedPatient(patient);
-    setIsModalOpen(true);
-  };
-
-  // Close modal
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => setSelectedPatient(null), 200);
+    onViewPatient?.(patient);
   };
 
   return (
@@ -592,13 +585,6 @@ export default function PatientRecordView() {
           />
         )}
       </div>
-
-      {/* Patient History Modal */}
-      <PatientHistoryModal
-        patient={selectedPatient}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
     </motion.div>
   );
 }

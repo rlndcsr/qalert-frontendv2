@@ -13,6 +13,7 @@ import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import PatientRecordView from "./adminComponents/PatientRecordView";
+import UserDetailView from "./adminComponents/UserDetailView";
 import EmergencyEncountersView from "./adminComponents/EmergencyEncountersView";
 import QueueHistoryView from "./adminComponents/QueueHistoryView";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
@@ -62,6 +63,9 @@ export default function AdminPortal() {
   const [queues, setQueues] = useState([]);
   const [users, setUsers] = useState([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
+
+  // Selected patient for detail view
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   // Ref to guard state updates after unmount
   const isMountedRef = useRef(true);
@@ -709,7 +713,19 @@ export default function AdminPortal() {
               ) : activeView === "queue-history" ? (
                 <QueueHistoryView key="queue-history" />
               ) : activeView === "patient-record" ? (
-                <PatientRecordView key="patient-record" />
+                <PatientRecordView
+                  key="patient-record"
+                  onViewPatient={(patient) => {
+                    setSelectedPatient(patient);
+                    handleViewChange("user-detail");
+                  }}
+                />
+              ) : activeView === "user-detail" ? (
+                <UserDetailView
+                  key="user-detail"
+                  patient={selectedPatient}
+                  onBack={() => handleViewChange("patient-record")}
+                />
               ) : activeView === "emergency-encounters" ? (
                 <EmergencyEncountersView key="emergency-encounters" />
               ) : activeView === "current-queue" ? (
