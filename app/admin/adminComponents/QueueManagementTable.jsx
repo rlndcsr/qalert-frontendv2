@@ -13,6 +13,7 @@ export default function QueueManagementTable({
   isFetchingData,
   setQueues,
   setCalledPatients,
+  users,
 }) {
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
@@ -107,6 +108,148 @@ export default function QueueManagementTable({
       sileo.error({
         title: "Call failed",
         description: "Failed to call patient. Please try again.",
+      });
+    }
+  };
+
+  const handleCallPatientV2 = async (queue) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      sileo.error({
+        title: "Authentication required",
+        description: "Please log in again.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/status/${queue.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": true,
+          },
+          body: JSON.stringify({ queue_status: "called" }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update queue status");
+      }
+
+      setQueues((prevQueues) =>
+        prevQueues.map((q) =>
+          q.queue_entry_id === queue.queue_entry_id
+            ? { ...q, queue_status: "called" }
+            : q,
+        ),
+      );
+
+      setCalledPatients((prev) => [
+        ...prev,
+        { ...queue, queue_status: "called" },
+      ]);
+
+      // Send SMS via new testing API
+      try {
+        const patient = userMap[queue.user_id] || {};
+        const rawPhone = patient.phone_number || "";
+        const recipient = rawPhone.startsWith("+")
+          ? rawPhone
+          : `+${rawPhone.replace(/^0/, "63")}`;
+
+        const sortedQueues = [...todayQueues].sort(
+          (a, b) => a.queue_number - b.queue_number,
+        );
+        const position =
+          sortedQueues.findIndex(
+            (q) => q.queue_entry_id === queue.queue_entry_id,
+          ) + 1;
+
+        const message = `CSU-UCHW: You are now called for queue #${String(
+          queue.queue_number,
+        ).padStart(
+          3,
+          "0",
+        )}. Your position is ${position}. Please proceed to the clinic immediately. You have 10-15 minutes before the next patient is called. We encourage you to arrive as early as possible. Thank you.`;
+
+        await fetch("/api/testing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipient, message }),
+        });
+
+        sileo.success({
+          title: "SMS sent (V2)",
+          description: "SMS notification sent via new API.",
+        });
+      } catch (smsError) {
+        console.error("SMS V2 send error:", smsError);
+        sileo.error({
+          title: "SMS V2 failed",
+          description: "Failed to send SMS via new API.",
+        });
+      }
+
+      sileo.success({
+        title: "Patient called (V2)",
+        description: `Called patient at queue #${queue.queue_number}`,
+      });
+    } catch (error) {
+      console.error("Error calling patient (V2):", error);
+      sileo.error({
+        title: "Call V2 failed",
+        description: "Failed to call patient. Please try again.",
+      });
+    }
+  };
+
+  // Handle sending test SMS to a user via the new testing API
+  const handleTestSms = async (user) => {
+    const rawPhone = user.phone_number || "";
+    if (!rawPhone) {
+      sileo.error({
+        title: "No phone number",
+        description: "This user has no phone number on file.",
+      });
+      return;
+    }
+
+    const recipient = rawPhone.startsWith("+")
+      ? rawPhone
+      : `+${rawPhone.replace(/^0/, "63")}`;
+
+    const message = `QAlert Test: Hello ${user.name || "Patient"}, this is a test message from QAlert SMS V2. If you received this, the new SMS service is working correctly. Thank you!`;
+
+    try {
+      const resp = await fetch("/api/testing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient, message }),
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok && data.success) {
+        sileo.success({
+          title: "Test SMS sent",
+          description: `Message sent to ${recipient}`,
+        });
+      } else {
+        sileo.error({
+          title: "Test SMS failed",
+          description: data?.error || "Failed to send test SMS.",
+        });
+      }
+    } catch (err) {
+      console.error("Test SMS error:", err);
+      sileo.error({
+        title: "Test SMS failed",
+        description: "An error occurred while sending the test SMS.",
       });
     }
   };
@@ -298,12 +441,20 @@ export default function QueueManagementTable({
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
                           {statusLower === "waiting" && (
-                            <button
-                              onClick={() => handleCallPatient(queue)}
-                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
-                            >
-                              Call
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleCallPatient(queue)}
+                                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                              >
+                                Call
+                              </button>
+                              <button
+                                onClick={() => handleCallPatientV2(queue)}
+                                className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                              >
+                                Call V2
+                              </button>
+                            </>
                           )}
                           {(statusLower === "called" ||
                             statusLower === "serving") && (
@@ -323,6 +474,102 @@ export default function QueueManagementTable({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* SMS V2 Test — All Users Table */}
+      <div className="p-6 border-t border-gray-200">
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-[#25323A]">
+            SMS V2 Test — All Registered Users
+          </h3>
+          <p className="text-sm text-gray-500">
+            Send a test SMS via the new API to any registered user.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-purple-50 border-b border-purple-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  #
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  Contact Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  ID Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {!users || users.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-sm text-gray-500"
+                  >
+                    No registered users found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((user, idx) => (
+                  <tr
+                    key={user.user_id}
+                    className="hover:bg-purple-50/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
+                      {idx + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#25323A]">
+                      {user.name || "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {user.email_address || "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1 text-sm text-gray-700">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-4 h-4 text-gray-400"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>{user.phone_number || "N/A"}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {user.id_number || "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleTestSms(user)}
+                        disabled={!user.phone_number}
+                        className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                      >
+                        Send Test SMS
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </motion.div>
   );

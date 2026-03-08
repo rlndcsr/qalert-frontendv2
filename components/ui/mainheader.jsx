@@ -6,12 +6,16 @@ import { motion } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../app/hooks/useAuth";
 import { useSystemStatus } from "../../app/hooks/useSystemStatus";
+import { useSseEvents } from "../../app/hooks/useSseEvents";
 
 export default function MainHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
-  const { isOnline, isLoading } = useSystemStatus();
+  const { isOnline, isLoading, setIsOnline } = useSystemStatus();
+  useSseEvents({
+    "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+  });
 
   return (
     <>

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import TopBar from "../components/ui/topbar";
 import MainHeader from "../components/ui/mainheader";
 import { useSystemStatus } from "./hooks/useSystemStatus";
+import { useSseEvents } from "./hooks/useSseEvents";
 
 const TILT_MAX = 9;
 const TILT_SPRING = { stiffness: 300, damping: 28 };
@@ -286,7 +287,14 @@ function PortalEntryCard({
 
 export default function Home() {
   const router = useRouter();
-  const { isOnline, isLoading: isSystemLoading } = useSystemStatus();
+  const {
+    isOnline,
+    isLoading: isSystemLoading,
+    setIsOnline,
+  } = useSystemStatus();
+  useSseEvents({
+    "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+  });
   const [showCards, setShowCards] = React.useState(false);
   const portalCards = [
     {

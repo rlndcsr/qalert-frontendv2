@@ -18,7 +18,7 @@ export function useSystemStatus() {
               "ngrok-skip-browser-warning": true,
             },
             mode: "cors",
-          }
+          },
         );
 
         // Check if response is ok before parsing JSON
@@ -38,14 +38,9 @@ export function useSystemStatus() {
       }
     };
 
-    // Initial check
+    // Initial check only — subsequent updates come via SSE (system-status-updated)
     checkSystemStatus();
-
-    // Poll every 30 seconds
-    const interval = setInterval(checkSystemStatus, 30000);
-
-    return () => clearInterval(interval);
   }, []);
 
-  return { isOnline, isLoading };
+  return { isOnline, isLoading, setIsOnline };
 }

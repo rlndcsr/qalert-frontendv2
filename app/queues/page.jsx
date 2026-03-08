@@ -3,16 +3,20 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSystemStatus } from "../hooks/useSystemStatus";
+import { useSseEvents } from "../hooks/useSseEvents";
 import Image from "next/image";
 
 // Constants
-const POLLING_INTERVAL = 3000; // 3 seconds
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev";
 
 export default function QueueDisplay() {
   const router = useRouter();
-  const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
+  const {
+    isOnline,
+    isLoading: isStatusLoading,
+    setIsOnline,
+  } = useSystemStatus();
   useEffect(() => {
     if (!isStatusLoading && !isOnline) {
       router.replace("/");
@@ -157,19 +161,17 @@ export default function QueueDisplay() {
     [getAuthToken, isDataEqual, getTodayString, normalizeDateToLocal],
   );
 
-  // Initial fetch and polling setup
+  // Initial fetch — SSE handles subsequent updates
   useEffect(() => {
-    // Perform initial fetch
     fetchQueueData(true);
-
-    // Set up polling interval (every 3 seconds)
-    const intervalId = setInterval(() => {
-      fetchQueueData(false);
-    }, POLLING_INTERVAL);
-
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
   }, [fetchQueueData]);
+
+  // SSE: re-fetch when the backend signals a queue or user change
+  useSseEvents({
+    "queue-updated": () => fetchQueueData(false),
+    "user-updated": () => fetchQueueData(false),
+    "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+  });
 
   // Process queue data
   const { nowServing, ready, waiting, totalInQueue } = useMemo(() => {

@@ -31,6 +31,7 @@ import {
 } from "./patientComponents/patientUtils";
 import { useAuth } from "../hooks/useAuth";
 import { useSystemStatus } from "../hooks/useSystemStatus";
+import { useSseEvents } from "../hooks/useSseEvents";
 import { SyncLoader } from "react-spinners";
 
 const API_BASE_URL =
@@ -39,7 +40,14 @@ const API_BASE_URL =
 
 export default function PatientPage() {
   const router = useRouter();
-  const { isOnline, isLoading: isStatusLoading } = useSystemStatus();
+  const {
+    isOnline,
+    isLoading: isStatusLoading,
+    setIsOnline,
+  } = useSystemStatus();
+  useSseEvents({
+    "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+  });
 
   useEffect(() => {
     if (!isStatusLoading && !isOnline) {

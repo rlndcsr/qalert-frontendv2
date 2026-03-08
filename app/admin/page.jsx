@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { sileo } from "sileo";
 import { SyncLoader } from "react-spinners";
@@ -17,6 +17,7 @@ import EmergencyEncountersView from "./adminComponents/EmergencyEncountersView";
 import QueueHistoryView from "./adminComponents/QueueHistoryView";
 import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
+import { useSseEvents } from "../hooks/useSseEvents";
 
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
@@ -62,6 +63,9 @@ export default function AdminPortal() {
   const [users, setUsers] = useState([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
 
+  // Ref to guard state updates after unmount
+  const isMountedRef = useRef(true);
+
   // User menu state
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -99,20 +103,58 @@ export default function AdminPortal() {
     checkAuth();
   }, []);
 
-  // Fetch queues and users when authenticated with live polling
+  // Separate fetch functions used by both initial load and SSE-triggered refetches
+  const fetchQueues = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/queues`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": true,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch queues");
+      const data = await response.json();
+      if (isMountedRef.current) setQueues(data);
+    } catch (error) {
+      console.error("Error fetching queues:", error);
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": true,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      const data = await response.json();
+      if (isMountedRef.current) setUsers(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  }, []);
+
+  // Initial data load when authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let isMounted = true;
+    isMountedRef.current = true;
 
-    const fetchData = async (isInitialLoad = false) => {
+    const initialLoad = async () => {
       const token = localStorage.getItem("adminToken");
-      if (!token || !isMounted) return;
+      if (!token) return;
 
-      // Only show loading state on initial load
-      if (isInitialLoad) {
-        setIsFetchingData(true);
-      }
+      setIsFetchingData(true);
       try {
         const headers = {
           Accept: "application/json",
@@ -132,40 +174,41 @@ export default function AdminPortal() {
         const queuesData = await queuesResponse.json();
         const usersData = await usersResponse.json();
 
-        if (isMounted) {
+        if (isMountedRef.current) {
           setQueues(queuesData);
           setUsers(usersData);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        // Only show error toast on initial load to avoid spamming
-        if (isInitialLoad && isMounted) {
+        if (isMountedRef.current) {
           sileo.error({
             title: "Failed to load data",
             description: "Could not fetch queue data. Please refresh.",
           });
         }
       } finally {
-        if (isInitialLoad && isMounted) {
+        if (isMountedRef.current) {
           setIsFetchingData(false);
         }
       }
     };
 
-    // Initial fetch
-    fetchData(true);
+    initialLoad();
 
-    // Set up polling interval (every 3 seconds for faster updates)
-    const pollInterval = setInterval(() => {
-      fetchData(false);
-    }, 3000);
-
-    // Cleanup interval on unmount or when authentication changes
     return () => {
-      isMounted = false;
-      clearInterval(pollInterval);
+      isMountedRef.current = false;
     };
   }, [isAuthenticated]);
+
+  // SSE: re-fetch only the affected resource when the backend signals a change
+  useSseEvents(
+    {
+      "queue-updated": () => fetchQueues(),
+      "user-updated": () => fetchUsers(),
+      "system-status-updated": (data) => setSystemStatus(data?.is_online === 1),
+    },
+    isAuthenticated,
+  );
 
   // Fetch system status when authenticated
   useEffect(() => {
@@ -549,6 +592,7 @@ export default function AdminPortal() {
               isFetchingData={isFetchingData}
               setQueues={setQueues}
               setCalledPatients={setCalledPatients}
+              users={users}
             />
           </motion.div>
         ) : (
