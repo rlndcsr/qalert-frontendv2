@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAppointment } from "./useAppointment";
 import AppointmentCard from "./AppointmentCard";
+import { toYMD } from "../patientUtils";
 import {
   Select,
   SelectContent,
@@ -26,8 +27,29 @@ import {
 import { ClipLoader } from "react-spinners";
 
 // Calendar Component
-function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+function Calendar({
+  selectedDate,
+  onDateSelect,
+  schedules,
+  isWeekday,
+  appointmentDates = [],
+  initialMonth = null,
+}) {
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (initialMonth) {
+      // Strip time portion to safely parse "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
+      const datePart = String(initialMonth).split("T")[0].split(" ")[0];
+      const parts = datePart.split("-");
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        if (!isNaN(year) && !isNaN(month)) {
+          return new Date(year, month, 1);
+        }
+      }
+    }
+    return new Date();
+  });
 
   const daysInMonth = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -105,6 +127,13 @@ function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
     });
   };
 
+  // Normalize to YYYY-MM-DD using local timezone (toYMD handles UTC ISO strings correctly)
+  const normalizedAppointmentDates = appointmentDates
+    .map((d) => toYMD(d))
+    .filter(Boolean);
+  const hasAppointment = (dateStr) =>
+    normalizedAppointmentDates.includes(dateStr);
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6">
       {/* Calendar Navigation */}
@@ -153,28 +182,36 @@ function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
           const isPast = date < today;
           const isWeekend = !isWeekday(dateStr);
           const hasDoctors = hasSchedule(date);
+          const isAppointment = hasAppointment(dateStr);
 
           return (
             <button
               key={dateStr}
-              onClick={() => !isPast && onDateSelect(dateStr)}
+              onClick={() =>
+                !isPast && !isAppointment && onDateSelect?.(dateStr)
+              }
               disabled={isPast}
               className={`
                 aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-medium transition-all duration-200
                 ${
-                  isSelected
-                    ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30 scale-105"
-                    : isPast
-                      ? "text-gray-300 cursor-not-allowed"
-                      : isWeekend
-                        ? "text-gray-400 bg-gray-50 cursor-not-allowed"
-                        : "text-gray-700 hover:bg-[#4ad294]/10 hover:scale-105 cursor-pointer"
+                  isAppointment
+                    ? "bg-gradient-to-br from-[#00968a] to-[#007a70] text-white shadow-lg shadow-[#00968a]/40 scale-105 cursor-default"
+                    : isSelected
+                      ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30 scale-105"
+                      : isPast
+                        ? "text-gray-300 cursor-not-allowed"
+                        : isWeekend
+                          ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-[#4ad294]/10 hover:scale-105 cursor-pointer"
                 }
-                ${isToday && !isSelected ? "ring-2 ring-[#4ad294]/50" : ""}
+                ${isToday && !isSelected && !isAppointment ? "ring-2 ring-[#4ad294]/50" : ""}
               `}
             >
               <span className="mb-0.5">{date.getDate()}</span>
-              {!isPast && hasDoctors && !isWeekend && (
+              {isAppointment && (
+                <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
+              )}
+              {!isAppointment && !isPast && hasDoctors && !isWeekend && (
                 <div
                   className={`w-1 h-1 rounded-full ${isSelected ? "bg-white" : "bg-[#4ad294]"}`}
                 />
@@ -186,10 +223,12 @@ function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
 
       {/* Legend */}
       <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-4 text-xs text-gray-600">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-gradient-to-br from-[#4ad294] to-[#3bb882]" />
-          <span>Selected</span>
-        </div>
+        {!appointmentDates.length && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gradient-to-br from-[#4ad294] to-[#3bb882]" />
+            <span>Selected</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded ring-2 ring-[#4ad294]/50" />
           <span>Today</span>
@@ -198,6 +237,12 @@ function Calendar({ selectedDate, onDateSelect, schedules, isWeekday }) {
           <div className="w-3 h-3 rounded bg-gray-50" />
           <span>Weekend</span>
         </div>
+        {appointmentDates.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-[#00968a]" />
+            <span>Your Appointment</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -600,45 +645,9 @@ export default function AppointmentView() {
 
   const isLoading = isLoadingAppointments || isLoadingSchedules;
 
-  // If there's an active appointment, show the appointment card
-  if (activeAppointment) {
-    const appointmentSchedule = schedules.find(
-      (s) => s.schedule_id === activeAppointment.schedule_id,
-    );
-
-    return (
-      <motion.div
-        className="w-full max-w-4xl mx-auto"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-[#4ad294]" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                My Appointment
-              </h2>
-              <p className="text-sm text-gray-500">
-                View your scheduled appointment
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-md mx-auto">
-          <AppointmentCard
-            appointment={activeAppointment}
-            schedule={appointmentSchedule}
-            isCancelling={isCancelling}
-            onCancel={cancelAppointment}
-          />
-        </div>
-      </motion.div>
-    );
-  }
+  const appointmentSchedule = activeAppointment
+    ? schedules.find((s) => s.schedule_id === activeAppointment.schedule_id)
+    : null;
 
   // Show loading state
   if (isLoading) {
@@ -728,10 +737,12 @@ export default function AppointmentView() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Book Appointment
+              {activeAppointment ? "My Appointment" : "Book Appointment"}
             </h2>
             <p className="text-sm text-gray-500">
-              Select a date and schedule your visit
+              {activeAppointment
+                ? "View your scheduled appointment"
+                : "Select a date and schedule your visit"}
             </p>
           </div>
         </div>
@@ -739,26 +750,49 @@ export default function AppointmentView() {
 
       {/* Content */}
       <div className="space-y-6">
-        {/* Calendar */}
+        {/* Calendar — marks appointment date when one exists */}
         <Calendar
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
+          selectedDate={activeAppointment ? "" : selectedDate}
+          onDateSelect={activeAppointment ? undefined : setSelectedDate}
           schedules={schedules}
           isWeekday={isWeekday}
+          appointmentDates={
+            activeAppointment ? [activeAppointment.appointment_date] : []
+          }
+          initialMonth={
+            activeAppointment ? toYMD(activeAppointment.appointment_date) : null
+          }
         />
 
-        {/* Booking Panel */}
-        <BookingPanel
-          selectedDate={selectedDate}
-          schedules={schedules}
-          reasonCategories={reasonCategories}
-          isLoadingSchedules={isLoadingSchedules}
-          isLoadingReasonCategories={isLoadingReasonCategories}
-          isBooking={isBooking}
-          onSubmit={bookAppointment}
-          getSchedulesForDate={getSchedulesForDate}
-          fetchBookedSlotsForDate={fetchBookedSlotsForDate}
-        />
+        {/* Appointment details or Booking Panel */}
+        {activeAppointment ? (
+          <AppointmentCard
+            appointment={activeAppointment}
+            schedule={appointmentSchedule}
+            reasonCategoryName={(() => {
+              const cat = reasonCategories.find(
+                (c) =>
+                  (c.reason_category_id || c.id)?.toString() ===
+                  activeAppointment.reason_category_id?.toString(),
+              );
+              return cat?.category_name || cat?.name || null;
+            })()}
+            isCancelling={isCancelling}
+            onCancel={cancelAppointment}
+          />
+        ) : (
+          <BookingPanel
+            selectedDate={selectedDate}
+            schedules={schedules}
+            reasonCategories={reasonCategories}
+            isLoadingSchedules={isLoadingSchedules}
+            isLoadingReasonCategories={isLoadingReasonCategories}
+            isBooking={isBooking}
+            onSubmit={bookAppointment}
+            getSchedulesForDate={getSchedulesForDate}
+            fetchBookedSlotsForDate={fetchBookedSlotsForDate}
+          />
+        )}
       </div>
     </motion.div>
   );

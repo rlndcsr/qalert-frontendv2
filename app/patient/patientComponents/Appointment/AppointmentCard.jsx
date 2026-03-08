@@ -9,6 +9,7 @@ import {
   XCircle,
   CalendarDays,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 
 // Day abbreviation to full name mapping
@@ -111,6 +112,7 @@ const getStatusConfig = (status) => {
 export default function AppointmentCard({
   appointment,
   schedule,
+  reasonCategoryName,
   isCancelling,
   onCancel,
 }) {
@@ -143,14 +145,14 @@ export default function AppointmentCard({
         </div>
         <div className="relative flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <StatusIcon className="w-5 h-5 text-white" />
+            <CalendarDays className="w-5 h-5 text-white" />
           </div>
           <div>
             <p className="text-white/80 text-xs font-medium uppercase tracking-wide">
-              Appointment Status
+              My Appointment
             </p>
             <h2 className="text-white text-lg font-semibold">
-              {statusConfig.label}
+              Appointment Details
             </h2>
           </div>
         </div>
@@ -223,6 +225,21 @@ export default function AppointmentCard({
                 <span className="font-medium">{fullDay}</span>
                 <span className="text-blue-400 mx-2">•</span>
                 <span className="text-blue-600">{shiftTime}</span>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Purpose / Reason */}
+        {reasonCategoryName && (
+          <div className="flex items-center gap-3 bg-slate-50/80 rounded-xl px-4 py-3 mb-6 border border-slate-100">
+            <ClipboardList className="w-5 h-5 text-slate-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-0.5">
+                Purpose of Visit
+              </p>
+              <p className="text-sm font-medium text-slate-700">
+                {reasonCategoryName}
               </p>
             </div>
           </div>

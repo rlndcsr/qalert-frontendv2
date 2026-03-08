@@ -6,6 +6,27 @@ import { sileo } from "sileo";
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
+const formatTime = (timeString) => {
+  if (!timeString) return "—";
+  let hours, minutes;
+  if (timeString.includes("T")) {
+    const date = new Date(timeString);
+    hours = date.getHours();
+    minutes = date.getMinutes();
+  } else {
+    const parts = timeString.split(" ");
+    const timePart = parts.length >= 2 ? parts[1] : parts[0];
+    const timeParts = timePart.split(":");
+    hours = parseInt(timeParts[0], 10);
+    minutes = parseInt(timeParts[1], 10);
+  }
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = String(minutes).padStart(2, "0");
+  return `${hours}:${minutesStr} ${ampm}`;
+};
+
 export default function QueueManagementTable({
   todayQueues,
   todayDate,
@@ -292,6 +313,9 @@ export default function QueueManagementTable({
                 Contact
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                Booked At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Reason
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -319,6 +343,9 @@ export default function QueueManagementTable({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="h-4 w-28 bg-gray-200 rounded"></div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="h-4 w-40 bg-gray-200 rounded"></div>
                     </td>
@@ -337,7 +364,7 @@ export default function QueueManagementTable({
             ) : todayQueues.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   No queue entries for today (
@@ -426,6 +453,9 @@ export default function QueueManagementTable({
                           </svg>
                           <span>{patient.phone_number || "N/A"}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {formatTime(queue.created_at)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
                         {queue.reason || "—"}
