@@ -17,7 +17,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "x-api-key":
-          process.env.SMSAPIPH_KEY || "sk-2b10rh42g2yycfqpunshbrsutulej2g3",
+          process.env.SMSAPIPH_KEY || "sk-2b10q3dg4sce3xufn1lsmpze2ex5pk4p",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ recipient, message }),
