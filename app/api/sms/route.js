@@ -24,7 +24,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer apit-53fCIYhDkdPEWfipOUiI4QL6h9kkyBis-smU0a",
+        Authorization: "Bearer apit-Y9UH3gB8JYmsjPjBXwgwfDhASxeoVEXJ-EFgvL",
       },
       body: params.toString(),
     });

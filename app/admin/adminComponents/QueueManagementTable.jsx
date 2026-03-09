@@ -88,15 +88,21 @@ export default function QueueManagementTable({
         ) + 1;
 
       const queueNum = String(queue.queue_number).padStart(3, "0");
-      const message = `CSU-UCHW: Queue #${queueNum} called. You are #${position} in line. Please proceed to the clinic now. You have 10-15 mins before the next patient is called.`;
+      const aptTime = queue.appointment_id
+        ? appointmentTimeMap[queue.appointment_id]
+        : null;
+      const aptTimeFormatted = aptTime ? formatTime(aptTime) : "N/A";
+      const reason =
+        reasonCategoryMap[queue.reason_category_id] || queue.reason || "N/A";
+      const message = `CSU UCHW:\n\nYou are now called for your appointment scheduled at ${aptTimeFormatted} for ${reason}. You are currently #${position} in the queue. Please proceed to the university clinic immediately. You have 10 minutes before the next patient is called.\n\nWe encourage you to arrive as early as possible. Thank you.`;
 
       console.log("[SMS] Sending to recipient:", recipient);
       console.log("[SMS] Message:", message);
 
-      const smsPromise = fetch("/api/testing", {
+      const smsPromise = fetch("/api/sms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient, message }),
+        body: JSON.stringify({ to: recipient, text: message }),
       }).then(async (res) => {
         const data = await res.json();
         console.log(
@@ -162,10 +168,10 @@ export default function QueueManagementTable({
 
     const message = `QAlert Test: Hello ${user.name}, this is a test message from QAlert SMS API.`;
 
-    const smsPromise = fetch("/api/testing", {
+    const smsPromise = fetch("/api/sms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipient, message }),
+      body: JSON.stringify({ to: recipient, text: message }),
     }).then(async (res) => {
       const data = await res.json();
       if (!res.ok || !data.success)
@@ -353,9 +359,21 @@ export default function QueueManagementTable({
                 </tr>
               ) : (
                 (() => {
-                  const sorted = todayQueues.sort(
-                    (a, b) => a.queue_number - b.queue_number,
-                  );
+                  const sorted = [...todayQueues].sort((a, b) => {
+                    const timeA = a.appointment_id
+                      ? appointmentTimeMap[a.appointment_id] || ""
+                      : "";
+                    const timeB = b.appointment_id
+                      ? appointmentTimeMap[b.appointment_id] || ""
+                      : "";
+                    // Both have times: sort chronologically
+                    if (timeA && timeB) return timeA.localeCompare(timeB);
+                    // Entries with a time come before those without
+                    if (timeA && !timeB) return -1;
+                    if (!timeA && timeB) return 1;
+                    // Neither has a time: fall back to queue_number
+                    return a.queue_number - b.queue_number;
+                  });
                   const firstWaitingId = sorted.find(
                     (q) => q.queue_status.toLowerCase() === "waiting",
                   )?.queue_entry_id;
