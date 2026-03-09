@@ -450,6 +450,8 @@ export function useAppointment() {
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           reason_category_id: parseInt(reasonCategoryId),
+          frontend_url:
+            typeof window !== "undefined" ? window.location.origin : "",
         }),
       }).then(async (response) => {
         const data = await response.json().catch(() => ({}));
