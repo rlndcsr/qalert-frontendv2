@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList,
   RefreshCw,
@@ -17,6 +17,9 @@ import {
   Phone,
   XCircle,
   AlertCircle,
+  BellRing,
+  Navigation2,
+  TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -491,6 +494,269 @@ const fetchFutureAppointment = async () => {
   }
 };
 
+// ─── Called Countdown ───────────────────────────────────────────────────────
+const COUNTDOWN_DURATION = 10 * 60; // 600 seconds
+const RING_RADIUS = 68;
+const RING_STROKE = 7;
+const RING_SIZE = (RING_RADIUS + RING_STROKE) * 2 + 4;
+const RING_CENTER = RING_RADIUS + RING_STROKE + 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function CalledCountdown({ queueEntryId, queueNumber }) {
+  const [startTime] = useState(() => {
+    if (typeof window === "undefined") return Date.now();
+    const key = `called_at_${queueEntryId}`;
+    const stored = localStorage.getItem(key);
+    if (stored) return parseInt(stored, 10);
+    const now = Date.now();
+    localStorage.setItem(key, String(now));
+    return now;
+  });
+
+  const calcRemaining = useCallback(
+    () =>
+      Math.max(
+        0,
+        COUNTDOWN_DURATION - Math.floor((Date.now() - startTime) / 1000),
+      ),
+    [startTime],
+  );
+
+  const [secondsLeft, setSecondsLeft] = useState(calcRemaining);
+  const [isExpired, setIsExpired] = useState(() => calcRemaining() <= 0);
+
+  useEffect(() => {
+    if (isExpired) return;
+    const id = setInterval(() => {
+      const remaining = calcRemaining();
+      setSecondsLeft(remaining);
+      if (remaining <= 0) setIsExpired(true);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [calcRemaining, isExpired]);
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const progress = secondsLeft / COUNTDOWN_DURATION;
+  const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
+
+  const isCritical = secondsLeft <= 60;
+  const isUrgent = secondsLeft <= 120;
+
+  const theme = isCritical
+    ? {
+        header: "from-red-500 to-rose-600",
+        ring: "#ef4444",
+        track: "#fee2e2",
+        bg: "from-red-50/80 to-rose-50/80",
+        border: "border-red-200",
+        text: "text-red-600",
+        subtext: "text-red-400",
+        badge: "bg-white/25 text-white border-white/20",
+        label: "⚠ Time Almost Up!",
+        sublabel:
+          "Your slot may be given to the next patient. Hurry to the clinic!",
+      }
+    : isUrgent
+      ? {
+          header: "from-amber-500 to-orange-500",
+          ring: "#f59e0b",
+          track: "#fef3c7",
+          bg: "from-amber-50/80 to-orange-50/80",
+          border: "border-amber-200",
+          text: "text-amber-600",
+          subtext: "text-amber-400",
+          badge: "bg-white/25 text-white border-white/20",
+          label: "Hurry! Head to the clinic now",
+          sublabel:
+            "Please make your way to the university clinic immediately.",
+        }
+      : {
+          header: "from-blue-500 to-sky-600",
+          ring: "#3b82f6",
+          track: "#dbeafe",
+          bg: "from-blue-50/80 to-sky-50/80",
+          border: "border-blue-200",
+          text: "text-blue-600",
+          subtext: "text-blue-400",
+          badge: "bg-white/25 text-white border-white/20",
+          label: "Please proceed to the clinic",
+          sublabel:
+            "You have been called. Make your way to the university clinic.",
+        };
+
+  if (isExpired) {
+    return (
+      <motion.div
+        key="expired"
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-red-50/60 rounded-2xl border border-red-200 shadow-sm"
+      >
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-rose-500" />
+        <div className="p-6 flex flex-col items-center text-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 border border-red-200 flex items-center justify-center">
+            <TriangleAlert className="w-8 h-8 text-red-500" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-gray-800 mb-1">
+              Response Time Expired
+            </h3>
+            <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+              Your 10-minute window has passed. Your slot may have been moved to
+              the next patient.
+            </p>
+          </div>
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 text-left">
+            <BellRing className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-700 leading-relaxed">
+              <span className="font-semibold">
+                Please contact clinic staff immediately
+              </span>{" "}
+              at the university health center to check your queue status.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      key="countdown"
+      initial={{ opacity: 0, y: 16, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={`relative overflow-hidden bg-gradient-to-br ${theme.bg} rounded-2xl border ${theme.border} shadow-sm`}
+    >
+      {/* Header */}
+      <div
+        className={`bg-gradient-to-r ${theme.header} px-5 py-4 flex items-center gap-3`}
+      >
+        <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center border border-white/15">
+          <BellRing className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white/75 text-[11px] font-semibold uppercase tracking-widest leading-none">
+            You&apos;ve Been Called
+          </p>
+          <h3 className="text-white font-bold text-sm mt-0.5 leading-snug">
+            Please Proceed to the Clinic
+          </h3>
+        </div>
+        <div
+          className={`flex-shrink-0 rounded-xl px-3.5 py-2 border ${theme.badge} backdrop-blur-sm text-center`}
+        >
+          <p className="text-white/70 text-[10px] leading-none uppercase tracking-wide">
+            Queue
+          </p>
+          <p className="text-xl font-bold text-white leading-tight tracking-tight">
+            #{queueNumber}
+          </p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="px-6 py-5 flex flex-col items-center gap-4">
+        {/* Circular Ring Timer */}
+        <div className="relative">
+          {/* Pulse aura when critical */}
+          {isCritical && (
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{ backgroundColor: `${theme.ring}22` }}
+              animate={{ scale: [1, 1.18, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{
+                duration: 1.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          )}
+          <svg
+            width={RING_SIZE}
+            height={RING_SIZE}
+            style={{ transform: "rotate(-90deg)" }}
+          >
+            {/* Track */}
+            <circle
+              cx={RING_CENTER}
+              cy={RING_CENTER}
+              r={RING_RADIUS}
+              fill="none"
+              stroke={theme.track}
+              strokeWidth={RING_STROKE}
+              strokeLinecap="round"
+            />
+            {/* Progress */}
+            <motion.circle
+              cx={RING_CENTER}
+              cy={RING_CENTER}
+              r={RING_RADIUS}
+              fill="none"
+              stroke={theme.ring}
+              strokeWidth={RING_STROKE}
+              strokeLinecap="round"
+              strokeDasharray={RING_CIRCUMFERENCE}
+              strokeDashoffset={dashOffset}
+              animate={{ strokeDashoffset: dashOffset }}
+              transition={{ duration: 0.5, ease: "linear" }}
+            />
+          </svg>
+          {/* Center text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <motion.span
+              key={secondsLeft}
+              className={`text-4xl font-mono font-extrabold tracking-tight ${
+                theme.text
+              }`}
+              animate={isCritical ? { scale: [1, 1.06, 1] } : {}}
+              transition={{ duration: 0.5 }}
+            >
+              {String(minutes).padStart(2, "0")}:
+              {String(seconds).padStart(2, "0")}
+            </motion.span>
+            <span className="text-[11px] text-gray-400 font-medium mt-0.5 uppercase tracking-wider">
+              remaining
+            </span>
+          </div>
+        </div>
+
+        {/* Status message */}
+        <div className="text-center">
+          <p className={`text-sm font-bold ${theme.text} mb-1`}>
+            {theme.label}
+          </p>
+          <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
+            {theme.sublabel}
+          </p>
+        </div>
+
+        {/* Proceed hint */}
+        <div
+          className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 border ${
+            isCritical
+              ? "bg-red-50 border-red-200"
+              : isUrgent
+                ? "bg-amber-50 border-amber-200"
+                : "bg-blue-50 border-blue-200"
+          }`}
+        >
+          <Navigation2 className={`w-4 h-4 flex-shrink-0 ${theme.text}`} />
+          <p className={`text-xs font-semibold ${theme.text}`}>
+            Head to the CSU University Clinic immediately. You have{" "}
+            <strong>
+              {minutes > 0
+                ? `${minutes} min ${seconds} sec`
+                : `${seconds} seconds`}
+            </strong>{" "}
+            before your slot may be reassigned.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // Future Appointment Reminder Card component
 function FutureAppointmentCard({ appointment }) {
   const appointmentDate = appointment?.appointment_date;
@@ -576,6 +842,17 @@ export default function AppointmentQueueView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Cleanup localStorage countdown key when status is no longer "called"
+  useEffect(() => {
+    if (
+      userQueue &&
+      userQueue.queue_status !== "called" &&
+      userQueue.queue_entry_id
+    ) {
+      localStorage.removeItem(`called_at_${userQueue.queue_entry_id}`);
+    }
+  }, [userQueue?.queue_status, userQueue?.queue_entry_id]);
+
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
@@ -601,6 +878,35 @@ export default function AppointmentQueueView() {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // SSE: re-fetch queue data in real-time when queue or appointment changes
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+
+    const handleQueueUpdate = () => {
+      console.log("[SSE/AppointmentQueueView] queue-updated → refreshing");
+      fetchData();
+    };
+    const handleAppointmentUpdate = () => {
+      console.log(
+        "[SSE/AppointmentQueueView] appointment-updated → refreshing",
+      );
+      fetchData();
+    };
+
+    es.addEventListener("queue-updated", handleQueueUpdate);
+    es.addEventListener("appointment-updated", handleAppointmentUpdate);
+    es.onerror = () =>
+      console.warn(
+        "[SSE/AppointmentQueueView] connection lost, will reconnect",
+      );
+
+    return () => {
+      es.removeEventListener("queue-updated", handleQueueUpdate);
+      es.removeEventListener("appointment-updated", handleAppointmentUpdate);
+      es.close();
+    };
   }, []);
 
   return (
@@ -701,6 +1007,17 @@ export default function AppointmentQueueView() {
           ) : (
             <NoServingCard />
           )}
+
+          {/* Countdown banner when called */}
+          <AnimatePresence mode="wait">
+            {userQueue.queue_status === "called" && (
+              <CalledCountdown
+                key={`countdown-${userQueue.queue_entry_id}`}
+                queueEntryId={userQueue.queue_entry_id}
+                queueNumber={String(userQueue.queue_number).padStart(3, "0")}
+              />
+            )}
+          </AnimatePresence>
 
           {/* User Queue Card */}
           <UserQueueCard
