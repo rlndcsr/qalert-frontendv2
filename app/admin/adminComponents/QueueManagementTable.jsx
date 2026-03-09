@@ -35,7 +35,6 @@ export default function QueueManagementTable({
   isFetchingData,
   setQueues,
   setCalledPatients,
-  users,
 }) {
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
@@ -155,51 +154,6 @@ export default function QueueManagementTable({
     }
   };
 
-  const handleTestSms = async (user) => {
-    const digits = (user.phone_number || "").replace(/\D/g, "");
-    let recipient;
-    if (digits.startsWith("63")) {
-      recipient = `+${digits}`;
-    } else if (digits.startsWith("0")) {
-      recipient = `+63${digits.slice(1)}`;
-    } else {
-      recipient = `+63${digits}`;
-    }
-
-    const message = `QAlert Test: Hello ${user.name}, this is a test message from QAlert SMS API.`;
-
-    const smsPromise = fetch("/api/sms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: recipient, text: message }),
-    }).then(async (res) => {
-      const data = await res.json();
-      if (!res.ok || !data.success)
-        throw new Error(
-          data?.details?.message ||
-            data?.details?.error ||
-            (typeof data?.details === "string" ? data.details : null) ||
-            data?.error ||
-            "Failed to send SMS",
-        );
-    });
-
-    sileo.promise(smsPromise, {
-      loading: {
-        title: "Sending test SMS…",
-        description: `Sending to ${recipient}`,
-      },
-      success: {
-        title: "Test SMS sent",
-        description: `Message delivered to ${user.name}`,
-      },
-      error: {
-        title: "SMS failed",
-        description: "Could not send test message.",
-      },
-    });
-  };
-
   const handleCompletePatient = (queue) => {
     console.log("Complete patient:", queue);
     sileo.success({
@@ -279,7 +233,6 @@ export default function QueueManagementTable({
             Manage patient flow and service status
           </p>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-gray-200">
@@ -491,82 +444,7 @@ export default function QueueManagementTable({
             </tbody>
           </table>
         </div>
-      </motion.div>
-
-      {/* SMS Test Table */}
-      <motion.div
-        className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-orange-200 mt-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-orange-400 via-orange-300 to-orange-400" />
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-transparent">
-          <h2 className="text-lg font-semibold text-[#25323A] mb-1">
-            SMS API Test
-          </h2>
-          <p className="text-sm text-gray-600">
-            Send a test SMS to any registered user
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {(users || []).length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-sm text-gray-500"
-                  >
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                (users || []).map((user) => (
-                  <tr
-                    key={user.user_id}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
-                      {user.name || "—"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {user.email_address || "—"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {user.phone_number || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleTestSms(user)}
-                        disabled={!user.phone_number}
-                        className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
-                      >
-                        Send Test SMS
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        ``{" "}
       </motion.div>
     </>
   );
