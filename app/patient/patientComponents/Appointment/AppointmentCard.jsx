@@ -76,7 +76,7 @@ const STATUS_CONFIG = {
     border: "border-amber-200",
     text: "text-amber-700",
     icon: AlertCircle,
-    label: "Pending",
+    label: "Pending Confirmation",
   },
   completed: {
     gradient: "from-slate-500 to-slate-600",
@@ -143,17 +143,25 @@ export default function AppointmentCard({
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-white rounded-full" />
           <div className="absolute -right-8 top-8 w-16 h-16 bg-white rounded-full" />
         </div>
-        <div className="relative flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-white" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <CalendarDays className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-white/80 text-xs font-medium uppercase tracking-wide">
+                My Appointment
+              </p>
+              <h2 className="text-white text-lg font-semibold">
+                Appointment Details
+              </h2>
+            </div>
           </div>
-          <div>
-            <p className="text-white/80 text-xs font-medium uppercase tracking-wide">
-              My Appointment
-            </p>
-            <h2 className="text-white text-lg font-semibold">
-              Appointment Details
-            </h2>
+          <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
+            <StatusIcon className="w-3.5 h-3.5 text-white" />
+            <span className="text-white text-xs font-semibold">
+              {statusConfig.label}
+            </span>
           </div>
         </div>
       </div>

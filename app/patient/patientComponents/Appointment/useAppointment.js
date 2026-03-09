@@ -467,7 +467,7 @@ export function useAppointment() {
           },
           success: {
             title: "Appointment booked!",
-            description: "Your appointment has been scheduled successfully.",
+            description: "Please check your email to confirm your appointment.",
           },
           error: (err) => ({
             title: "Booking failed",
@@ -560,6 +560,34 @@ export function useAppointment() {
     fetchSchedules();
     fetchReasonCategories();
   }, [fetchAppointments, fetchSchedules, fetchReasonCategories]);
+
+  // Listen for SSE events to auto-refresh appointment data
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+
+    const handleAppointmentUpdate = () => {
+      console.log("[SSE] appointment-updated → refreshing appointments");
+      fetchAppointments();
+    };
+
+    const handleQueueUpdate = () => {
+      console.log("[SSE] queue-updated → refreshing appointments");
+      fetchAppointments();
+    };
+
+    es.addEventListener("appointment-updated", handleAppointmentUpdate);
+    es.addEventListener("queue-updated", handleQueueUpdate);
+
+    es.onerror = () => {
+      console.warn("[SSE/useAppointment] connection lost, will auto-reconnect");
+    };
+
+    return () => {
+      es.removeEventListener("appointment-updated", handleAppointmentUpdate);
+      es.removeEventListener("queue-updated", handleQueueUpdate);
+      es.close();
+    };
+  }, [fetchAppointments]);
 
   return {
     appointments,
