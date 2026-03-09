@@ -1,7 +1,76 @@
 "use client";
 
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { sileo } from "sileo";
+import { Clock, XCircle } from "lucide-react";
+
+const COUNTDOWN_DURATION = 600; // 10 minutes in seconds
+
+function MiniCountdown({ queueEntryId, onExpire }) {
+  const [startTime] = useState(() => {
+    if (typeof window === "undefined") return Date.now();
+    const stored = localStorage.getItem(`called_at_${queueEntryId}`);
+    if (stored) return parseInt(stored, 10);
+    // Fallback: start now if patient-side key not set (different device)
+    const now = Date.now();
+    localStorage.setItem(`called_at_${queueEntryId}`, String(now));
+    return now;
+  });
+
+  const calcRemaining = useCallback(
+    () =>
+      Math.max(
+        0,
+        COUNTDOWN_DURATION - Math.floor((Date.now() - startTime) / 1000),
+      ),
+    [startTime],
+  );
+
+  const [secondsLeft, setSecondsLeft] = useState(calcRemaining);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  });
+
+  useEffect(() => {
+    if (secondsLeft <= 0) {
+      onExpireRef.current?.();
+      return;
+    }
+    const id = setInterval(() => {
+      const remaining = calcRemaining();
+      setSecondsLeft(remaining);
+      if (remaining <= 0) onExpireRef.current?.();
+    }, 1000);
+    return () => clearInterval(id);
+  }, [calcRemaining, secondsLeft]);
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const isExpired = secondsLeft <= 0;
+  const isCritical = secondsLeft <= 60;
+  const isUrgent = secondsLeft <= 120;
+
+  const style =
+    isExpired || isCritical
+      ? "bg-red-100 text-red-700 border-red-200"
+      : isUrgent
+        ? "bg-amber-100 text-amber-700 border-amber-200"
+        : "bg-blue-50 text-blue-600 border-blue-200";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border ${style}`}
+      title="Time since patient was called"
+    >
+      <Clock className="w-3 h-3" />
+      {isExpired
+        ? "Expired"
+        : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+    </span>
+  );
+}
 
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
@@ -12,6 +81,13 @@ export default function CalledPatientDisplay({
   setQueues,
   setCalledPatients,
 }) {
+  // Track which queue entry IDs have expired countdowns
+  const [expiredIds, setExpiredIds] = useState(new Set());
+
+  const handleExpired = (queueEntryId) => {
+    setExpiredIds((prev) => new Set([...prev, queueEntryId]));
+  };
+
   const handleStatusChange = async (patient, newStatus) => {
     if (!newStatus) return;
 
@@ -74,6 +150,20 @@ export default function CalledPatientDisplay({
         setCalledPatients((prev) =>
           prev.filter((p) => p.queue_entry_id !== patient.queue_entry_id),
         );
+      } else if (newStatus === "cancelled") {
+        sileo.success({
+          title: "Queue Cancelled",
+          description: "Patient queue entry has been cancelled.",
+        });
+        setCalledPatients((prev) =>
+          prev.filter((p) => p.queue_entry_id !== patient.queue_entry_id),
+        );
+        setExpiredIds((prev) => {
+          const next = new Set(prev);
+          next.delete(patient.queue_entry_id);
+          return next;
+        });
+        localStorage.removeItem(`called_at_${patient.queue_entry_id}`);
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -128,17 +218,27 @@ export default function CalledPatientDisplay({
                       {String(calledPatient.queue_number).padStart(3, "0")}
                     </p>
                   </div>
-                  <span
-                    className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      calledPatient.queue_status === "now_serving"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {calledPatient.queue_status === "now_serving"
-                      ? "Now Serving"
-                      : "Called"}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span
+                      className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        calledPatient.queue_status === "now_serving"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {calledPatient.queue_status === "now_serving"
+                        ? "Now Serving"
+                        : "Called"}
+                    </span>
+                    {calledPatient.queue_status === "called" && (
+                      <MiniCountdown
+                        queueEntryId={calledPatient.queue_entry_id}
+                        onExpire={() =>
+                          handleExpired(calledPatient.queue_entry_id)
+                        }
+                      />
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-gray-700 mb-3">
                   {calledPatient.reason}
@@ -184,6 +284,17 @@ export default function CalledPatientDisplay({
                   )}
                   <option value="completed">Completed</option>
                 </select>
+                {expiredIds.has(calledPatient.queue_entry_id) && (
+                  <button
+                    onClick={() =>
+                      handleStatusChange(calledPatient, "cancelled")
+                    }
+                    className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    Cancel Queue (No-show)
+                  </button>
+                )}
               </div>
             </div>
           ))}
