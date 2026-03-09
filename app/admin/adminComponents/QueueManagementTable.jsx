@@ -128,7 +128,7 @@ export default function QueueManagementTable({
         },
         success: {
           title: "Patient called",
-          description: `SMS sent for queue #${String(queue.queue_number).padStart(3, "0")}`,
+          description: `SMS notification sent to ${patient.name || "the patient"}.`,
         },
         error: {
           title: "SMS failed",
