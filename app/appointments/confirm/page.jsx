@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -19,7 +19,7 @@ const STATUS = {
   ERROR: "error",
 };
 
-export default function ConfirmAppointmentPage() {
+function ConfirmAppointmentContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState(
@@ -105,6 +105,14 @@ export default function ConfirmAppointmentPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function ConfirmAppointmentPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ConfirmAppointmentContent />
+    </Suspense>
   );
 }
 
