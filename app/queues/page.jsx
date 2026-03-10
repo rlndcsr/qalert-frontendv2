@@ -117,7 +117,8 @@ export default function QueueDisplay() {
             const todayString = getTodayString();
             const todayEncounters = allEncounters.filter((enc) => {
               const encDate = normalizeDateToLocal(enc.date);
-              return encDate === todayString;
+              const encStatus = (enc.status || "active").toLowerCase();
+              return encDate === todayString && encStatus === "active";
             });
             if (
               !isDataEqual(todayEncounters, previousEmergencyDataRef.current)
@@ -166,11 +167,12 @@ export default function QueueDisplay() {
     fetchQueueData(true);
   }, [fetchQueueData]);
 
-  // SSE: re-fetch when the backend signals a queue or user change
+  // SSE: re-fetch when the backend signals a queue, user, or emergency encounter change
   useSseEvents({
     "queue-updated": () => fetchQueueData(false),
     "user-updated": () => fetchQueueData(false),
     "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
+    "emergency-encounter-updated": () => fetchQueueData(false),
   });
 
   // Process queue data

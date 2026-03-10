@@ -1,8 +1,12 @@
 "use client";
 
+// Used for read-only GET requests (ngrok-skip-browser-warning avoids the interstitial)
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_APP_BASE_URL ||
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+
+// All write operations go through the Next.js proxy (same-origin → no CORS issues)
+const PROXY_BASE_URL = "/api/emergency-encounters";
 
 /**
  * Get auth headers with Bearer token
@@ -56,7 +60,7 @@ export const getEmergencyEncounterById = async (id) => {
  * Create a new emergency encounter
  */
 export const createEmergencyEncounter = async (data) => {
-  const response = await fetch(`${API_BASE_URL}/emergency-encounters`, {
+  const response = await fetch(PROXY_BASE_URL, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -75,7 +79,7 @@ export const createEmergencyEncounter = async (data) => {
  * Update an existing emergency encounter
  */
 export const updateEmergencyEncounter = async (id, data) => {
-  const response = await fetch(`${API_BASE_URL}/emergency-encounters/${id}`, {
+  const response = await fetch(`${PROXY_BASE_URL}/${id}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -94,7 +98,7 @@ export const updateEmergencyEncounter = async (id, data) => {
  * Delete an emergency encounter
  */
 export const deleteEmergencyEncounter = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/emergency-encounters/${id}`, {
+  const response = await fetch(`${PROXY_BASE_URL}/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });

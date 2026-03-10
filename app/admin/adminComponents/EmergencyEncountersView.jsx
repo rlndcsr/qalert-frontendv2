@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSseEvents } from "../../hooks/useSseEvents";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { sileo } from "sileo";
@@ -899,6 +900,9 @@ export default function EmergencyEncountersView() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'active', 'done', 'cancelled'
+
   // Get today's date in YYYY-MM-DD format for comparisons (using local timezone)
   const getTodayString = () => {
     const today = new Date();
@@ -918,6 +922,9 @@ export default function EmergencyEncountersView() {
   useEffect(() => {
     fetchEncounters();
   }, []);
+
+  // SSE: re-fetch when any client creates, updates, or deletes an encounter
+  useSseEvents({ "emergency-encounter-updated": () => fetchEncounters() });
 
   const fetchEncounters = async () => {
     setIsLoading(true);
@@ -1017,6 +1024,13 @@ export default function EmergencyEncountersView() {
 
     console.log("Filtered result count:", result.length);
 
+    // Apply status filter
+    if (statusFilter !== "all") {
+      result = result.filter(
+        (enc) => (enc.status || "active").toLowerCase() === statusFilter,
+      );
+    }
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -1029,7 +1043,14 @@ export default function EmergencyEncountersView() {
     }
 
     return result;
-  }, [encounters, searchQuery, dateFilterType, startDate, endDate]);
+  }, [
+    encounters,
+    searchQuery,
+    dateFilterType,
+    startDate,
+    endDate,
+    statusFilter,
+  ]);
 
   // Pagination
   const totalPages = Math.ceil(filteredEncounters.length / itemsPerPage);
@@ -1038,10 +1059,10 @@ export default function EmergencyEncountersView() {
     return filteredEncounters.slice(start, start + itemsPerPage);
   }, [filteredEncounters, currentPage]);
 
-  // Reset page when search or date filter changes
+  // Reset page when any filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, dateFilterType, startDate, endDate]);
+  }, [searchQuery, dateFilterType, startDate, endDate, statusFilter]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -1049,10 +1070,12 @@ export default function EmergencyEncountersView() {
     setStartDate("");
     setEndDate("");
     setSearchQuery("");
+    setStatusFilter("all");
   };
 
   // Check if any filter is active
-  const hasActiveFilters = dateFilterType !== "all" || searchQuery.trim();
+  const hasActiveFilters =
+    dateFilterType !== "all" || statusFilter !== "all" || searchQuery.trim();
 
   const handleCreate = async (formData) => {
     await sileo.promise(createEmergencyEncounter(formData), {
@@ -1093,6 +1116,39 @@ export default function EmergencyEncountersView() {
       },
       error: (err) => ({
         title: "Failed to delete encounter",
+        description: err.message || "Something went wrong. Please try again.",
+      }),
+    });
+    fetchEncounters();
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    const encounter = encounters.find((e) => e.id === id);
+    if (!encounter) return;
+
+    // Send only the fields the backend validates, with time trimmed to HH:MM
+    // Use normalizeDateForComparison instead of split("T")[0] to correctly handle
+    // UTC ISO strings from Laravel (e.g. "2026-03-09T16:00:00Z" is March 10 in UTC+8)
+    const payload = {
+      patient_name: encounter.patient_name,
+      id_number: encounter.id_number || null,
+      contact_number: encounter.contact_number,
+      date: encounter.date
+        ? normalizeDateForComparison(encounter.date)
+        : encounter.date,
+      time: encounter.time ? encounter.time.substring(0, 5) : encounter.time,
+      details: encounter.details,
+      status: newStatus,
+    };
+
+    await sileo.promise(updateEmergencyEncounter(id, payload), {
+      loading: { title: "Updating status..." },
+      success: {
+        title: "Status updated",
+        description: `Encounter marked as ${newStatus}.`,
+      },
+      error: (err) => ({
+        title: "Failed to update status",
         description: err.message || "Something went wrong. Please try again.",
       }),
     });
@@ -1209,6 +1265,32 @@ export default function EmergencyEncountersView() {
                 </button>
               </div>
 
+              {/* Status filter pills */}
+              <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+                {[
+                  { value: "all", label: "All Status" },
+                  { value: "active", label: "Active", color: "text-blue-700" },
+                  { value: "done", label: "Done", color: "text-emerald-700" },
+                  {
+                    value: "cancelled",
+                    label: "Cancelled",
+                    color: "text-red-600",
+                  },
+                ].map(({ value, label, color }) => (
+                  <button
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      statusFilter === value
+                        ? `bg-white shadow-sm ${color || "text-gray-900"}`
+                        : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {/* Date range pickers */}
               {dateFilterType === "range" && (
                 <div className="flex items-center gap-2">
@@ -1285,6 +1367,11 @@ export default function EmergencyEncountersView() {
                 <th className="px-5 py-3.5 text-left">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                     Details
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Status
                   </span>
                 </th>
                 <th className="px-5 py-3.5 text-right">
@@ -1374,6 +1461,31 @@ export default function EmergencyEncountersView() {
                       <p className="text-sm text-gray-600 line-clamp-2 leading-snug">
                         {encounter.details}
                       </p>
+                    </td>
+                    {/* Status */}
+                    <td className="px-5 py-4">
+                      {(() => {
+                        const s = encounter.status || "active";
+                        const cfg =
+                          {
+                            active: "bg-blue-100 text-blue-700",
+                            done: "bg-emerald-100 text-emerald-700",
+                            cancelled: "bg-red-100 text-red-600",
+                          }[s] || "bg-gray-100 text-gray-600";
+                        return (
+                          <select
+                            value={s}
+                            onChange={(e) =>
+                              handleStatusChange(encounter.id, e.target.value)
+                            }
+                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#00968a] ${cfg}`}
+                          >
+                            <option value="active">Active</option>
+                            <option value="done">Done</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        );
+                      })()}
                     </td>
                     {/* Actions */}
                     <td className="px-5 py-4">
@@ -1481,6 +1593,30 @@ export default function EmergencyEncountersView() {
                       {encounter.details}
                     </p>
                   )}
+                </div>
+                <div className="px-4 pb-3 flex items-center gap-2">
+                  {(() => {
+                    const s = encounter.status || "active";
+                    const cfg =
+                      {
+                        active: "bg-blue-100 text-blue-700",
+                        done: "bg-emerald-100 text-emerald-700",
+                        cancelled: "bg-red-100 text-red-600",
+                      }[s] || "bg-gray-100 text-gray-600";
+                    return (
+                      <select
+                        value={s}
+                        onChange={(e) =>
+                          handleStatusChange(encounter.id, e.target.value)
+                        }
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none ${cfg}`}
+                      >
+                        <option value="active">Active</option>
+                        <option value="done">Done</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center border-t border-gray-100 divide-x divide-gray-100">
                   <button
