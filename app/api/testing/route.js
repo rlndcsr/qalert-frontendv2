@@ -24,7 +24,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer apit-CfscjHWy1RcZBkTs5YLARhBYSsYSytt0-wL3Fi",
+        Authorization: `Bearer ${process.env.MOCEAN_API_KEY}`,
       },
       body: params.toString(),
     });

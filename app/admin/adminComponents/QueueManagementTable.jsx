@@ -55,14 +55,26 @@ export default function QueueManagementTable({
             Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": true,
+            "ngrok-skip-browser-warning": "true",
           },
           body: JSON.stringify({ queue_status: "called" }),
         },
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update queue status");
+        let errorDetail = `HTTP ${response.status}`;
+        try {
+          const errBody = await response.json();
+          console.error("[Call] API error body:", errBody);
+          errorDetail =
+            errBody?.message ||
+            errBody?.error ||
+            (typeof errBody === "string" ? errBody : errorDetail);
+        } catch {
+          const text = await response.text().catch(() => "");
+          console.error("[Call] API error text:", text);
+        }
+        throw new Error(`Failed to update queue status: ${errorDetail}`);
       }
 
       // Send SMS via new API
@@ -145,11 +157,20 @@ export default function QueueManagementTable({
             : q,
         ),
       );
+
+      setCalledPatients((prev) => {
+        const already = prev.some(
+          (p) => p.queue_entry_id === queue.queue_entry_id,
+        );
+        if (already) return prev;
+        return [...prev, { ...queue, queue_status: "called" }];
+      });
     } catch (error) {
       console.error("Error calling patient:", error);
       sileo.error({
         title: "Call failed",
-        description: "Failed to call patient. Please try again.",
+        description:
+          error.message || "Failed to call patient. Please try again.",
       });
     }
   };
@@ -166,6 +187,7 @@ export default function QueueManagementTable({
   const [reasonCategoryMap, setReasonCategoryMap] = useState({});
   // appointmentMap: keyed by appointment_id → appointment_time
   const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
+  const [isLoadingLookups, setIsLoadingLookups] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -207,7 +229,8 @@ export default function QueueManagementTable({
       })
       .catch((err) =>
         console.error("[QueueManagementTable] lookup fetch:", err),
-      );
+      )
+      .finally(() => setIsLoadingLookups(false));
   }, []);
 
   const getAppointmentTime = (queue) => {
@@ -401,7 +424,11 @@ export default function QueueManagementTable({
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {getAppointmentTime(queue)}
+                          {isLoadingLookups && queue.appointment_id ? (
+                            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                          ) : (
+                            getAppointmentTime(queue)
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
                           {reasonCategoryMap[queue.reason_category_id] ||

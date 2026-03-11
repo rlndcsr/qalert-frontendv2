@@ -6,6 +6,7 @@ import { sileo } from "sileo";
 import { Clock, XCircle } from "lucide-react";
 
 const COUNTDOWN_DURATION = 600; // 10 minutes in seconds
+const SERVING_DURATION = 1200; // 20 minutes in seconds
 
 function MiniCountdown({ queueEntryId, onExpire }) {
   const [startTime] = useState(() => {
@@ -72,6 +73,61 @@ function MiniCountdown({ queueEntryId, onExpire }) {
   );
 }
 
+function ServingCountdown({ queueEntryId }) {
+  const [startTime] = useState(() => {
+    if (typeof window === "undefined") return Date.now();
+    const stored = localStorage.getItem(`serving_at_${queueEntryId}`);
+    if (stored) return parseInt(stored, 10);
+    const now = Date.now();
+    localStorage.setItem(`serving_at_${queueEntryId}`, String(now));
+    return now;
+  });
+
+  const calcRemaining = useCallback(
+    () =>
+      Math.max(
+        0,
+        SERVING_DURATION - Math.floor((Date.now() - startTime) / 1000),
+      ),
+    [startTime],
+  );
+
+  const [secondsLeft, setSecondsLeft] = useState(calcRemaining);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setInterval(() => {
+      setSecondsLeft(calcRemaining());
+    }, 1000);
+    return () => clearInterval(id);
+  }, [calcRemaining, secondsLeft]);
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const isExpired = secondsLeft <= 0;
+  const isCritical = secondsLeft <= 60;
+  const isUrgent = secondsLeft <= 180;
+
+  const style =
+    isExpired || isCritical
+      ? "bg-red-100 text-red-700 border-red-200"
+      : isUrgent
+        ? "bg-amber-100 text-amber-700 border-amber-200"
+        : "bg-green-50 text-green-700 border-green-200";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border ${style}`}
+      title="Time remaining for consultation"
+    >
+      <Clock className="w-3 h-3" />
+      {isExpired
+        ? "Time up"
+        : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+    </span>
+  );
+}
+
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
 
@@ -131,6 +187,10 @@ export default function CalledPatientDisplay({
       );
 
       if (newStatus === "now_serving") {
+        localStorage.setItem(
+          `serving_at_${patient.queue_entry_id}`,
+          String(Date.now()),
+        );
         sileo.success({
           title: "Now Serving",
           description: "Patient is now being served.",
@@ -143,6 +203,7 @@ export default function CalledPatientDisplay({
           ),
         );
       } else if (newStatus === "completed") {
+        localStorage.removeItem(`serving_at_${patient.queue_entry_id}`);
         sileo.success({
           title: "Service Completed",
           description: "Patient service has been completed.",
@@ -164,6 +225,7 @@ export default function CalledPatientDisplay({
           return next;
         });
         localStorage.removeItem(`called_at_${patient.queue_entry_id}`);
+        localStorage.removeItem(`serving_at_${patient.queue_entry_id}`);
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -236,6 +298,11 @@ export default function CalledPatientDisplay({
                         onExpire={() =>
                           handleExpired(calledPatient.queue_entry_id)
                         }
+                      />
+                    )}
+                    {calledPatient.queue_status === "now_serving" && (
+                      <ServingCountdown
+                        queueEntryId={calledPatient.queue_entry_id}
                       />
                     )}
                   </div>

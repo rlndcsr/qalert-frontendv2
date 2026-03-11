@@ -10,6 +10,72 @@ import Image from "next/image";
 const API_BASE_URL =
   "https://intercarpellary-rosana-indivisibly.ngrok-free.dev";
 
+const SERVING_DURATION = 1200; // 20 minutes in seconds
+
+function ServingCountdown({ queueEntryId }) {
+  const [startTime] = useState(() => {
+    if (typeof window === "undefined") return Date.now();
+    const stored = localStorage.getItem(`serving_at_${queueEntryId}`);
+    if (stored) return parseInt(stored, 10);
+    return Date.now();
+  });
+
+  const calcRemaining = useCallback(
+    () =>
+      Math.max(
+        0,
+        SERVING_DURATION - Math.floor((Date.now() - startTime) / 1000),
+      ),
+    [startTime],
+  );
+
+  const [secondsLeft, setSecondsLeft] = useState(calcRemaining);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setInterval(() => {
+      setSecondsLeft(calcRemaining());
+    }, 1000);
+    return () => clearInterval(id);
+  }, [calcRemaining, secondsLeft]);
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const isExpired = secondsLeft <= 0;
+  const isCritical = secondsLeft <= 60;
+  const isUrgent = secondsLeft <= 180;
+
+  const style =
+    isExpired || isCritical
+      ? "bg-red-500/30 text-red-200 border-red-400/40"
+      : isUrgent
+        ? "bg-amber-400/25 text-amber-200 border-amber-300/40"
+        : "bg-white/10 text-white/90 border-white/20";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded border ${style}`}
+      title="Time remaining for consultation"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-2.5 h-2.5"
+      >
+        <path
+          fillRule="evenodd"
+          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
+          clipRule="evenodd"
+        />
+      </svg>
+      {isExpired
+        ? "Time up"
+        : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+    </span>
+  );
+}
+
 export default function QueueDisplay() {
   const router = useRouter();
   const {
@@ -204,6 +270,7 @@ export default function QueueDisplay() {
       number: entry.queue_number,
       name: users[entry.user_id]?.name || "Unknown",
       id_number: users[entry.user_id]?.id_number || "",
+      queue_entry_id: entry.queue_entry_id,
     }));
 
     // Ready (Please Proceed): all "called" entries
@@ -377,6 +444,13 @@ export default function QueueDisplay() {
                       >
                         {patient.id_number}
                       </div>
+                      {patient.queue_entry_id && (
+                        <div className="mt-1.5">
+                          <ServingCountdown
+                            queueEntryId={patient.queue_entry_id}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

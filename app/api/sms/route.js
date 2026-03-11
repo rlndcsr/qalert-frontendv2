@@ -29,6 +29,8 @@ export async function POST(req) {
       body: params.toString(),
     });
 
+    console.log("[SMS] Mocean response status:", resp.status);
+
     const contentType = resp.headers.get("content-type") || "";
     const isJson = contentType.includes("application/json");
     const body = isJson ? await resp.json() : await resp.text();
