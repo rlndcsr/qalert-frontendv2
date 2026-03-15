@@ -58,15 +58,12 @@ export default function AnalyticsTab({
   useEffect(() => {
     const fetchReasonCategories = async () => {
       try {
-        const response = await fetch(
-          "/api/proxy/reason-categories",
-          {
-            headers: {
-              Accept: "application/json",
-              "ngrok-skip-browser-warning": true,
-            },
+        const response = await fetch("/api/proxy/reason-categories", {
+          headers: {
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": true,
           },
-        );
+        });
         if (response.ok) {
           const data = await response.json();
           setReasonCategories(data);

@@ -16,9 +16,9 @@ import {
 
 const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
-  { id: "doctors", label: "My Doctors", icon: Stethoscope },
   { id: "appointment", label: "My Appointment", icon: CalendarCheck },
   { id: "queue", label: "Appointment Queue", icon: ClipboardList },
+  { id: "doctors", label: "My Doctors", icon: Stethoscope },
   { id: "history", label: "My History", icon: History },
 ];
 

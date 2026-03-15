@@ -9,17 +9,14 @@ export function useSystemStatus() {
   useEffect(() => {
     const checkSystemStatus = async () => {
       try {
-        const response = await fetch(
-          "/api/proxy/system-status",
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              "ngrok-skip-browser-warning": true,
-            },
-            mode: "cors",
+        const response = await fetch("/api/proxy/system-status", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": true,
           },
-        );
+          mode: "cors",
+        });
 
         // Check if response is ok before parsing JSON
         if (!response.ok) {

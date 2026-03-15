@@ -335,21 +335,18 @@ export default function AdminPortal() {
     setIsLoggingIn(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/adminLogin`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": true,
-          },
-          body: JSON.stringify({
-            email_address: email_address.trim(),
-            password: password.trim(),
-          }),
+      const response = await fetch(`${API_BASE_URL}/adminLogin`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": true,
         },
-      );
+        body: JSON.stringify({
+          email_address: email_address.trim(),
+          password: password.trim(),
+        }),
+      });
 
       const data = await response.json().catch(() => ({}));
 
@@ -420,18 +417,15 @@ export default function AdminPortal() {
     try {
       // Call the same logout API endpoint used by patient portal
       if (adminToken) {
-        await fetch(
-          `${API_BASE_URL}/logout`,
-          {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${adminToken}`,
-              "ngrok-skip-browser-warning": true,
-            },
+        await fetch(`${API_BASE_URL}/logout`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+            "ngrok-skip-browser-warning": true,
           },
-        );
+        });
       }
     } catch (error) {
       console.error("Logout API error:", error);
