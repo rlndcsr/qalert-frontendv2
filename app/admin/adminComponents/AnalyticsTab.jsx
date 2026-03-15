@@ -226,6 +226,19 @@ export default function AnalyticsTab({
     return dates.size;
   }, [selectedMonthQueues]);
 
+  // Calculate average session duration for the month
+  const avgSessionDuration = useMemo(() => {
+    const queuesWithDuration = selectedMonthQueues.filter(
+      (q) => q.session_duration_minutes && q.session_duration_minutes > 0,
+    );
+    if (queuesWithDuration.length === 0) return 0;
+    const totalDuration = queuesWithDuration.reduce(
+      (sum, q) => sum + q.session_duration_minutes,
+      0,
+    );
+    return (totalDuration / queuesWithDuration.length).toFixed(1);
+  }, [selectedMonthQueues]);
+
   // Monthly KPI cards
   const kpis = [
     {
@@ -265,6 +278,14 @@ export default function AnalyticsTab({
       bg: "from-amber-50 to-amber-100",
       border: "border-amber-200",
       text: "text-amber-700",
+    },
+    {
+      label: "Avg Session Duration",
+      value: `${avgSessionDuration} min`,
+      sub: "Average minutes per session",
+      bg: "from-purple-50 to-purple-100",
+      border: "border-purple-200",
+      text: "text-purple-700",
     },
   ];
 

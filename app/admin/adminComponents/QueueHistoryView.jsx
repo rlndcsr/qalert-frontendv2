@@ -92,6 +92,9 @@ function TableRowSkeleton() {
         <div className="h-3.5 bg-gray-200 rounded w-36" />
       </td>
       <td className="px-5 py-4">
+        <div className="h-3.5 bg-gray-200 rounded w-20" />
+      </td>
+      <td className="px-5 py-4">
         <div className="h-7 bg-gray-200 rounded-lg w-8 ml-auto" />
       </td>
     </tr>
@@ -229,6 +232,15 @@ function ViewModal({ queue, user, reasonCategoryMap, onClose }) {
                   {formatTime(queue.created_at)}
                 </span>
               </div>
+              {queue.session_duration_minutes && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-500">Session Duration:</span>
+                  <span className="text-gray-900 font-medium">
+                    {queue.session_duration_minutes} minutes
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-100 pt-4">
@@ -753,6 +765,11 @@ export default function QueueHistoryView() {
                     Reason
                   </span>
                 </th>
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Duration
+                  </span>
+                </th>
                 <th className="px-5 py-3.5 text-right">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                     Actions
@@ -767,7 +784,7 @@ export default function QueueHistoryView() {
                 ))
               ) : paginatedQueues.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center">
+                  <td colSpan={7} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
                         <History className="w-7 h-7 text-gray-300" />
@@ -844,6 +861,14 @@ export default function QueueHistoryView() {
                           {reasonCategoryMap[queue.reason_category_id] ||
                             queue.reason ||
                             "\u2014"}
+                        </p>
+                      </td>
+                      {/* Session Duration */}
+                      <td className="px-5 py-4">
+                        <p className="text-sm font-medium text-gray-800">
+                          {queue.session_duration_minutes
+                            ? `${queue.session_duration_minutes} min`
+                            : "—"}
                         </p>
                       </td>
                       {/* Actions */}
@@ -932,6 +957,14 @@ export default function QueueHistoryView() {
                       <Clock className="w-3.5 h-3.5 text-gray-400 ml-1" />
                       <span>{formatTime(queue.created_at)}</span>
                     </div>
+                    {queue.session_duration_minutes && (
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        <span>
+                          Duration: {queue.session_duration_minutes} min
+                        </span>
+                      </div>
+                    )}
                     {(reasonCategoryMap[queue.reason_category_id] ||
                       queue.reason) && (
                       <div className="flex items-start gap-2 text-xs text-gray-500">
