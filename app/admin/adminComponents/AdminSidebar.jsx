@@ -136,7 +136,7 @@ export default function AdminSidebar({
 
       {/* Logo / Icon */}
       <div
-        className={`px-3 pt-6 pb-4 border-b border-gray-100 flex flex-col items-center ${
+        className={`flex-shrink-0 px-3 pt-6 pb-4 border-b border-gray-100 flex flex-col items-center ${
           isMobile ? "h-auto" : "h-[160px]"
         }`}
       >
@@ -174,8 +174,8 @@ export default function AdminSidebar({
         )}
       </div>
 
-      {/* Navigation Items */}
-      <nav className="flex-1 pt-4 px-2 overflow-hidden">
+      {/* Navigation Items — scrollable so logout stays visible on mobile */}
+      <nav className="flex-1 min-h-0 pt-4 px-2 overflow-y-auto overflow-x-hidden">
         <ul className="space-y-3">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
@@ -220,8 +220,8 @@ export default function AdminSidebar({
         </ul>
       </nav>
 
-      {/* Logout Button */}
-      <div className="px-2 pb-4 border-t border-gray-100 pt-4">
+      {/* Logout Button — flex-shrink-0 so it stays visible at bottom on mobile */}
+      <div className="flex-shrink-0 px-2 pb-4 border-t border-gray-100 pt-4">
         <button
           onClick={() => {
             onLogout();
@@ -293,7 +293,7 @@ export default function AdminSidebar({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-300 shadow-lg z-50 flex flex-col lg:hidden"
+            className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-300 shadow-lg z-50 flex flex-col overflow-hidden lg:hidden"
           >
             <SidebarContent showLabels={true} isMobile={true} />
           </motion.aside>
