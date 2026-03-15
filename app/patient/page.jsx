@@ -34,9 +34,7 @@ import { useSystemStatus } from "../hooks/useSystemStatus";
 import { useSseEvents } from "../hooks/useSseEvents";
 import { SyncLoader } from "react-spinners";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 export default function PatientPage() {
   const router = useRouter();
@@ -602,8 +600,7 @@ export default function PatientPage() {
       );
 
       // Use the backend URL
-      const backendBaseUrl =
-        "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+      const backendBaseUrl = API_BASE_URL;
 
       // Fetch all three APIs in parallel
       const [doctorsResponse, schedulesResponse, doctorSchedulesResponse] =

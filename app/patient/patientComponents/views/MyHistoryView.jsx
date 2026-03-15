@@ -16,9 +16,7 @@ import {
 } from "lucide-react";
 import { getAuthToken } from "../patientUtils";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 // ─── Filter Tabs ────────────────────────────────────────────────────────────
 const FILTER_OPTIONS = [

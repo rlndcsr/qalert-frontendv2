@@ -5,9 +5,7 @@ import { motion } from "framer-motion";
 import { Stethoscope, RefreshCw, Calendar } from "lucide-react";
 import DoctorCard from "../DoctorCard";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 // Filter options configuration
 const FILTER_OPTIONS = [

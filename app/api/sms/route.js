@@ -14,6 +14,14 @@ export async function POST(req) {
       );
     }
 
+    const apiKey = process.env.MOCEAN_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "SMS service not configured (missing MOCEAN_API_KEY)" },
+        { status: 503 },
+      );
+    }
+
     const params = new URLSearchParams({
       "mocean-from": from,
       "mocean-to": to,
@@ -24,7 +32,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer apit-67E1Yl6qTVZDLdlf4qYSjT5auGHItTQq-PkhBu",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: params.toString(),
     });
