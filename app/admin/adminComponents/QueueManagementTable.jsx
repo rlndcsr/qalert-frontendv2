@@ -35,60 +35,43 @@ export default function QueueManagementTable({
   setQueues,
   setCalledPatients,
 }) {
-  const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+  // Send Test SMS — commented out
+  // const [isSendingTestSms, setIsSendingTestSms] = useState(false);
 
-  const handleSendTestSms = async () => {
-    const recipient = "+639109836427";
-    const message =
-      "CSU UCHW:\n\nThis is a test SMS from QAlert. If you received this message, the SMS notification feature is working.";
-
-    try {
-      setIsSendingTestSms(true);
-
-      const smsPromise = fetch("/api/sms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: recipient, text: message }),
-      }).then(async (res) => {
-        const data = await res.json();
-        console.log(
-          "[SMS Test] Response status:",
-          res.status,
-          "| body:",
-          JSON.stringify(data),
-        );
-
-        if (!res.ok || !data.success) {
-          throw new Error(
-            data?.details?.message ||
-              data?.details?.error ||
-              (typeof data?.details === "string" ? data.details : null) ||
-              data?.error ||
-              "Failed to send test SMS",
-          );
-        }
-      });
-
-      await sileo.promise(smsPromise, {
-        loading: {
-          title: "Sending test SMS…",
-          description: `Sending notification to ${recipient}`,
-        },
-        success: {
-          title: "Test SMS sent",
-          description: `SMS notification sent to ${recipient}.`,
-        },
-        error: {
-          title: "Test SMS failed",
-          description: "Unable to send the test SMS.",
-        },
-      });
-    } catch (error) {
-      console.error("[SMS Test] Error:", error);
-    } finally {
-      setIsSendingTestSms(false);
-    }
-  };
+  // const handleSendTestSms = async () => {
+  //   const recipient = "+639109836427";
+  //   const message =
+  //     "CSU UCHW:\n\nThis is a test SMS from QAlert. If you received this message, the SMS notification feature is working.";
+  //   try {
+  //     setIsSendingTestSms(true);
+  //     const smsPromise = fetch("/api/sms", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ to: recipient, text: message }),
+  //     }).then(async (res) => {
+  //       const data = await res.json();
+  //       console.log("[SMS Test] Response status:", res.status, "| body:", JSON.stringify(data));
+  //       if (!res.ok || !data.success) {
+  //         throw new Error(
+  //           data?.details?.message ||
+  //             data?.details?.error ||
+  //             (typeof data?.details === "string" ? data.details : null) ||
+  //             data?.error ||
+  //             "Failed to send test SMS",
+  //         );
+  //       }
+  //     });
+  //     await sileo.promise(smsPromise, {
+  //       loading: { title: "Sending test SMS…", description: `Sending notification to ${recipient}` },
+  //       success: { title: "Test SMS sent", description: `SMS notification sent to ${recipient}.` },
+  //       error: { title: "Test SMS failed", description: "Unable to send the test SMS." },
+  //     });
+  //   } catch (error) {
+  //     console.error("[SMS Test] Error:", error);
+  //   } finally {
+  //     setIsSendingTestSms(false);
+  //   }
+  // };
 
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
@@ -312,6 +295,7 @@ export default function QueueManagementTable({
                 Manage patient flow and service status
               </p>
             </div>
+            {/* Send Test SMS button — commented out
             <button
               type="button"
               onClick={handleSendTestSms}
@@ -320,6 +304,7 @@ export default function QueueManagementTable({
             >
               {isSendingTestSms ? "Sending test SMS..." : "Send Test SMS"}
             </button>
+            */}
           </div>
         </div>
         <div className="overflow-x-auto">
