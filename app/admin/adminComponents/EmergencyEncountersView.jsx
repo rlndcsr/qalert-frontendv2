@@ -900,8 +900,8 @@ export default function EmergencyEncountersView() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Status filter state
-  const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'active', 'done', 'cancelled'
+  // Status filter state (default: Active)
+  const [statusFilter, setStatusFilter] = useState("active"); // 'all', 'active', 'done', 'cancelled'
 
   // Get today's date in YYYY-MM-DD format for comparisons (using local timezone)
   const getTodayString = () => {

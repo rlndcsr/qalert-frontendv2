@@ -128,8 +128,7 @@ function ServingCountdown({ queueEntryId }) {
   );
 }
 
-const API_BASE_URL =
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 export default function CalledPatientDisplay({
   calledPatients,

@@ -59,7 +59,7 @@ export default function AnalyticsTab({
     const fetchReasonCategories = async () => {
       try {
         const response = await fetch(
-          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/reason-categories",
+          "/api/proxy/reason-categories",
           {
             headers: {
               Accept: "application/json",

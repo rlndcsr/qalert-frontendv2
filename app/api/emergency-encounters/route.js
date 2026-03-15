@@ -10,6 +10,17 @@ const commonHeaders = (req) => ({
   }),
 });
 
+export async function GET(req) {
+  const upstream = await fetch(`${BACKEND_URL}/emergency-encounters`, {
+    method: "GET",
+    headers: commonHeaders(req),
+    cache: "no-store",
+  });
+
+  const data = await upstream.json().catch(() => ({}));
+  return Response.json(data, { status: upstream.status });
+}
+
 export async function POST(req) {
   const body = await req.json();
 

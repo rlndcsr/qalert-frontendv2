@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import { sileo } from "sileo";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

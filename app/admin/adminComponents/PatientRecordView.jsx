@@ -24,9 +24,7 @@ function getInitials(name) {
     : parts[0].slice(0, 2).toUpperCase();
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 // Skeleton loader for table rows
 function TableRowSkeleton() {

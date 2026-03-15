@@ -7,8 +7,7 @@ import { useSseEvents } from "../hooks/useSseEvents";
 import Image from "next/image";
 
 // Constants
-const API_BASE_URL =
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev";
+const API_BASE_URL = "/api/proxy";
 
 const SERVING_DURATION = 1200; // 20 minutes in seconds
 
@@ -158,9 +157,9 @@ export default function QueueDisplay() {
         // Fetch queues, users, and emergency encounters in parallel
         const [queuesResponse, usersResponse, emergencyResponse] =
           await Promise.all([
-            fetch(`${API_BASE_URL}/api/queues`, { headers }),
-            fetch(`${API_BASE_URL}/api/users`, { headers }),
-            fetch(`${API_BASE_URL}/api/emergency-encounters`, { headers }),
+            fetch(`${API_BASE_URL}/queues`, { headers }),
+            fetch(`${API_BASE_URL}/users`, { headers }),
+            fetch(`${API_BASE_URL}/emergency-encounters`, { headers }),
           ]);
 
         if (queuesResponse.ok && usersResponse.ok) {

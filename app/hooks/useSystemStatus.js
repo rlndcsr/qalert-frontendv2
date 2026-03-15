@@ -10,7 +10,7 @@ export function useSystemStatus() {
     const checkSystemStatus = async () => {
       try {
         const response = await fetch(
-          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/system-status",
+          "/api/proxy/system-status",
           {
             method: "GET",
             headers: {

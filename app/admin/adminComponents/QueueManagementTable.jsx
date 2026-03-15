@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { sileo } from "sileo";
 
-const API_BASE_URL =
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 const formatTime = (timeString) => {
   if (!timeString) return "—";
@@ -36,6 +35,61 @@ export default function QueueManagementTable({
   setQueues,
   setCalledPatients,
 }) {
+  const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+
+  const handleSendTestSms = async () => {
+    const recipient = "+639109836427";
+    const message =
+      "CSU UCHW:\n\nThis is a test SMS from QAlert. If you received this message, the SMS notification feature is working.";
+
+    try {
+      setIsSendingTestSms(true);
+
+      const smsPromise = fetch("/api/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: recipient, text: message }),
+      }).then(async (res) => {
+        const data = await res.json();
+        console.log(
+          "[SMS Test] Response status:",
+          res.status,
+          "| body:",
+          JSON.stringify(data),
+        );
+
+        if (!res.ok || !data.success) {
+          throw new Error(
+            data?.details?.message ||
+              data?.details?.error ||
+              (typeof data?.details === "string" ? data.details : null) ||
+              data?.error ||
+              "Failed to send test SMS",
+          );
+        }
+      });
+
+      await sileo.promise(smsPromise, {
+        loading: {
+          title: "Sending test SMS…",
+          description: `Sending notification to ${recipient}`,
+        },
+        success: {
+          title: "Test SMS sent",
+          description: `SMS notification sent to ${recipient}.`,
+        },
+        error: {
+          title: "Test SMS failed",
+          description: "Unable to send the test SMS.",
+        },
+      });
+    } catch (error) {
+      console.error("[SMS Test] Error:", error);
+    } finally {
+      setIsSendingTestSms(false);
+    }
+  };
+
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
     if (!token) {
@@ -249,12 +303,24 @@ export default function QueueManagementTable({
       >
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#00968a] via-[#11b3a6] to-[#00968a]" />
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#00968a]/5 to-transparent">
-          <h2 className="text-lg font-semibold text-[#25323A] mb-1">
-            Queue Management
-          </h2>
-          <p className="text-sm text-gray-600">
-            Manage patient flow and service status
-          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-[#25323A] mb-1">
+                Queue Management
+              </h2>
+              <p className="text-sm text-gray-600">
+                Manage patient flow and service status
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSendTestSms}
+              disabled={isSendingTestSms}
+              className="inline-flex items-center justify-center rounded-xl bg-[#00968a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007d74] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSendingTestSms ? "Sending test SMS..." : "Send Test SMS"}
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">

@@ -1,11 +1,5 @@
 "use client";
 
-// Used for read-only GET requests (ngrok-skip-browser-warning avoids the interstitial)
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_BASE_URL ||
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
-
-// All write operations go through the Next.js proxy (same-origin → no CORS issues)
 const PROXY_BASE_URL = "/api/emergency-encounters";
 
 /**
@@ -26,7 +20,7 @@ const getAuthHeaders = () => {
  * Fetch all emergency encounters
  */
 export const getEmergencyEncounters = async () => {
-  const response = await fetch(`${API_BASE_URL}/emergency-encounters`, {
+  const response = await fetch(PROXY_BASE_URL, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -43,7 +37,7 @@ export const getEmergencyEncounters = async () => {
  * Get a single emergency encounter by ID
  */
 export const getEmergencyEncounterById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/emergency-encounters/${id}`, {
+  const response = await fetch(`${PROXY_BASE_URL}/${id}`, {
     method: "GET",
     headers: getAuthHeaders(),
   });

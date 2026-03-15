@@ -20,8 +20,7 @@ import { mockMonthlyQueues } from "./adminComponents/mockMonthlyData";
 import MonthSelector from "./adminComponents/MonthSelector";
 import { useSseEvents } from "../hooks/useSseEvents";
 
-const API_BASE_URL =
-  "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api";
+const API_BASE_URL = "/api/proxy";
 
 export default function AdminPortal() {
   const [email_address, setEmail_address] = useState("");
@@ -337,7 +336,7 @@ export default function AdminPortal() {
 
     try {
       const response = await fetch(
-        "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/adminLogin",
+        `${API_BASE_URL}/adminLogin`,
         {
           method: "POST",
           headers: {
@@ -422,7 +421,7 @@ export default function AdminPortal() {
       // Call the same logout API endpoint used by patient portal
       if (adminToken) {
         await fetch(
-          "https://intercarpellary-rosana-indivisibly.ngrok-free.dev/api/logout",
+          `${API_BASE_URL}/logout`,
           {
             method: "POST",
             headers: {
