@@ -14,9 +14,13 @@ function normalizeApiBaseUrl(value) {
     : `${withoutTrailingSlashes}/api`;
 }
 
+// Prefer APP_BASE_URL: on Vercel, serverless API routes get runtime env from this.
+// NEXT_PUBLIC_* can be build-time only, so the proxy may not see it at runtime.
 function getBackendApiBaseUrl() {
   return normalizeApiBaseUrl(
-    process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_BASE_URL,
+    process.env.APP_BASE_URL ||
+      process.env.NEXT_PUBLIC_APP_BASE_URL ||
+      DEFAULT_BACKEND_API_BASE_URL,
   );
 }
 
