@@ -26,7 +26,9 @@ function getBackendApiBaseUrl() {
 
 function buildUpstreamUrl(request, pathSegments) {
   const requestUrl = new URL(request.url);
-  const upstreamPath = Array.isArray(pathSegments) ? pathSegments.join("/") : "";
+  const upstreamPath = Array.isArray(pathSegments)
+    ? pathSegments.join("/")
+    : "";
 
   return `${getBackendApiBaseUrl()}/${upstreamPath}${requestUrl.search}`;
 }
@@ -42,11 +44,16 @@ function buildUpstreamHeaders(request) {
   return headers;
 }
 
+const PROXY_TIMEOUT_MS = 15000; // 15s — avoid hanging when backend/ngrok is unreachable
+
 async function forwardRequest(request, context) {
   const params = await context.params;
   const upstreamUrl = buildUpstreamUrl(request, params?.path);
   const method = request.method.toUpperCase();
   const shouldIncludeBody = method !== "GET" && method !== "HEAD";
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
 
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
@@ -55,7 +62,9 @@ async function forwardRequest(request, context) {
       body: shouldIncludeBody ? await request.text() : undefined,
       cache: "no-store",
       redirect: "manual",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     const responseHeaders = new Headers(upstreamResponse.headers);
     responseHeaders.delete("content-encoding");
