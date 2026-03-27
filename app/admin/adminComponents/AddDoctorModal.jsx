@@ -191,14 +191,16 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
                 : "Choose one or more schedules for this doctor."}
             </p>
           </div>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <span className="text-lg leading-none">×</span>
-          </button>
+          {isStep1 && (
+            <button
+              type="button"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <span className="text-lg leading-none">×</span>
+            </button>
+          )}
         </div>
 
         <div className="px-6 mt-4">
@@ -347,32 +349,14 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
                   {error}
                 </div>
               )}
-              <div className="mt-1 flex items-center justify-between gap-2">
+              <div className="mt-1">
                 <button
-                  type="button"
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                  onClick={onClose}
-                  disabled={loading}
+                  type="submit"
+                  className="w-full rounded-lg bg-[#00968a] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#00796b] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={loading || selectedSchedules.length === 0}
                 >
-                  Close
+                  {loading ? "Assigning…" : "Assign schedule(s)"}
                 </button>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                    onClick={() => setStep(1)}
-                    disabled={loading}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-[#00968a] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#00796b] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={loading || selectedSchedules.length === 0}
-                  >
-                    {loading ? "Assigning…" : "Assign schedule(s)"}
-                  </button>
-                </div>
               </div>
             </form>
           )}
