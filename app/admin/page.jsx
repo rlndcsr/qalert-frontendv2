@@ -12,6 +12,7 @@ import StatisticsCards from "./adminComponents/StatisticsCards";
 import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
+import DoctorsTab from "./adminComponents/DoctorsTab";
 import PatientRecordView from "./adminComponents/PatientRecordView";
 import UserDetailView from "./adminComponents/UserDetailView";
 import EmergencyEncountersView from "./adminComponents/EmergencyEncountersView";
@@ -497,6 +498,16 @@ export default function AdminPortal() {
             Queue Management
           </button>
           <button
+            onClick={() => setActiveTab("doctors")}
+            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
+              activeTab === "doctors"
+                ? "bg-[#00968a] text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}
+          >
+            Doctors
+          </button>
+          <button
             onClick={() => setActiveTab("analytics")}
             className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
               activeTab === "analytics"
@@ -565,7 +576,7 @@ export default function AdminPortal() {
       )}
 
       <AnimatePresence mode="wait">
-        {activeTab === "queue-management" ? (
+        {activeTab === "queue-management" && (
           <motion.div
             key="queue-management"
             initial={{ opacity: 0, y: 20 }}
@@ -592,7 +603,8 @@ export default function AdminPortal() {
               users={users}
             />
           </motion.div>
-        ) : (
+        )}
+        {activeTab === "analytics" && (
           <AnalyticsTab
             stats={stats}
             selectedMonth={selectedMonth}
@@ -611,6 +623,7 @@ export default function AdminPortal() {
             todayDate={todayDate}
           />
         )}
+        {activeTab === "doctors" && <DoctorsTab />}
       </AnimatePresence>
     </motion.div>
   );
