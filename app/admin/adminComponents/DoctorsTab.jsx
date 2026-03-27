@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AddDoctorModal from "./AddDoctorModal";
+import { sileo } from "sileo";
 
 export default function DoctorsTab() {
   const [doctors, setDoctors] = useState([]);
@@ -8,6 +9,10 @@ export default function DoctorsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editingDoctor, setEditingDoctor] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -62,6 +67,79 @@ export default function DoctorsTab() {
   useEffect(() => {
     fetchAll();
   }, []);
+
+  const openEditDoctorModal = (doctor) => {
+    setEditingDoctor(doctor);
+    setEditName(doctor?.doctor_name || "");
+    setShowEditModal(true);
+  };
+
+  const closeEditDoctorModal = () => {
+    if (editLoading) return;
+    setShowEditModal(false);
+    setEditingDoctor(null);
+    setEditName("");
+  };
+
+  const handleUpdateDoctor = async (e) => {
+    e.preventDefault();
+    if (!editingDoctor?.doctor_id) {
+      sileo.error({
+        title: "Update failed",
+        description: "Doctor ID is missing.",
+      });
+      return;
+    }
+
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      sileo.error({
+        title: "Validation error",
+        description: "Doctor name is required.",
+      });
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const adminToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("adminToken")
+          : null;
+
+      const response = await fetch(
+        `http://qalert-backend.test/api/doctors/${editingDoctor.doctor_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
+          },
+          body: JSON.stringify({ doctor_name: trimmedName }),
+        },
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.message || "Failed to update doctor");
+      }
+
+      await fetchAll();
+      closeEditDoctorModal();
+      sileo.success({
+        title: "Doctor updated",
+        description: "Doctor profile was updated successfully.",
+      });
+    } catch (err) {
+      sileo.error({
+        title: "Update failed",
+        description: err.message || "Failed to update doctor profile.",
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
@@ -143,7 +221,11 @@ export default function DoctorsTab() {
                       })}
                     </ul>
                   )}
-                  <button className="mt-4 w-full px-3 py-1 rounded border border-teal-200 text-teal-700 bg-teal-50 text-xs font-medium hover:bg-teal-100 transition-colors hover:cursor-pointer">
+                  <button
+                    className="mt-4 w-full px-3 py-1 rounded border border-teal-200 text-teal-700 bg-teal-50 text-xs font-medium hover:bg-teal-100 transition-colors hover:cursor-pointer"
+                    onClick={() => openEditDoctorModal(doctor)}
+                    type="button"
+                  >
                     Edit
                   </button>
                 </div>
@@ -173,6 +255,68 @@ export default function DoctorsTab() {
             onClose={() => setShowAddModal(false)}
             onDoctorAdded={fetchAll}
           />
+          {showEditModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+              <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <div className="flex items-center justify-between px-6 pt-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Edit Doctor Profile
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Update the doctor name shown in the admin and patient
+                      views.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors disabled:opacity-50"
+                    onClick={closeEditDoctorModal}
+                    disabled={editLoading}
+                    aria-label="Close edit modal"
+                  >
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateDoctor} className="px-6 pb-5 pt-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Doctor name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00968a] focus:ring-2 focus:ring-[#00968a]/20 disabled:bg-slate-50"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Enter doctor name"
+                      autoFocus
+                      disabled={editLoading}
+                      required
+                    />
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60"
+                      onClick={closeEditDoctorModal}
+                      disabled={editLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-[#00968a] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#00796b] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={editLoading || !editName.trim()}
+                    >
+                      {editLoading ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
