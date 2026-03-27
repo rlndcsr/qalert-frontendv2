@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import AddDoctorModal from "./AddDoctorModal";
 
 export default function DoctorsTab() {
   const [doctors, setDoctors] = useState([]);
@@ -6,60 +7,59 @@ export default function DoctorsTab() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Get admin token from localStorage
+      const adminToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("adminToken")
+          : null;
+      const doctorRes = await fetch("http://qalert-backend.test/api/doctors", {
+        headers: { Accept: "application/json" },
+      });
+      if (!doctorRes.ok) throw new Error("Failed to fetch doctors");
+      const doctorsData = await doctorRes.json();
+
+      const doctorScheduleRes = await fetch(
+        "http://qalert-backend.test/api/doctor-schedule",
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
+          },
+        },
+      );
+      if (!doctorScheduleRes.ok)
+        throw new Error("Failed to fetch doctor schedules");
+      const doctorSchedulesData = await doctorScheduleRes.json();
+
+      const schedulesRes = await fetch(
+        "http://qalert-backend.test/api/schedules",
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
+          },
+        },
+      );
+      if (!schedulesRes.ok) throw new Error("Failed to fetch schedules");
+      const schedulesData = await schedulesRes.json();
+
+      setDoctors(doctorsData);
+      setDoctorSchedules(doctorSchedulesData);
+      setSchedules(schedulesData);
+    } catch (err) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Get admin token from localStorage
-        const adminToken =
-          typeof window !== "undefined"
-            ? localStorage.getItem("adminToken")
-            : null;
-        const doctorRes = await fetch(
-          "http://qalert-backend.test/api/doctors",
-          {
-            headers: { Accept: "application/json" },
-          },
-        );
-        if (!doctorRes.ok) throw new Error("Failed to fetch doctors");
-        const doctorsData = await doctorRes.json();
-
-        const doctorScheduleRes = await fetch(
-          "http://qalert-backend.test/api/doctor-schedule",
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
-            },
-          },
-        );
-        if (!doctorScheduleRes.ok)
-          throw new Error("Failed to fetch doctor schedules");
-        const doctorSchedulesData = await doctorScheduleRes.json();
-
-        const schedulesRes = await fetch(
-          "http://qalert-backend.test/api/schedules",
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
-            },
-          },
-        );
-        if (!schedulesRes.ok) throw new Error("Failed to fetch schedules");
-        const schedulesData = await schedulesRes.json();
-
-        setDoctors(doctorsData);
-        setDoctorSchedules(doctorSchedulesData);
-        setSchedules(schedulesData);
-      } catch (err) {
-        setError(err.message || "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAll();
   }, []);
 
@@ -156,6 +156,7 @@ export default function DoctorsTab() {
             style={{ minHeight: 220 }}
             tabIndex={0}
             aria-label="Add Doctor"
+            onClick={() => setShowAddModal(true)}
           >
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <span className="text-3xl font-bold text-teal-500">+</span>
@@ -167,6 +168,11 @@ export default function DoctorsTab() {
               Onboard a new medical specialist to the team
             </div>
           </div>
+          <AddDoctorModal
+            open={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            onDoctorAdded={fetchAll}
+          />
         </div>
       )}
     </div>
