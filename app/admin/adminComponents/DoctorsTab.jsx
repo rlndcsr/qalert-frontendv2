@@ -2,6 +2,18 @@ import React, { useEffect, useState } from "react";
 import AddDoctorModal from "./AddDoctorModal";
 import { sileo } from "sileo";
 
+const BACKEND_BASE = "http://qalert-backend.test/api";
+
+function buildScheduleRowsForDoctor(doctorSchedules, doctorId) {
+  return doctorSchedules
+    .filter((ds) => Number(ds.doctor_id) === Number(doctorId))
+    .map((ds) => ({
+      doctor_schedule_id: ds.doctor_schedule_id,
+      schedule_id:
+        ds.schedule_id != null ? Number(ds.schedule_id) : null,
+    }));
+}
+
 export default function DoctorsTab() {
   const [doctors, setDoctors] = useState([]);
   const [doctorSchedules, setDoctorSchedules] = useState([]);
@@ -13,6 +25,12 @@ export default function DoctorsTab() {
   const [editName, setEditName] = useState("");
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [scheduleEditRows, setScheduleEditRows] = useState(
+    /** @type {{ doctor_schedule_id: number | null, schedule_id: number | null }[]} */ ([]),
+  );
+  /** Snapshot when modal opened — used to detect deletes and updates */
+  const [initialScheduleSnapshot, setInitialScheduleSnapshot] = useState([]);
+  const [showDeleteDoctorConfirm, setShowDeleteDoctorConfirm] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -71,14 +89,115 @@ export default function DoctorsTab() {
   const openEditDoctorModal = (doctor) => {
     setEditingDoctor(doctor);
     setEditName(doctor?.doctor_name || "");
+    const rows = buildScheduleRowsForDoctor(doctorSchedules, doctor.doctor_id);
+    setScheduleEditRows(rows.map((r) => ({ ...r })));
+    setInitialScheduleSnapshot(rows.map((r) => ({ ...r })));
+    setShowDeleteDoctorConfirm(false);
     setShowEditModal(true);
   };
 
-  const closeEditDoctorModal = () => {
-    if (editLoading) return;
+  const closeEditDoctorModal = (forceClose = false) => {
+    if (!forceClose && editLoading) return;
     setShowEditModal(false);
+    setShowDeleteDoctorConfirm(false);
     setEditingDoctor(null);
     setEditName("");
+    setScheduleEditRows([]);
+    setInitialScheduleSnapshot([]);
+  };
+
+  const addScheduleRow = () => {
+    setScheduleEditRows((prev) => [
+      ...prev,
+      {
+        doctor_schedule_id: null,
+        schedule_id: null,
+        _clientId: `new-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      },
+    ]);
+  };
+
+  const removeScheduleRow = (index) => {
+    setScheduleEditRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateScheduleRow = (index, scheduleId) => {
+    setScheduleEditRows((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        schedule_id: scheduleId === "" ? null : Number(scheduleId),
+      };
+      return next;
+    });
+  };
+
+  const openDeleteDoctorConfirm = () => {
+    if (!editingDoctor?.doctor_id) {
+      sileo.error({
+        title: "Delete failed",
+        description: "Doctor ID is missing.",
+      });
+      return;
+    }
+    setShowDeleteDoctorConfirm(true);
+  };
+
+  const closeDeleteDoctorConfirm = () => {
+    if (editLoading) return;
+    setShowDeleteDoctorConfirm(false);
+  };
+
+  const confirmDeleteDoctor = async () => {
+    if (!editingDoctor?.doctor_id) {
+      sileo.error({
+        title: "Delete failed",
+        description: "Doctor ID is missing.",
+      });
+      return;
+    }
+
+    const name =
+      editingDoctor.doctor_name?.trim() || "this doctor";
+
+    setEditLoading(true);
+    try {
+      const adminToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("adminToken")
+          : null;
+
+      const response = await fetch(
+        `${BACKEND_BASE}/doctors/${editingDoctor.doctor_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.message || "Failed to delete doctor");
+      }
+
+      await fetchAll();
+      setShowDeleteDoctorConfirm(false);
+      closeEditDoctorModal(true);
+      sileo.success({
+        title: "Doctor removed",
+        description: `${name} was deleted successfully.`,
+      });
+    } catch (err) {
+      sileo.error({
+        title: "Delete failed",
+        description: err.message || "Could not delete this doctor.",
+      });
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleUpdateDoctor = async (e) => {
@@ -100,6 +219,28 @@ export default function DoctorsTab() {
       return;
     }
 
+    const selectedIds = scheduleEditRows
+      .map((r) => r.schedule_id)
+      .filter((id) => id != null);
+    if (new Set(selectedIds).size !== selectedIds.length) {
+      sileo.error({
+        title: "Duplicate schedules",
+        description: "Each schedule slot can only be selected once.",
+      });
+      return;
+    }
+
+    for (let i = 0; i < scheduleEditRows.length; i++) {
+      const row = scheduleEditRows[i];
+      if (row.schedule_id == null) {
+        sileo.error({
+          title: "Validation error",
+          description: `Choose a schedule for row ${i + 1}, or remove that row.`,
+        });
+        return;
+      }
+    }
+
     setEditLoading(true);
     try {
       const adminToken =
@@ -107,15 +248,19 @@ export default function DoctorsTab() {
           ? localStorage.getItem("adminToken")
           : null;
 
+      const authHeaders = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
+      };
+
+      const doctorId = editingDoctor.doctor_id;
+
       const response = await fetch(
-        `http://qalert-backend.test/api/doctors/${editingDoctor.doctor_id}`,
+        `${BACKEND_BASE}/doctors/${doctorId}`,
         {
           method: "PUT",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
-          },
+          headers: authHeaders,
           body: JSON.stringify({ doctor_name: trimmedName }),
         },
       );
@@ -125,16 +270,91 @@ export default function DoctorsTab() {
         throw new Error(errData?.message || "Failed to update doctor");
       }
 
+      const initialByDsId = new Map(
+        initialScheduleSnapshot.map((r) => [
+          r.doctor_schedule_id,
+          r.schedule_id,
+        ]),
+      );
+      const currentDsIds = new Set(
+        scheduleEditRows
+          .filter((r) => r.doctor_schedule_id != null)
+          .map((r) => r.doctor_schedule_id),
+      );
+
+      for (const initial of initialScheduleSnapshot) {
+        if (!currentDsIds.has(initial.doctor_schedule_id)) {
+          const delRes = await fetch(
+            `${BACKEND_BASE}/doctor-schedule/${initial.doctor_schedule_id}`,
+            {
+              method: "DELETE",
+              headers: authHeaders,
+            },
+          );
+          if (!delRes.ok) {
+            const errData = await delRes.json().catch(() => ({}));
+            throw new Error(
+              errData?.message || "Failed to remove a doctor schedule",
+            );
+          }
+        }
+      }
+
+      for (const row of scheduleEditRows) {
+        if (row.doctor_schedule_id == null) continue;
+        const orig = initialByDsId.get(row.doctor_schedule_id);
+        if (orig === row.schedule_id) continue;
+        const putRes = await fetch(
+          `${BACKEND_BASE}/doctor-schedule/${row.doctor_schedule_id}`,
+          {
+            method: "PUT",
+            headers: authHeaders,
+            body: JSON.stringify({
+              doctor_id: doctorId,
+              schedule_id: row.schedule_id,
+              sched: row.schedule_id,
+            }),
+          },
+        );
+        if (!putRes.ok) {
+          const errData = await putRes.json().catch(() => ({}));
+          throw new Error(
+            errData?.message || "Failed to update a doctor schedule",
+          );
+        }
+      }
+
+      for (const row of scheduleEditRows) {
+        if (row.doctor_schedule_id != null) continue;
+        if (row.schedule_id == null) continue;
+        const sched = row.schedule_id;
+        const postRes = await fetch(`${BACKEND_BASE}/doctor-schedule`, {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            doctor_id: doctorId,
+            schedule_id: sched,
+            sched,
+          }),
+        });
+        if (!postRes.ok) {
+          const errData = await postRes.json().catch(() => ({}));
+          throw new Error(
+            errData?.message || "Failed to add a doctor schedule",
+          );
+        }
+      }
+
       await fetchAll();
-      closeEditDoctorModal();
+      closeEditDoctorModal(true);
       sileo.success({
         title: "Doctor updated",
-        description: "Doctor profile was updated successfully.",
+        description: "Doctor profile and schedules were saved.",
       });
     } catch (err) {
       sileo.error({
         title: "Update failed",
-        description: err.message || "Failed to update doctor profile.",
+        description: err.message || "Failed to update doctor.",
       });
     } finally {
       setEditLoading(false);
@@ -257,15 +477,14 @@ export default function DoctorsTab() {
           />
           {showEditModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-              <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
+              <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <div className="flex items-center justify-between px-6 pt-5">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900">
                       Edit Doctor Profile
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      Update the doctor name shown in the admin and patient
-                      views.
+                      Update the doctor name and assigned schedules.
                     </p>
                   </div>
                   <button
@@ -296,24 +515,165 @@ export default function DoctorsTab() {
                     />
                   </div>
 
-                  <div className="mt-5 flex items-center justify-end gap-2">
+                  <div className="mt-5 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="block text-sm font-medium text-slate-700">
+                        Schedules
+                      </label>
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-[#00968a] hover:text-[#00796b] disabled:opacity-50"
+                        onClick={addScheduleRow}
+                        disabled={editLoading}
+                      >
+                        + Add schedule
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Change a slot with the dropdown, remove a row, or add a
+                      new assignment.
+                    </p>
+                    {scheduleEditRows.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-xs text-slate-400">
+                        No schedules assigned. Use &quot;Add schedule&quot; to
+                        assign one.
+                      </div>
+                    ) : (
+                      <div className="max-h-44 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 p-2">
+                        {scheduleEditRows.map((row, idx) => {
+                          const scheduleOptions = schedules.filter((s) => {
+                            const sid = Number(s.schedule_id ?? s.id);
+                            const current = row.schedule_id;
+                            const taken = new Set(
+                              scheduleEditRows
+                                .map((r, j) =>
+                                  j !== idx && r.schedule_id != null
+                                    ? Number(r.schedule_id)
+                                    : null,
+                                )
+                                .filter((id) => id != null),
+                            );
+                            if (current != null && sid === Number(current))
+                              return true;
+                            return !taken.has(sid);
+                          });
+                          return (
+                            <div
+                              key={
+                                row.doctor_schedule_id != null
+                                  ? `ds-${row.doctor_schedule_id}`
+                                  : row._clientId ?? `idx-${idx}`
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              <select
+                                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-[#00968a] focus:ring-1 focus:ring-[#00968a]/30 disabled:bg-slate-50"
+                                value={
+                                  row.schedule_id == null
+                                    ? ""
+                                    : String(row.schedule_id)
+                                }
+                                onChange={(e) =>
+                                  updateScheduleRow(idx, e.target.value)
+                                }
+                                disabled={editLoading}
+                                required
+                              >
+                                <option value="">Select schedule…</option>
+                                {scheduleOptions.map((s) => {
+                                  const sid = s.schedule_id ?? s.id;
+                                  return (
+                                    <option key={sid} value={String(sid)}>
+                                      {s.day} · {s.shift}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                              <button
+                                type="button"
+                                className="shrink-0 rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-white disabled:opacity-50"
+                                onClick={() => removeScheduleRow(idx)}
+                                disabled={editLoading}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60"
-                      onClick={closeEditDoctorModal}
+                      className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
+                      onClick={openDeleteDoctorConfirm}
                       disabled={editLoading}
                     >
-                      Cancel
+                      Delete doctor
                     </button>
-                    <button
-                      type="submit"
-                      className="rounded-lg bg-[#00968a] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#00796b] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={editLoading || !editName.trim()}
-                    >
-                      {editLoading ? "Saving..." : "Save changes"}
-                    </button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60"
+                        onClick={closeEditDoctorModal}
+                        disabled={editLoading}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-[#00968a] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#00796b] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={editLoading || !editName.trim()}
+                      >
+                        {editLoading ? "Saving..." : "Save changes"}
+                      </button>
+                    </div>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+          {showDeleteDoctorConfirm && editingDoctor && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+              <div
+                className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-doctor-title"
+              >
+                <h4
+                  id="delete-doctor-title"
+                  className="text-base font-semibold text-slate-900"
+                >
+                  Delete doctor?
+                </h4>
+                <p className="mt-2 text-sm text-slate-600">
+                  This will permanently remove{" "}
+                  <span className="font-medium text-slate-800">
+                    {editingDoctor.doctor_name?.trim() || "this doctor"}
+                  </span>
+                  . This action cannot be undone.
+                </p>
+                <div className="mt-6 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60"
+                    onClick={closeDeleteDoctorConfirm}
+                    disabled={editLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={confirmDeleteDoctor}
+                    disabled={editLoading}
+                  >
+                    {editLoading ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
