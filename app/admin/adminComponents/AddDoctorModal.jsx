@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { sileo } from "sileo";
 
+const API_BASE_URL = "/api/proxy";
+
 /** Normalize Laravel / nested API shapes for POST /doctors responses. */
 function extractDoctorId(payload) {
   if (payload == null) return null;
@@ -55,7 +57,7 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
           typeof window !== "undefined"
             ? localStorage.getItem("adminToken")
             : null;
-        const res = await fetch("http://qalert-backend.test/api/schedules", {
+        const res = await fetch(`${API_BASE_URL}/schedules`, {
           headers: {
             Accept: "application/json",
             Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
@@ -89,7 +91,7 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
         typeof window !== "undefined"
           ? localStorage.getItem("adminToken")
           : null;
-      const res = await fetch("http://qalert-backend.test/api/doctors", {
+      const res = await fetch(`${API_BASE_URL}/doctors`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -129,7 +131,7 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
 
       for (const sched of selectedSchedules) {
         const schedRes = await fetch(
-          "http://qalert-backend.test/api/doctor-schedule",
+          `${API_BASE_URL}/doctor-schedule`,
           {
             method: "POST",
             headers: {

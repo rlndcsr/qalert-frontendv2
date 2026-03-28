@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AddDoctorModal from "./AddDoctorModal";
 import { sileo } from "sileo";
 
-const BACKEND_BASE = "http://qalert-backend.test/api";
+const API_BASE_URL = "/api/proxy";
 
 function buildScheduleRowsForDoctor(doctorSchedules, doctorId) {
   return doctorSchedules
@@ -41,14 +41,14 @@ export default function DoctorsTab() {
         typeof window !== "undefined"
           ? localStorage.getItem("adminToken")
           : null;
-      const doctorRes = await fetch("http://qalert-backend.test/api/doctors", {
+      const doctorRes = await fetch(`${API_BASE_URL}/doctors`, {
         headers: { Accept: "application/json" },
       });
       if (!doctorRes.ok) throw new Error("Failed to fetch doctors");
       const doctorsData = await doctorRes.json();
 
       const doctorScheduleRes = await fetch(
-        "http://qalert-backend.test/api/doctor-schedule",
+        `${API_BASE_URL}/doctor-schedule`,
         {
           headers: {
             Accept: "application/json",
@@ -61,7 +61,7 @@ export default function DoctorsTab() {
       const doctorSchedulesData = await doctorScheduleRes.json();
 
       const schedulesRes = await fetch(
-        "http://qalert-backend.test/api/schedules",
+        `${API_BASE_URL}/schedules`,
         {
           headers: {
             Accept: "application/json",
@@ -257,7 +257,7 @@ export default function DoctorsTab() {
       const doctorId = editingDoctor.doctor_id;
 
       const response = await fetch(
-        `${BACKEND_BASE}/doctors/${doctorId}`,
+        `${API_BASE_URL}/doctors/${doctorId}`,
         {
           method: "PUT",
           headers: authHeaders,
@@ -285,7 +285,7 @@ export default function DoctorsTab() {
       for (const initial of initialScheduleSnapshot) {
         if (!currentDsIds.has(initial.doctor_schedule_id)) {
           const delRes = await fetch(
-            `${BACKEND_BASE}/doctor-schedule/${initial.doctor_schedule_id}`,
+            `${API_BASE_URL}/doctor-schedule/${initial.doctor_schedule_id}`,
             {
               method: "DELETE",
               headers: authHeaders,
@@ -305,7 +305,7 @@ export default function DoctorsTab() {
         const orig = initialByDsId.get(row.doctor_schedule_id);
         if (orig === row.schedule_id) continue;
         const putRes = await fetch(
-          `${BACKEND_BASE}/doctor-schedule/${row.doctor_schedule_id}`,
+          `${API_BASE_URL}/doctor-schedule/${row.doctor_schedule_id}`,
           {
             method: "PUT",
             headers: authHeaders,
@@ -328,7 +328,7 @@ export default function DoctorsTab() {
         if (row.doctor_schedule_id != null) continue;
         if (row.schedule_id == null) continue;
         const sched = row.schedule_id;
-        const postRes = await fetch(`${BACKEND_BASE}/doctor-schedule`, {
+        const postRes = await fetch(`${API_BASE_URL}/doctor-schedule`, {
           method: "POST",
           headers: authHeaders,
           body: JSON.stringify({
