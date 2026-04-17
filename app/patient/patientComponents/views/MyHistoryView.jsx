@@ -13,6 +13,8 @@ import {
   Clock,
   Filter,
   Search,
+  ChevronDown,
+  CalendarRange,
 } from "lucide-react";
 import { getAuthToken } from "../patientUtils";
 
@@ -24,6 +26,64 @@ const FILTER_OPTIONS = [
   { id: "completed", label: "Completed" },
   { id: "cancelled", label: "Cancelled" },
 ];
+
+// ─── Date Range Options ─────────────────────────────────────────────────────
+const DATE_RANGE_OPTIONS = [
+  { id: "all", label: "All Time" },
+  { id: "week", label: "This Week" },
+  { id: "month", label: "This Month" },
+  { id: "3months", label: "Last 3 Months" },
+  { id: "6months", label: "Last 6 Months" },
+  { id: "year", label: "This Year" },
+];
+
+// ─── Date Range Filter Component ───────────────────────────────────────────
+function DateRangeFilter({ activeRange, onRangeChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const activeOption = DATE_RANGE_OPTIONS.find((opt) => opt.id === activeRange) || DATE_RANGE_OPTIONS[0];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200/60 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm"
+      >
+        <CalendarRange className="w-4 h-4 text-[#4ad294]" />
+        <span>{activeOption.label}</span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute right-0 mt-2 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg z-50 overflow-hidden"
+          >
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  onRangeChange(option.id);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-4 py-2.5 text-sm text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                  activeRange === option.id
+                    ? "bg-[#4ad294]/10 text-[#4ad294] font-semibold"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {activeRange === option.id && <CheckCircle2 className="w-4 h-4" />}
+                <span className={activeRange === option.id ? "ml-0" : "ml-6"}>{option.label}</span>
+              </button>
+            ))}
+          </motion.div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 function HistoryCardSkeleton() {
@@ -413,6 +473,7 @@ export default function MyHistoryView() {
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState("all");
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -444,6 +505,27 @@ export default function MyHistoryView() {
     // Filter by status
     if (activeFilter !== "all") {
       entries = entries.filter((e) => e.queue_status === activeFilter);
+    }
+
+    // Filter by date range
+    if (dateRange !== "all") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const cutoffDays = {
+        week: 7,
+        month: 30,
+        "3months": 90,
+        "6months": 180,
+        year: 365,
+      };
+      const days = cutoffDays[dateRange] || 0;
+      const cutoffDate = new Date(today);
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+
+      entries = entries.filter((entry) => {
+        const entryDate = new Date(entry.date || entry.created_at);
+        return entryDate >= cutoffDate;
+      });
     }
 
     // Filter by search query
@@ -483,6 +565,7 @@ export default function MyHistoryView() {
   }, [
     history,
     activeFilter,
+    dateRange,
     searchQuery,
     doctorSchedules,
     doctors,
@@ -540,16 +623,21 @@ export default function MyHistoryView() {
           </div>
         </div>
 
-        <button
-          onClick={fetchData}
-          disabled={isLoading}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
-          title="Refresh history"
-        >
-          <RefreshCw
-            className={`w-5 h-5 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
-          />
-        </button>
+        <div className="flex items-center gap-2">
+          {!isLoading && !error && history.length > 0 && (
+            <DateRangeFilter activeRange={dateRange} onRangeChange={setDateRange} />
+          )}
+          <button
+            onClick={fetchData}
+            disabled={isLoading}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+            title="Refresh history"
+          >
+            <RefreshCw
+              className={`w-5 h-5 text-gray-500 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* ─── Stats Summary ───────────────────────────────────────────── */}
