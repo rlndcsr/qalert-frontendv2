@@ -240,7 +240,6 @@ function UserQueueCard({ userQueue, reasonCategories }) {
     ? String(userQueue.queue_number).padStart(3, "0")
     : "—";
 
-  // Get reason category name from ID
   const getReasonCategoryName = (categoryId) => {
     if (!categoryId || !reasonCategories || reasonCategories.length === 0) {
       return "—";
@@ -252,9 +251,72 @@ function UserQueueCard({ userQueue, reasonCategories }) {
   };
 
   const status = userQueue.queue_status;
-  const isActive =
-    status === "waiting" || status === "called" || status === "now_serving";
-  const accentColor = isActive ? "#4ad294" : "#94a3b8";
+  const isCompleted = status === "completed";
+  const isActive = status === "waiting" || status === "called" || status === "now_serving";
+  const accentColor = isCompleted ? "#4ad294" : isActive ? "#4ad294" : "#94a3b8";
+
+  if (isCompleted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.06 }}
+        className="relative bg-gradient-to-br from-[#4ad294] to-[#3bb882] rounded-2xl shadow-lg shadow-[#4ad294]/20 overflow-hidden"
+      >
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-28 h-28 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-white/20" />
+
+        <div className="relative p-5">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+                <CheckCircle2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white/70 text-xs font-medium uppercase tracking-wide">
+                  Queue Entry
+                </p>
+                <h3 className="text-white text-base font-bold mt-0.5">
+                  Appointment Complete
+                </h3>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
+              <CheckCircle2 className="w-4 h-4 text-white" />
+              <span className="text-white text-xs font-semibold">Completed</span>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">Queue Number</p>
+              <p className="text-2xl font-bold text-white">#{formattedQueueNumber}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">Purpose</p>
+              <p className="text-sm font-semibold text-white truncate mt-1">
+                {getReasonCategoryName(userQueue.reason_category_id)}
+              </p>
+            </div>
+          </div>
+
+          {/* Completion Message */}
+          <div className="mt-4 flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-white/90 text-sm font-medium">
+              You've completed your appointment. Thank you for visiting!
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
