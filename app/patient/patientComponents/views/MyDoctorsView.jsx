@@ -112,7 +112,8 @@ export default function MyDoctorsView() {
     setError(null);
 
     // Get token from localStorage
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const headers = {
       Accept: "application/json",
       "ngrok-skip-browser-warning": "true",

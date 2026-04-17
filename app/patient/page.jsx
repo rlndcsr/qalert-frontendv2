@@ -19,6 +19,7 @@ import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
 import PatientSidebar from "./patientComponents/PatientSidebar";
 import PlaceholderView from "./patientComponents/views/PlaceholderView";
 import MyDoctorsView from "./patientComponents/views/MyDoctorsView";
+import EditProfileView from "./patientComponents/views/EditProfileView";
 import AppointmentQueueView from "./patientComponents/views/AppointmentQueueView";
 import MyHistoryView from "./patientComponents/views/MyHistoryView";
 import AppointmentView from "./patientComponents/Appointment/AppointmentView";
@@ -64,6 +65,7 @@ export default function PatientPage() {
     isLoggingIn,
     loginWithAPI,
     logout,
+    updateUser,
   } = useAuth();
 
   // Initialize activeView from localStorage or default to "home"
@@ -987,6 +989,8 @@ export default function PatientPage() {
                 <AppointmentQueueView key="queue" />
               ) : activeView === "history" ? (
                 <MyHistoryView key="history" />
+              ) : activeView === "profile" ? (
+                <EditProfileView key="profile" user={user} onUpdateUser={updateUser} />
               ) : null}
             </AnimatePresence>
           )}

@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   X,
   CalendarCheck,
+  User,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -20,6 +21,7 @@ const sidebarItems = [
   { id: "queue", label: "Appointment Queue", icon: ClipboardList },
   { id: "doctors", label: "My Doctors", icon: Stethoscope },
   { id: "history", label: "My History", icon: History },
+  { id: "profile", label: "Edit Profile", icon: User },
 ];
 
 export default function PatientSidebar({
