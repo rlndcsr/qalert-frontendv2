@@ -1393,7 +1393,7 @@ export default function EmergencyEncountersView() {
                 ))
               ) : paginatedEncounters.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center">
+                  <td colSpan={7} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
                         <AlertTriangle className="w-7 h-7 text-gray-300" />
