@@ -554,19 +554,9 @@ export default function QueueDisplay() {
                   </p>
                   <div className="space-y-1.5 max-h-24 overflow-y-auto">
                     {emergencyEncounters.map((enc, index) => (
-                      <div
-                        key={enc.id || index}
-                        className="flex items-center justify-between"
-                      >
+                      <div key={enc.id || index} className="flex items-center">
                         <p className="text-xs md:text-sm font-semibold text-gray-800 truncate max-w-[120px]">
                           {enc.patient_name}
-                        </p>
-                        <p className="text-[10px] md:text-xs text-gray-500">
-                          {enc.details
-                            ? enc.details.length > 15
-                              ? enc.details.substring(0, 15) + "..."
-                              : enc.details
-                            : "—"}
                         </p>
                       </div>
                     ))}

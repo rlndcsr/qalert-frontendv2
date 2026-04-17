@@ -1356,6 +1356,11 @@ export default function EmergencyEncountersView() {
                 </th>
                 <th className="px-5 py-3.5 text-left">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    ID Number
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 text-left">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                     Contact
                   </span>
                 </th>
@@ -1432,11 +1437,14 @@ export default function EmergencyEncountersView() {
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {encounter.patient_name}
                           </p>
-                          <p className="text-xs text-gray-400 font-mono mt-0.5">
-                            {encounter.id_number || "No ID"}
-                          </p>
                         </div>
                       </div>
+                    </td>
+                    {/* ID Number */}
+                    <td className="px-5 py-4">
+                      <span className="text-xs text-gray-700 font-mono">
+                        {encounter.id_number || ""}
+                      </span>
                     </td>
                     {/* Contact */}
                     <td className="px-5 py-4">
