@@ -384,6 +384,24 @@ export default function DoctorsTab() {
         <div className="text-gray-500">No doctors found.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* Add Doctor Card - displayed first */}
+          <div
+            className="bg-white border-2 border-dashed border-gray-300 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center hover:border-teal-400 transition-colors duration-200 cursor-pointer min-h-[220px]"
+            style={{ minHeight: 220 }}
+            tabIndex={0}
+            aria-label="Add Doctor"
+            onClick={() => setShowAddModal(true)}
+          >
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <span className="text-3xl font-bold text-teal-500">+</span>
+            </div>
+            <div className="text-lg font-semibold text-gray-700 text-center mb-1">
+              Add Doctor
+            </div>
+            <div className="text-sm text-gray-400 text-center">
+              Onboard a new medical specialist to the team
+            </div>
+          </div>
           {/* Doctor Cards */}
           {doctors.map((doctor) => {
             // Find all doctorSchedules for this doctor
@@ -452,24 +470,6 @@ export default function DoctorsTab() {
               </div>
             );
           })}
-          {/* Add Doctor Card at the end */}
-          <div
-            className="bg-white border-2 border-dashed border-gray-300 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center hover:border-teal-400 transition-colors duration-200 cursor-pointer min-h-[220px]"
-            style={{ minHeight: 220 }}
-            tabIndex={0}
-            aria-label="Add Doctor"
-            onClick={() => setShowAddModal(true)}
-          >
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <span className="text-3xl font-bold text-teal-500">+</span>
-            </div>
-            <div className="text-lg font-semibold text-gray-700 text-center mb-1">
-              Add Doctor
-            </div>
-            <div className="text-sm text-gray-400 text-center">
-              Onboard a new medical specialist to the team
-            </div>
-          </div>
           <AddDoctorModal
             open={showAddModal}
             onClose={() => setShowAddModal(false)}
