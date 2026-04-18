@@ -522,7 +522,6 @@ export default function QueueManagementTable({
             </tbody>
           </table>
         </div>
-        ``{" "}
       </motion.div>
     </>
   );

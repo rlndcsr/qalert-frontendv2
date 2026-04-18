@@ -247,14 +247,12 @@ export default function AdminPortal() {
     return `${year}-${month}-${day}`;
   }, []);
 
-  // Filter queues for today only and exclude cancelled, called, now_serving, and completed queues
+  // Filter queues for today only - include all active statuses (waiting, called, now_serving) but exclude cancelled and completed
   const todayQueues = useMemo(() => {
     return queues.filter(
       (queue) =>
         queue.date === todayDate &&
         queue.queue_status.toLowerCase() !== "cancelled" &&
-        queue.queue_status.toLowerCase() !== "called" &&
-        queue.queue_status.toLowerCase() !== "now_serving" &&
         queue.queue_status.toLowerCase() !== "completed",
     );
   }, [queues, todayDate]);
