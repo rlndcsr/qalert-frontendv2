@@ -81,9 +81,9 @@ export default function AppointmentForm({
     setAppointmentTime("");
     setErrors((prev) => ({ ...prev, date: null }));
 
-    // Check if weekend
+    // Check if Sunday (only day blocked now)
     if (newDate && !isWeekday(newDate)) {
-      setDateError("Appointments are only available on weekdays.");
+      setDateError("Appointments are not available on Sundays.");
     } else {
       setDateError("");
     }
@@ -99,7 +99,7 @@ export default function AppointmentForm({
     if (!appointmentDate) {
       newErrors.date = "Please select a date";
     } else if (!isWeekday(appointmentDate)) {
-      newErrors.date = "Appointments are only available on weekdays.";
+      newErrors.date = "Appointments are not available on Sundays.";
     }
 
     if (!selectedSchedule) {

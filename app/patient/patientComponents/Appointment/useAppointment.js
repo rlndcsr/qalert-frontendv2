@@ -350,8 +350,8 @@ export function useAppointment() {
       const date = new Date(dateString);
       const dayIndex = date.getDay();
 
-      // Check if weekend (0 = Sunday, 6 = Saturday)
-      if (dayIndex === 0 || dayIndex === 6) {
+      // Check if Sunday (0) - Saturday is now allowed
+      if (dayIndex === 0) {
         return [];
       }
 
@@ -368,7 +368,7 @@ export function useAppointment() {
     if (!dateString) return false;
     const date = new Date(dateString);
     const dayIndex = date.getDay();
-    return dayIndex !== 0 && dayIndex !== 6;
+    return dayIndex !== 0; // Sunday = 0, Saturday = 6 is now allowed
   }, []);
 
   // Fetch all booked (non-cancelled) time slots for a given date + schedule
