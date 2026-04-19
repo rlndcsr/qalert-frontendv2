@@ -74,16 +74,30 @@ function Calendar({
   today.setHours(0, 0, 0, 0);
 
   const goToPreviousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
+    );
   };
 
   const goToNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+    );
   };
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const formatDateToYMD = (date) => {
@@ -103,8 +117,11 @@ function Calendar({
     });
   };
 
-  const normalizedAppointmentDates = appointmentDates.map((d) => toYMD(d)).filter(Boolean);
-  const hasAppointment = (dateStr) => normalizedAppointmentDates.includes(dateStr);
+  const normalizedAppointmentDates = appointmentDates
+    .map((d) => toYMD(d))
+    .filter(Boolean);
+  const hasAppointment = (dateStr) =>
+    normalizedAppointmentDates.includes(dateStr);
 
   return (
     <motion.div
@@ -150,7 +167,10 @@ function Calendar({
       {/* Day Headers */}
       <div className="px-6 grid grid-cols-7 gap-1 mb-2">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-2 uppercase tracking-wider">
+          <div
+            key={day}
+            className="text-center text-xs font-semibold text-gray-400 py-2 uppercase tracking-wider"
+          >
             {day}
           </div>
         ))}
@@ -174,26 +194,33 @@ function Calendar({
           return (
             <button
               key={dateStr}
-              onClick={() => !isPast && !isAppointment && onDateSelect?.(dateStr)}
+              onClick={() =>
+                !isPast && !isAppointment && onDateSelect?.(dateStr)
+              }
               disabled={isPast}
               className={`
                 aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-medium transition-all duration-200 relative
-                ${isAppointment
-                  ? "bg-gradient-to-br from-[#00968a] to-[#007a70] text-white shadow-lg shadow-[#00968a]/30 cursor-default"
-                  : isSelected
-                    ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30"
-                    : isPast
-                      ? "text-gray-200 cursor-not-allowed"
-                      : isWeekend
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-700 hover:bg-[#4ad294]/10 hover:scale-105 cursor-pointer"
+                ${
+                  isAppointment
+                    ? "bg-gradient-to-br from-[#00968a] to-[#007a70] text-white shadow-lg shadow-[#00968a]/30 cursor-default"
+                    : isSelected
+                      ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30"
+                      : isPast
+                        ? "text-gray-200 cursor-not-allowed"
+                        : isWeekend
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-[#4ad294]/10 hover:scale-105 cursor-pointer"
                 }
                 ${isToday && !isSelected && !isAppointment ? "ring-2 ring-[#4ad294]/40 ring-offset-1" : ""}
               `}
             >
-              <span className={isSelected || isAppointment ? "text-white" : ""}>{date.getDate()}</span>
+              <span className={isSelected || isAppointment ? "text-white" : ""}>
+                {date.getDate()}
+              </span>
               {!isAppointment && !isPast && hasDoctors && !isWeekend && (
-                <div className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/70" : "bg-[#4ad294]"}`} />
+                <div
+                  className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/70" : "bg-[#4ad294]"}`}
+                />
               )}
               {isAppointment && (
                 <div className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-white/70" />
@@ -247,20 +274,28 @@ function DoctorCard({ schedule, isSelected, onClick }) {
       }`}
     >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-          isSelected
-            ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] shadow-md"
-            : "bg-gray-100"
-        }`}>
-          <User className={`w-6 h-6 ${isSelected ? "text-white" : "text-gray-500"}`} />
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            isSelected
+              ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] shadow-md"
+              : "bg-gray-100"
+          }`}
+        >
+          <User
+            className={`w-6 h-6 ${isSelected ? "text-white" : "text-gray-500"}`}
+          />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`font-semibold text-sm truncate ${isSelected ? "text-[#4ad294]" : "text-gray-900"}`}>
+          <p
+            className={`font-semibold text-sm truncate ${isSelected ? "text-[#4ad294]" : "text-gray-900"}`}
+          >
             {schedule.doctor_name}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <p className="text-xs text-gray-500">{getShiftTimeRange(schedule.shift)}</p>
+            <p className="text-xs text-gray-500">
+              {getShiftTimeRange(schedule.shift)}
+            </p>
           </div>
         </div>
         {isSelected && (
@@ -288,11 +323,12 @@ function TimeSlotButton({ time, isBooked, isSelected, onClick }) {
       whileTap={!isBooked ? { scale: 0.95 } : {}}
       className={`
         px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
-        ${isBooked
-          ? "bg-gray-100 text-gray-400 cursor-not-allowed line-through"
-          : isSelected
-            ? "bg-gradient-to-r from-[#4ad294] to-[#3bb882] text-white shadow-md shadow-[#4ad294]/20"
-            : "bg-gray-50 text-gray-700 hover:bg-[#4ad294]/10 border border-gray-200 hover:border-[#4ad294]/30"
+        ${
+          isBooked
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed line-through"
+            : isSelected
+              ? "bg-gradient-to-r from-[#4ad294] to-[#3bb882] text-white shadow-md shadow-[#4ad294]/20"
+              : "bg-gray-50 text-gray-700 hover:bg-[#4ad294]/10 border border-gray-200 hover:border-[#4ad294]/30"
         }
       `}
     >
@@ -332,7 +368,9 @@ function BookingPanel({
   }, [selectedDate, getSchedulesForDate]);
 
   const timeOptions = useMemo(() => {
-    const schedule = availableSchedules.find((s) => s.schedule_id?.toString() === selectedSchedule);
+    const schedule = availableSchedules.find(
+      (s) => s.schedule_id?.toString() === selectedSchedule,
+    );
     if (!schedule) return [];
 
     const times = [];
@@ -382,7 +420,9 @@ function BookingPanel({
       return;
     }
 
-    const formattedTime = appointmentTime.includes(":") ? appointmentTime.substring(0, 5) : appointmentTime;
+    const formattedTime = appointmentTime.includes(":")
+      ? appointmentTime.substring(0, 5)
+      : appointmentTime;
     onSubmit(selectedSchedule, selectedDate, formattedTime, selectedPurpose);
   };
 
@@ -419,8 +459,12 @@ function BookingPanel({
             <CalendarCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Book Your Appointment</h3>
-            <p className="text-sm text-white/80">Complete the form below to schedule</p>
+            <h3 className="text-lg font-bold text-white">
+              Book Your Appointment
+            </h3>
+            <p className="text-sm text-white/80">
+              Complete the form below to schedule
+            </p>
           </div>
         </div>
       </div>
@@ -439,8 +483,12 @@ function BookingPanel({
                 <CalendarDays className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-[#4ad294] uppercase tracking-wide">Selected Date</p>
-                <p className="text-base font-bold text-gray-900 mt-0.5">{formatDate(selectedDate)}</p>
+                <p className="text-xs font-semibold text-[#4ad294] uppercase tracking-wide">
+                  Selected Date
+                </p>
+                <p className="text-base font-bold text-gray-900 mt-0.5">
+                  {formatDate(selectedDate)}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -472,7 +520,9 @@ function BookingPanel({
                   <DoctorCard
                     key={schedule.schedule_id}
                     schedule={schedule}
-                    isSelected={selectedSchedule === schedule.schedule_id?.toString()}
+                    isSelected={
+                      selectedSchedule === schedule.schedule_id?.toString()
+                    }
                     onClick={() => {
                       setSelectedSchedule(schedule.schedule_id?.toString());
                       setAppointmentTime("");
@@ -499,46 +549,7 @@ function BookingPanel({
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5" />
 
-            {/* Select Doctor */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <div className="flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-gray-400" />
-                  <span>Doctor</span>
-                </div>
-              </label>
-              <Select
-                value={selectedSchedule}
-                onValueChange={(value) => {
-                  setSelectedSchedule(value);
-                  setAppointmentTime("");
-                  setErrors((prev) => ({ ...prev, schedule: null }));
-                }}
-              >
-                <SelectTrigger className={`h-12 ${errors.schedule ? "border-red-400 bg-red-50" : "bg-gray-50 hover:bg-gray-100"}`}>
-                  <SelectValue placeholder="Select a doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSchedules.map((schedule) => (
-                    <SelectItem key={schedule.schedule_id} value={schedule.schedule_id?.toString()}>
-                      {schedule.doctor_name} – {getShiftTimeRange(schedule.shift)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.schedule && (
-                <motion.p
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
-                >
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.schedule}
-                </motion.p>
-              )}
-            </div>
-
-            {/* Purpose */}
+            {/* Booking Form */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <div className="flex items-center gap-2">
@@ -558,14 +569,18 @@ function BookingPanel({
                     setErrors((prev) => ({ ...prev, purpose: null }));
                   }}
                 >
-                  <SelectTrigger className={`h-12 ${errors.purpose ? "border-red-400 bg-red-50" : "bg-gray-50 hover:bg-gray-100"}`}>
+                  <SelectTrigger
+                    className={`h-12 ${errors.purpose ? "border-red-400 bg-red-50" : "bg-gray-50 hover:bg-gray-100"}`}
+                  >
                     <SelectValue placeholder="Select purpose" />
                   </SelectTrigger>
                   <SelectContent>
                     {reasonCategories.map((category) => (
                       <SelectItem
                         key={category.reason_category_id || category.id}
-                        value={(category.reason_category_id || category.id)?.toString()}
+                        value={(
+                          category.reason_category_id || category.id
+                        )?.toString()}
                       >
                         {category.category_name || category.name}
                       </SelectItem>
@@ -650,7 +665,9 @@ function BookingPanel({
               ) : (
                 <>
                   <CheckCircle className="w-5 h-5" />
-                  <span>Confirm Appointment</span>
+                  <span className="hover:cursor-pointer">
+                    Confirm Appointment
+                  </span>
                 </>
               )}
             </motion.button>
@@ -740,7 +757,9 @@ export default function AppointmentView() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 flex items-center justify-center">
             <XCircle className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-lg font-bold text-red-700 mb-2">Error Loading Appointments</h3>
+          <h3 className="text-lg font-bold text-red-700 mb-2">
+            Error Loading Appointments
+          </h3>
           <p className="text-red-600 text-sm max-w-md mx-auto">{error}</p>
         </div>
       </motion.div>
@@ -765,7 +784,9 @@ export default function AppointmentView() {
               {activeAppointment ? "My Appointment" : "Book Appointment"}
             </h2>
             <p className="text-sm text-gray-500">
-              {activeAppointment ? "View your scheduled appointment" : "Select a date and schedule your visit"}
+              {activeAppointment
+                ? "View your scheduled appointment"
+                : "Select a date and schedule your visit"}
             </p>
           </div>
         </div>
@@ -778,8 +799,12 @@ export default function AppointmentView() {
           onDateSelect={activeAppointment ? undefined : setSelectedDate}
           schedules={schedules}
           isWeekday={isWeekday}
-          appointmentDates={activeAppointment ? [activeAppointment.appointment_date] : []}
-          initialMonth={activeAppointment ? toYMD(activeAppointment.appointment_date) : null}
+          appointmentDates={
+            activeAppointment ? [activeAppointment.appointment_date] : []
+          }
+          initialMonth={
+            activeAppointment ? toYMD(activeAppointment.appointment_date) : null
+          }
         />
 
         {activeAppointment ? (
@@ -788,7 +813,9 @@ export default function AppointmentView() {
             schedule={appointmentSchedule}
             reasonCategoryName={(() => {
               const cat = reasonCategories.find(
-                (c) => (c.reason_category_id || c.id)?.toString() === activeAppointment.reason_category_id?.toString()
+                (c) =>
+                  (c.reason_category_id || c.id)?.toString() ===
+                  activeAppointment.reason_category_id?.toString(),
               );
               return cat?.category_name || cat?.name || null;
             })()}

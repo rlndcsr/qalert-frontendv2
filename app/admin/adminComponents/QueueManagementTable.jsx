@@ -34,8 +34,8 @@ export default function QueueManagementTable({
   isFetchingData,
   setQueues,
   setCalledPatients,
+  users = [],
 }) {
-  
   const handleCallPatient = async (queue) => {
     const token = localStorage.getItem("adminToken");
     if (!token) {
@@ -100,7 +100,7 @@ export default function QueueManagementTable({
 
       const queueNum = String(queue.queue_number).padStart(3, "0");
       const aptTime = queue.appointment_id
-        ? appointmentTimeMap[queue.appointment_id]
+        ? appointmentTimeMap[String(queue.appointment_id)]
         : null;
       const aptTimeFormatted = aptTime ? formatTime(aptTime) : "N/A";
       const reason =
@@ -189,7 +189,7 @@ export default function QueueManagementTable({
   const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
   const [isLoadingLookups, setIsLoadingLookups] = useState(true);
 
-  useEffect(() => {
+  const fetchLookups = () => {
     const token = localStorage.getItem("adminToken");
     if (!token) return;
     const headers = {
@@ -197,6 +197,7 @@ export default function QueueManagementTable({
       Authorization: `Bearer ${token}`,
       "ngrok-skip-browser-warning": "true",
     };
+    setIsLoadingLookups(true);
     Promise.all([
       fetch(`${API_BASE_URL}/reason-categories`, { headers }).then((r) =>
         r.ok ? r.json() : [],
@@ -216,14 +217,14 @@ export default function QueueManagementTable({
         });
         setReasonCategoryMap(catMap);
 
-        // Build appointment time map keyed by appointment_id
+        // Build appointment time map keyed by appointment_id (as string)
         const aptList = Array.isArray(aptData)
           ? aptData
           : aptData?.data || aptData?.appointments || [];
         const timeMap = {};
         aptList.forEach((apt) => {
-          if (apt.appointment_id && apt.appointment_time)
-            timeMap[apt.appointment_id] = apt.appointment_time;
+          if (apt.appointment_id != null && apt.appointment_time)
+            timeMap[String(apt.appointment_id)] = apt.appointment_time;
         });
         setAppointmentTimeMap(timeMap);
       })
@@ -231,11 +232,22 @@ export default function QueueManagementTable({
         console.error("[QueueManagementTable] lookup fetch:", err),
       )
       .finally(() => setIsLoadingLookups(false));
+  };
+
+  useEffect(() => {
+    fetchLookups();
   }, []);
+
+  // Re-fetch lookups when todayQueues changes (new appointment added)
+  useEffect(() => {
+    if (todayQueues.length > 0) {
+      fetchLookups();
+    }
+  }, [todayQueues.length]);
 
   const getAppointmentTime = (queue) => {
     if (!queue.appointment_id) return "—";
-    const time = appointmentTimeMap[queue.appointment_id];
+    const time = appointmentTimeMap[String(queue.appointment_id)];
     return time ? formatTime(time) : "—";
   };
 
@@ -258,14 +270,14 @@ export default function QueueManagementTable({
                 Manage patient flow and service status
               </p>
             </div>
-                      </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Position
+                  Queue Number
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                   Patient
@@ -358,7 +370,7 @@ export default function QueueManagementTable({
                     (q) => q.queue_status.toLowerCase() === "waiting",
                   )?.queue_entry_id;
 
-                  return sorted.map((queue, index) => {
+                  return sorted.map((queue) => {
                     const patient = userMap[queue.user_id] || {};
                     const statusLower = queue.queue_status.toLowerCase();
                     const isFirstWaiting =
@@ -396,7 +408,7 @@ export default function QueueManagementTable({
                         className="hover:bg-slate-50/80 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#25323A]">
-                          {index + 1}
+                          {String(queue.queue_number).padStart(3, "0")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -428,7 +440,7 @@ export default function QueueManagementTable({
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {isLoadingLookups && queue.appointment_id ? (
+                          {(isLoadingLookups && queue.appointment_id != null && !appointmentTimeMap[String(queue.appointment_id)]) ? (
                             <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
                           ) : (
                             getAppointmentTime(queue)
@@ -451,7 +463,7 @@ export default function QueueManagementTable({
                             {statusLower === "waiting" && (
                               <button
                                 onClick={() => handleCallPatient(queue)}
-                                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
                               >
                                 Call
                               </button>
@@ -460,7 +472,7 @@ export default function QueueManagementTable({
                               statusLower === "serving") && (
                               <button
                                 onClick={() => handleCompletePatient(queue)}
-                                className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                                className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
                               >
                                 Complete
                               </button>

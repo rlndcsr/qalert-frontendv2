@@ -350,11 +350,6 @@ export function useAppointment() {
       const date = new Date(dateString);
       const dayIndex = date.getDay();
 
-      // Check if Sunday (0) - Saturday is now allowed
-      if (dayIndex === 0) {
-        return [];
-      }
-
       const dayAbbrev = DAY_INDEX_TO_ABBREV[dayIndex];
 
       // Filter schedules that match the day
@@ -363,12 +358,10 @@ export function useAppointment() {
     [schedules],
   );
 
-  // Check if a date is a weekday
+  // Check if a date is a valid day (all days including Sunday are now allowed)
   const isWeekday = useCallback((dateString) => {
     if (!dateString) return false;
-    const date = new Date(dateString);
-    const dayIndex = date.getDay();
-    return dayIndex !== 0; // Sunday = 0, Saturday = 6 is now allowed
+    return true; // All days are now allowed
   }, []);
 
   // Fetch all booked (non-cancelled) time slots for a given date + schedule

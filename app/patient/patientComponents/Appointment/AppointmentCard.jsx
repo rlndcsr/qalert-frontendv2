@@ -55,7 +55,7 @@ const STATUS_CONFIG = {
     text: "text-emerald-700",
     icon: CheckCircle2,
     label: "Confirmed",
-    pulse: true,
+    pulse: false,
   },
   scheduled: {
     gradient: "from-[#4ad294] to-[#3bb882]",
@@ -63,7 +63,7 @@ const STATUS_CONFIG = {
     text: "text-emerald-700",
     icon: CheckCircle2,
     label: "Confirmed",
-    pulse: true,
+    pulse: false,
   },
   pending: {
     gradient: "from-amber-500 to-orange-500",
@@ -113,10 +113,13 @@ export default function AppointmentCard({
 }) {
   if (!appointment) return null;
 
-  const appointmentStatus = appointment.status || appointment.appointment_status || "";
+  const appointmentStatus =
+    appointment.status || appointment.appointment_status || "";
   const statusConfig = getStatusConfig(appointmentStatus);
   const StatusIcon = statusConfig.icon;
-  const fullDay = schedule ? DAY_ABBREV_TO_FULL[schedule.day] || schedule.day : "";
+  const fullDay = schedule
+    ? DAY_ABBREV_TO_FULL[schedule.day] || schedule.day
+    : "";
   const shiftTime = schedule ? getShiftTimeRange(schedule.shift) : "";
   const dateComponents = getDateComponents(appointment.appointment_date);
 
@@ -128,7 +131,9 @@ export default function AppointmentCard({
       transition={{ duration: 0.4 }}
     >
       {/* Header */}
-      <div className={`bg-gradient-to-r ${statusConfig.gradient} px-6 py-5 relative overflow-hidden`}>
+      <div
+        className={`bg-gradient-to-r ${statusConfig.gradient} px-6 py-5 relative overflow-hidden`}
+      >
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-white rounded-full" />
           <div className="absolute -right-8 top-8 w-16 h-16 bg-white rounded-full" />
@@ -216,7 +221,9 @@ export default function AppointmentCard({
               </span>
             </div>
             <p className="text-xs text-gray-400 mt-1">{dateComponents.year}</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">{dateComponents.weekday}</p>
+            <p className="text-xs text-gray-500 mt-1 font-medium">
+              {dateComponents.weekday}
+            </p>
           </div>
 
           {/* Time Card */}
@@ -272,7 +279,7 @@ export default function AppointmentCard({
           ) : (
             <>
               <XCircle className="w-4 h-4" />
-              <span>Cancel Appointment</span>
+              <span className="hover:cursor-pointer">Cancel Appointment</span>
             </>
           )}
         </motion.button>
