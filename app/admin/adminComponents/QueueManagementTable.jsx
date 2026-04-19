@@ -370,11 +370,12 @@ export default function QueueManagementTable({
                     (q) => q.queue_status.toLowerCase() === "waiting",
                   )?.queue_entry_id;
 
-                  return sorted.map((queue) => {
+                  return sorted.map((queue, idx) => {
                     const patient = userMap[queue.user_id] || {};
                     const statusLower = queue.queue_status.toLowerCase();
                     const isFirstWaiting =
                       queue.queue_entry_id === firstWaitingId;
+                    const isTopThree = idx < 3;
 
                     // Determine status badge color
                     let statusClass = "bg-gray-100 text-gray-700";
@@ -460,7 +461,7 @@ export default function QueueManagementTable({
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center gap-2">
-                            {statusLower === "waiting" && (
+                            {statusLower === "waiting" && isTopThree && (
                               <button
                                 onClick={() => handleCallPatient(queue)}
                                 className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
