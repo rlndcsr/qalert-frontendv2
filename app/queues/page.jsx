@@ -102,6 +102,10 @@ export default function QueueDisplay() {
   const [emergencyEncounters, setEmergencyEncounters] = useState([]);
   const previousEmergencyDataRef = useRef(null);
 
+  // Appointment time map for scheduled times
+  const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
+  const previousAppointmentDataRef = useRef(null);
+
   // Refs for comparing data to avoid unnecessary re-renders
   const previousQueueDataRef = useRef(null);
   const previousUsersDataRef = useRef(null);
@@ -143,6 +147,28 @@ export default function QueueDisplay() {
     return `${year}-${month}-${day}`;
   }, []);
 
+  // Format time string to 12-hour format
+  const formatTime = useCallback((timeString) => {
+    if (!timeString) return null;
+    let hours, minutes;
+    if (timeString.includes("T")) {
+      const date = new Date(timeString);
+      hours = date.getHours();
+      minutes = date.getMinutes();
+    } else {
+      const parts = timeString.split(" ");
+      const timePart = parts.length >= 2 ? parts[1] : parts[0];
+      const timeParts = timePart.split(":");
+      hours = parseInt(timeParts[0], 10);
+      minutes = parseInt(timeParts[1], 10);
+    }
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const minutesStr = String(minutes).padStart(2, "0");
+    return `${hours}:${minutesStr} ${ampm}`;
+  }, []);
+
   // Fetch queue entries and users with optimized state updates
   const fetchQueueData = useCallback(
     async (isInitial = false) => {
@@ -154,11 +180,12 @@ export default function QueueDisplay() {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        // Fetch queues, users, and emergency encounters in parallel
-        const [queuesResponse, usersResponse, emergencyResponse] =
+        // Fetch queues, users, appointments, and emergency encounters in parallel
+        const [queuesResponse, usersResponse, appointmentsResponse, emergencyResponse] =
           await Promise.all([
             fetch(`${API_BASE_URL}/queues`, { headers }),
             fetch(`${API_BASE_URL}/users`, { headers }),
+            fetch(`${API_BASE_URL}/appointments`, { headers }),
             fetch(`${API_BASE_URL}/emergency-encounters`, { headers }),
           ]);
 
@@ -199,6 +226,19 @@ export default function QueueDisplay() {
             userMap[user.user_id] = user;
           });
 
+          // Build appointment time map keyed by appointment_id (as string)
+          const timeMap = {};
+          if (appointmentsResponse.ok) {
+            const aptData = await appointmentsResponse.json();
+            const aptList = Array.isArray(aptData)
+              ? aptData
+              : aptData?.data || aptData?.appointments || [];
+            aptList.forEach((apt) => {
+              if (apt.appointment_id != null && apt.appointment_time)
+                timeMap[String(apt.appointment_id)] = apt.appointment_time;
+            });
+          }
+
           // Only update state if data has changed (prevents unnecessary re-renders)
           if (!isDataEqual(todayQueues, previousQueueDataRef.current)) {
             previousQueueDataRef.current = todayQueues;
@@ -208,6 +248,11 @@ export default function QueueDisplay() {
           if (!isDataEqual(userMap, previousUsersDataRef.current)) {
             previousUsersDataRef.current = userMap;
             setUsers(userMap);
+          }
+
+          if (!isDataEqual(timeMap, previousAppointmentDataRef.current)) {
+            previousAppointmentDataRef.current = timeMap;
+            setAppointmentTimeMap(timeMap);
           }
         } else {
           console.error("Failed to fetch data:", {
@@ -280,12 +325,18 @@ export default function QueueDisplay() {
     }));
 
     // Waiting: all "waiting" entries
-    const waitingData = waitingEntries.map((entry, index) => ({
-      number: entry.queue_number,
-      name: users[entry.user_id]?.name || "Unknown",
-      id_number: users[entry.user_id]?.id_number || "",
-      wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`, // Use stored value or fallback
-    }));
+    const waitingData = waitingEntries.map((entry, index) => {
+      const aptTime = entry.appointment_id
+        ? appointmentTimeMap[String(entry.appointment_id)]
+        : null;
+      return {
+        number: entry.queue_number,
+        name: users[entry.user_id]?.name || "Unknown",
+        id_number: users[entry.user_id]?.id_number || "",
+        wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`,
+        scheduledTime: aptTime || null,
+      };
+    });
 
     // Total in queue (now_serving + called + waiting)
     const total =
@@ -297,7 +348,7 @@ export default function QueueDisplay() {
       waiting: waitingData,
       totalInQueue: total,
     };
-  }, [queueEntries, users, isLoadingData]);
+  }, [queueEntries, users, isLoadingData, appointmentTimeMap]);
 
   // Update time only on client side after mount
   useEffect(() => {
@@ -647,6 +698,11 @@ export default function QueueDisplay() {
                       <p className="text-[10px] md:text-xs text-gray-500">
                         {w.id_number}
                       </p>
+                      {w.scheduledTime && (
+                        <p className="text-[10px] md:text-xs text-[#374D6C] font-medium">
+                          {formatTime(w.scheduledTime)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
