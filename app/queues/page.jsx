@@ -434,11 +434,6 @@ export default function QueueDisplay() {
                         {formatQueueNumber(patient.number)}
                       </div>
                       <div
-                        className={`font-bold text-white mb-0.5 truncate ${nowServing.length === 1 ? "text-lg md:text-xl" : "text-sm md:text-base"}`}
-                      >
-                        {patient.name}
-                      </div>
-                      <div
                         className={`text-white/90 ${nowServing.length === 1 ? "text-xs md:text-sm" : "text-[10px] md:text-xs"}`}
                       >
                         {patient.id_number}
@@ -511,9 +506,6 @@ export default function QueueDisplay() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-white text-xs md:text-sm font-semibold">
-                            {patient.name}
-                          </p>
                           <p className="text-white/80 text-[10px] md:text-xs">
                             {patient.id_number}
                           </p>
@@ -652,9 +644,6 @@ export default function QueueDisplay() {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
-                        {w.name}
-                      </p>
                       <p className="text-[10px] md:text-xs text-gray-500">
                         {w.id_number}
                       </p>
