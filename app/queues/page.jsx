@@ -9,71 +9,6 @@ import Image from "next/image";
 // Constants
 const API_BASE_URL = "/api/proxy";
 
-const SERVING_DURATION = 1200; // 20 minutes in seconds
-
-function ServingCountdown({ queueEntryId }) {
-  const [startTime] = useState(() => {
-    if (typeof window === "undefined") return Date.now();
-    const stored = localStorage.getItem(`serving_at_${queueEntryId}`);
-    if (stored) return parseInt(stored, 10);
-    return Date.now();
-  });
-
-  const calcRemaining = useCallback(
-    () =>
-      Math.max(
-        0,
-        SERVING_DURATION - Math.floor((Date.now() - startTime) / 1000),
-      ),
-    [startTime],
-  );
-
-  const [secondsLeft, setSecondsLeft] = useState(calcRemaining);
-
-  useEffect(() => {
-    if (secondsLeft <= 0) return;
-    const id = setInterval(() => {
-      setSecondsLeft(calcRemaining());
-    }, 1000);
-    return () => clearInterval(id);
-  }, [calcRemaining, secondsLeft]);
-
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = secondsLeft % 60;
-  const isExpired = secondsLeft <= 0;
-  const isCritical = secondsLeft <= 60;
-  const isUrgent = secondsLeft <= 180;
-
-  const style =
-    isExpired || isCritical
-      ? "bg-red-500/30 text-red-200 border-red-400/40"
-      : isUrgent
-        ? "bg-amber-400/25 text-amber-200 border-amber-300/40"
-        : "bg-white/10 text-white/90 border-white/20";
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded border ${style}`}
-      title="Time remaining for consultation"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-2.5 h-2.5"
-      >
-        <path
-          fillRule="evenodd"
-          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
-          clipRule="evenodd"
-        />
-      </svg>
-      {isExpired
-        ? "Time up"
-        : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
-    </span>
-  );
-}
 
 export default function QueueDisplay() {
   const router = useRouter();
@@ -105,6 +40,20 @@ export default function QueueDisplay() {
   // Appointment time map for scheduled times
   const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
   const previousAppointmentDataRef = useRef(null);
+
+  // Appointment to schedule mapping
+  const [aptScheduleMap, setAptScheduleMap] = useState({});
+  const previousAptScheduleRef = useRef(null);
+
+  // Schedule shift and doctor maps
+  const [scheduleShiftMap, setScheduleShiftMap] = useState({});
+  const [scheduleDoctorMap, setScheduleDoctorMap] = useState({});
+  const [doctorNameMap, setDoctorNameMap] = useState({});
+  const [shiftDoctorMap, setShiftDoctorMap] = useState({ AM: null, PM: null });
+  const previousSchedulesDataRef = useRef(null);
+  const previousScheduleDoctorRef = useRef(null);
+  const previousDoctorNameRef = useRef(null);
+  const previousShiftDoctorRef = useRef(null);
 
   // Refs for comparing data to avoid unnecessary re-renders
   const previousQueueDataRef = useRef(null);
@@ -180,12 +129,15 @@ export default function QueueDisplay() {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        // Fetch queues, users, appointments, and emergency encounters in parallel
-        const [queuesResponse, usersResponse, appointmentsResponse, emergencyResponse] =
+        // Fetch queues, users, appointments, schedules, doctor-schedule, doctors, and emergency encounters in parallel
+        const [queuesResponse, usersResponse, appointmentsResponse, schedulesResponse, doctorSchedulesResponse, doctorsResponse, emergencyResponse] =
           await Promise.all([
             fetch(`${API_BASE_URL}/queues`, { headers }),
             fetch(`${API_BASE_URL}/users`, { headers }),
             fetch(`${API_BASE_URL}/appointments`, { headers }),
+            fetch(`${API_BASE_URL}/schedules`, { headers }),
+            fetch(`${API_BASE_URL}/doctor-schedule`, { headers }),
+            fetch(`${API_BASE_URL}/doctors`, { headers }),
             fetch(`${API_BASE_URL}/emergency-encounters`, { headers }),
           ]);
 
@@ -226,16 +178,81 @@ export default function QueueDisplay() {
             userMap[user.user_id] = user;
           });
 
-          // Build appointment time map keyed by appointment_id (as string)
+          // Build appointment time map and appointment-to-schedule map keyed by appointment_id (as string)
           const timeMap = {};
+          const aptScheduleMap = {};
           if (appointmentsResponse.ok) {
             const aptData = await appointmentsResponse.json();
             const aptList = Array.isArray(aptData)
               ? aptData
               : aptData?.data || aptData?.appointments || [];
             aptList.forEach((apt) => {
-              if (apt.appointment_id != null && apt.appointment_time)
-                timeMap[String(apt.appointment_id)] = apt.appointment_time;
+              if (apt.appointment_id != null) {
+                if (apt.appointment_time)
+                  timeMap[String(apt.appointment_id)] = apt.appointment_time;
+                if (apt.schedule_id != null)
+                  aptScheduleMap[String(apt.appointment_id)] = String(apt.schedule_id);
+              }
+            });
+          }
+
+          // Build schedule shift map keyed by schedule_id
+          const shiftMap = {};
+          let schedList = [];
+          if (schedulesResponse.ok) {
+            const schedData = await schedulesResponse.json();
+            schedList = Array.isArray(schedData)
+              ? schedData
+              : schedData?.data || schedData?.schedules || [];
+            schedList.forEach((sched) => {
+              if (sched.schedule_id != null) {
+                shiftMap[String(sched.schedule_id)] = sched.shift || null;
+              }
+            });
+          }
+
+          // Build schedule-to-doctor map using doctor_schedule table
+          const scheduleDoctorMap = {};
+          if (doctorSchedulesResponse.ok) {
+            const dsData = await doctorSchedulesResponse.json();
+            const dsList = Array.isArray(dsData)
+              ? dsData
+              : dsData?.data || dsData?.doctor_schedules || [];
+            dsList.forEach((ds) => {
+              if (ds.schedule_id != null && ds.doctor_id != null) {
+                scheduleDoctorMap[String(ds.schedule_id)] = String(ds.doctor_id);
+              }
+            });
+          }
+
+          // Build doctor name map keyed by doctor_id
+          const doctorNameMap = {};
+          if (doctorsResponse.ok) {
+            const docData = await doctorsResponse.json();
+            const docList = Array.isArray(docData)
+              ? docData
+              : docData?.data || docData?.doctors || [];
+            docList.forEach((doc) => {
+              if (doc.doctor_id != null) {
+                doctorNameMap[String(doc.doctor_id)] = doc.doctor_name || null;
+              }
+            });
+          }
+
+          // Build AM/PM shift doctor map for today (reuses schedList)
+          const shiftDoctorMap = { AM: null, PM: null };
+          if (schedList.length > 0) {
+            // Get today's day abbreviation
+            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const todayDay = dayNames[new Date().getDay()];
+            // Find today's AM and PM schedules
+            schedList.forEach((sched) => {
+              if (sched.day === todayDay && (sched.shift === "AM" || sched.shift === "PM")) {
+                const doctorId = scheduleDoctorMap[String(sched.schedule_id)];
+                if (doctorId) {
+                  shiftDoctorMap[sched.shift] = doctorNameMap[doctorId] || null;
+                }
+              }
             });
           }
 
@@ -253,6 +270,31 @@ export default function QueueDisplay() {
           if (!isDataEqual(timeMap, previousAppointmentDataRef.current)) {
             previousAppointmentDataRef.current = timeMap;
             setAppointmentTimeMap(timeMap);
+          }
+
+          if (!isDataEqual(aptScheduleMap, previousAptScheduleRef.current)) {
+            previousAptScheduleRef.current = aptScheduleMap;
+            setAptScheduleMap(aptScheduleMap);
+          }
+
+          if (!isDataEqual({ shiftMap }, previousSchedulesDataRef.current)) {
+            previousSchedulesDataRef.current = { shiftMap };
+            setScheduleShiftMap(shiftMap);
+          }
+
+          if (!isDataEqual(scheduleDoctorMap, previousScheduleDoctorRef.current)) {
+            previousScheduleDoctorRef.current = scheduleDoctorMap;
+            setScheduleDoctorMap(scheduleDoctorMap);
+          }
+
+          if (!isDataEqual(doctorNameMap, previousDoctorNameRef.current)) {
+            previousDoctorNameRef.current = doctorNameMap;
+            setDoctorNameMap(doctorNameMap);
+          }
+
+          if (!isDataEqual(shiftDoctorMap, previousShiftDoctorRef.current)) {
+            previousShiftDoctorRef.current = shiftDoctorMap;
+            setShiftDoctorMap(shiftDoctorMap);
           }
         } else {
           console.error("Failed to fetch data:", {
@@ -329,12 +371,22 @@ export default function QueueDisplay() {
       const aptTime = entry.appointment_id
         ? appointmentTimeMap[String(entry.appointment_id)]
         : null;
+      // Get schedule_id from appointment, then look up shift and doctor
+      const scheduleId = entry.appointment_id
+        ? aptScheduleMap[String(entry.appointment_id)]
+        : null;
+      const shift = scheduleId ? scheduleShiftMap[scheduleId] || null : null;
+      // scheduleDoctorMap[schedule_id] -> doctor_id, then doctorNameMap[doctor_id] -> doctor_name
+      const doctorId = scheduleId ? scheduleDoctorMap[scheduleId] || null : null;
+      const doctor = doctorId ? doctorNameMap[doctorId] || null : null;
       return {
         number: entry.queue_number,
         name: users[entry.user_id]?.name || "Unknown",
         id_number: users[entry.user_id]?.id_number || "",
         wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`,
         scheduledTime: aptTime || null,
+        shift,
+        doctor,
       };
     });
 
@@ -348,7 +400,7 @@ export default function QueueDisplay() {
       waiting: waitingData,
       totalInQueue: total,
     };
-  }, [queueEntries, users, isLoadingData, appointmentTimeMap]);
+  }, [queueEntries, users, isLoadingData, appointmentTimeMap, aptScheduleMap, scheduleShiftMap, scheduleDoctorMap, doctorNameMap, shiftDoctorMap]);
 
   // Update time only on client side after mount
   useEffect(() => {
@@ -490,11 +542,7 @@ export default function QueueDisplay() {
                         {patient.id_number}
                       </div>
                       {patient.queue_entry_id && (
-                        <div className="mt-1.5">
-                          <ServingCountdown
-                            queueEntryId={patient.queue_entry_id}
-                          />
-                        </div>
+                        <div className="mt-1.5" />
                       )}
                     </div>
                   ))}
@@ -635,29 +683,40 @@ export default function QueueDisplay() {
             {isLoadingData ? (
               <div className="h-[20px] md:h-[24px] w-16 bg-slate-200 rounded-full animate-pulse"></div>
             ) : (
-              <div
-                className="px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
-                style={{
-                  borderColor: "#374D6C",
-                  color: "#374D6C",
-                  backgroundColor: "#E8EDF2",
-                }}
-              >
-                {`${waiting.length} waiting`}
+              <div className="flex items-center gap-2">
+                <div
+                  className="px-2 py-0.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
+                  style={{
+                    borderColor: "#374D6C",
+                    color: "#374D6C",
+                    backgroundColor: "#E8EDF2",
+                  }}
+                >
+                  {waiting.filter((w) => w.shift === "AM").length} AM
+                </div>
+                <div
+                  className="px-2 py-0.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
+                  style={{
+                    borderColor: "#374D6C",
+                    color: "#374D6C",
+                    backgroundColor: "#E8EDF2",
+                  }}
+                >
+                  {waiting.filter((w) => w.shift === "PM").length} PM
+                </div>
               </div>
             )}
           </div>
 
-          <div className="flex-1 p-2.5 md:p-3 columns-1 md:columns-2 gap-x-2.5 md:gap-x-3 overflow-y-auto min-h-0">
+          <div className="flex-1 p-2.5 md:p-3 overflow-y-auto min-h-0">
             {isLoadingData ? (
               <div className="space-y-2.5 md:space-y-3">
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="rounded-2xl p-2.5 md:p-3 border border-slate-200 animate-pulse break-inside-avoid"
+                    className="rounded-2xl p-2.5 md:p-3 border border-slate-200 animate-pulse"
                     style={{
-                      background:
-                        "linear-gradient(to right, #F1F5F9, transparent)",
+                      background: "linear-gradient(to right, #F1F5F9, transparent)",
                     }}
                   >
                     <div className="flex items-center gap-2.5 md:gap-3">
@@ -672,41 +731,115 @@ export default function QueueDisplay() {
                 ))}
               </div>
             ) : waiting.length > 0 ? (
-              waiting.map((w, index) => (
-                <div
-                  key={w.number}
-                  className="rounded-2xl p-2.5 md:p-3 border border-slate-200 hover:shadow-md transition-all break-inside-avoid mb-2.5 md:mb-3"
-                  style={{
-                    background:
-                      "linear-gradient(to right, #F1F5F9, transparent)",
-                  }}
-                >
-                  <div className="flex items-center gap-2.5 md:gap-3">
-                    <div
-                      className="rounded-2xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0 shadow-sm border-1"
-                      style={{
-                        backgroundColor: "#E8EDF2",
-                        borderColor: "#374D6C",
-                        color: "#374D6C",
-                      }}
-                    >
-                      <span className="text-base md:text-lg font-black">
-                        {formatQueueNumber(w.number)}
-                      </span>
+              (() => {
+                // Separate AM and PM queues
+                const amQueue = waiting.filter((w) => w.shift === "AM");
+                const pmQueue = waiting.filter((w) => w.shift === "PM");
+
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* AM Column */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">AM</span>
+                        {shiftDoctorMap.AM && (
+                          <span className="text-sm text-gray-600 font-medium truncate">{shiftDoctorMap.AM}</span>
+                        )}
+                        <div className="flex-1 h-px bg-[#374D6C]/20"></div>
+                        <span className="text-xs text-gray-500">{amQueue.length}</span>
+                      </div>
+                      {amQueue.length > 0 ? (
+                        amQueue.map((w) => (
+                          <div
+                            key={w.number}
+                            className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
+                            style={{
+                              background: "linear-gradient(to right, #F1F5F9, transparent)",
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
+                                style={{
+                                  backgroundColor: "#E8EDF2",
+                                  borderColor: "#374D6C",
+                                  color: "#374D6C",
+                                }}
+                              >
+                                <span className="text-sm font-black">
+                                  {formatQueueNumber(w.number)}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] text-gray-500 truncate">
+                                  {w.id_number}
+                                </p>
+                                {w.scheduledTime && (
+                                  <p className="text-[10px] text-[#374D6C] font-medium">
+                                    {formatTime(w.scheduledTime)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-400 text-center py-4">No AM queues</p>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] md:text-xs text-gray-500">
-                        {w.id_number}
-                      </p>
-                      {w.scheduledTime && (
-                        <p className="text-[10px] md:text-xs text-[#374D6C] font-medium">
-                          {formatTime(w.scheduledTime)}
-                        </p>
+
+                    {/* PM Column */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">PM</span>
+                        {shiftDoctorMap.PM && (
+                          <span className="text-sm text-gray-600 font-medium truncate">{shiftDoctorMap.PM}</span>
+                        )}
+                        <div className="flex-1 h-px bg-[#374D6C]/20"></div>
+                        <span className="text-xs text-gray-500">{pmQueue.length}</span>
+                      </div>
+                      {pmQueue.length > 0 ? (
+                        pmQueue.map((w) => (
+                          <div
+                            key={w.number}
+                            className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
+                            style={{
+                              background: "linear-gradient(to right, #F1F5F9, transparent)",
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
+                                style={{
+                                  backgroundColor: "#E8EDF2",
+                                  borderColor: "#374D6C",
+                                  color: "#374D6C",
+                                }}
+                              >
+                                <span className="text-sm font-black">
+                                  {formatQueueNumber(w.number)}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] text-gray-500 truncate">
+                                  {w.id_number}
+                                </p>
+                                {w.scheduledTime && (
+                                  <p className="text-[10px] text-[#374D6C] font-medium">
+                                    {formatTime(w.scheduledTime)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-400 text-center py-4">No PM queues</p>
                       )}
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })()
             ) : (
               <div className="text-left text-gray-500 p-2">
                 <p className="text-sm md:text-base font-medium">
