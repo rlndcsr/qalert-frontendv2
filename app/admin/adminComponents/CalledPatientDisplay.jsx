@@ -330,32 +330,186 @@ export default function CalledPatientDisplay({
 
               {/* Update Status */}
               <div className="w-56 flex flex-col shrink-0">
-                <label className="block text-sm font-medium text-[#25323A] mb-2">
+                <label className="block text-xs font-medium text-[#25323A] mb-2">
                   Status
                 </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00968a] text-sm h-fit bg-white shadow-sm"
-                  value=""
-                  onChange={(e) =>
-                    handleStatusChange(calledPatient, e.target.value)
-                  }
-                >
-                  <option value="" disabled>
-                    {calledPatient.queue_status === "now_serving"
-                      ? "Now Serving"
-                      : "Called"}
-                  </option>
-                  {calledPatient.queue_status !== "now_serving" && (
-                    <option value="now_serving">Now Serving</option>
-                  )}
-                  <option value="completed">Completed</option>
-                </select>
+                <div className="flex items-center gap-0.5">
+                  {/* Step 1: Called */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() =>
+                        calledPatient.queue_status === "waiting"
+                          ? handleStatusChange(calledPatient, "called")
+                          : null
+                      }
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 hover:cursor-pointer ${
+                        calledPatient.queue_status === "called" ||
+                        calledPatient.queue_status === "now_serving" ||
+                        calledPatient.queue_status === "completed"
+                          ? "bg-green-500 text-white shadow-md"
+                          : "bg-gray-100 text-gray-400 border-2 border-dashed border-gray-300 hover:border-[#00968a] hover:text-[#00968a]"
+                      }`}
+                      disabled={
+                        calledPatient.queue_status !== "waiting" &&
+                        calledPatient.queue_status !== "called"
+                      }
+                    >
+                      {calledPatient.queue_status === "called" ||
+                      calledPatient.queue_status === "now_serving" ||
+                      calledPatient.queue_status === "completed" ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        "1"
+                      )}
+                    </button>
+                    <span
+                      className={`text-[9px] mt-0.5 font-medium ${
+                        calledPatient.queue_status === "called" ||
+                        calledPatient.queue_status === "now_serving" ||
+                        calledPatient.queue_status === "completed"
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Called
+                    </span>
+                  </div>
+
+                  {/* Connector Line 1 */}
+                  <div
+                    className={`flex-1 h-0.5 mb-4 ${
+                      calledPatient.queue_status === "now_serving" ||
+                      calledPatient.queue_status === "completed"
+                        ? "bg-green-500"
+                        : "bg-gray-200"
+                    }`}
+                  />
+
+                  {/* Step 2: Serving */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() =>
+                        calledPatient.queue_status === "called"
+                          ? handleStatusChange(calledPatient, "now_serving")
+                          : null
+                      }
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 hover:cursor-pointer ${
+                        calledPatient.queue_status === "now_serving" ||
+                        calledPatient.queue_status === "completed"
+                          ? "bg-green-500 text-white shadow-md"
+                          : calledPatient.queue_status === "called"
+                            ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                            : "bg-gray-100 text-gray-400 border-2 border-dashed border-gray-300"
+                      }`}
+                      disabled={
+                        calledPatient.queue_status !== "called" &&
+                        calledPatient.queue_status !== "now_serving"
+                      }
+                    >
+                      {calledPatient.queue_status === "now_serving" ||
+                      calledPatient.queue_status === "completed" ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        "2"
+                      )}
+                    </button>
+                    <span
+                      className={`text-[9px] mt-0.5 font-medium ${
+                        calledPatient.queue_status === "now_serving" ||
+                        calledPatient.queue_status === "completed"
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Serving
+                    </span>
+                  </div>
+
+                  {/* Connector Line 2 */}
+                  <div
+                    className={`flex-1 h-0.5 mb-4 ${
+                      calledPatient.queue_status === "completed"
+                        ? "bg-green-500"
+                        : "bg-gray-200"
+                    }`}
+                  />
+
+                  {/* Step 3: Completed */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() =>
+                        calledPatient.queue_status === "now_serving"
+                          ? handleStatusChange(calledPatient, "completed")
+                          : null
+                      }
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 hover:cursor-pointer ${
+                        calledPatient.queue_status === "completed"
+                          ? "bg-green-500 text-white shadow-md"
+                          : calledPatient.queue_status === "now_serving"
+                            ? "bg-[#00968a] text-white shadow-md hover:bg-[#007a6c]"
+                            : "bg-gray-100 text-gray-400 border-2 border-dashed border-gray-300"
+                      }`}
+                      disabled={
+                        calledPatient.queue_status !== "now_serving" &&
+                        calledPatient.queue_status !== "completed"
+                      }
+                    >
+                      {calledPatient.queue_status === "completed" ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        "3"
+                      )}
+                    </button>
+                    <span
+                      className={`text-[9px] mt-0.5 font-medium ${
+                        calledPatient.queue_status === "completed"
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Done
+                    </span>
+                  </div>
+                </div>
                 {expiredIds.has(calledPatient.queue_entry_id) && (
                   <button
                     onClick={() =>
                       handleStatusChange(calledPatient, "cancelled")
                     }
-                    className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
+                    className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
                   >
                     <XCircle className="w-3.5 h-3.5" />
                     Cancel Queue (No-show)
