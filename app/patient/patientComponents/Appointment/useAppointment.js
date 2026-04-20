@@ -343,6 +343,7 @@ export function useAppointment() {
   }, []);
 
   // Get schedules filtered by a specific date (weekday)
+  // Also filters AM schedules when booking for today in the afternoon
   const getSchedulesForDate = useCallback(
     (dateString) => {
       if (!dateString) return [];
@@ -353,7 +354,21 @@ export function useAppointment() {
       const dayAbbrev = DAY_INDEX_TO_ABBREV[dayIndex];
 
       // Filter schedules that match the day
-      return schedules.filter((schedule) => schedule.day === dayAbbrev);
+      let filtered = schedules.filter((schedule) => schedule.day === dayAbbrev);
+
+      // If booking for today, filter out AM schedules if current time is past noon (12:00 PM)
+      const today = new Date();
+      const isToday =
+        dateString === today.toISOString().split("T")[0];
+      if (isToday) {
+        const currentHour = today.getHours();
+        if (currentHour >= 12) {
+          // Past noon - only show PM schedules
+          filtered = filtered.filter((schedule) => schedule.shift === "PM");
+        }
+      }
+
+      return filtered;
     },
     [schedules],
   );

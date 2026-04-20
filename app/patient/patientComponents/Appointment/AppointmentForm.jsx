@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -53,6 +53,15 @@ export default function AppointmentForm({
   const [appointmentTime, setAppointmentTime] = useState("");
   const [errors, setErrors] = useState({});
   const [dateError, setDateError] = useState("");
+  const currentTimeRef = useRef(new Date());
+
+  // Keep current time ref fresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      currentTimeRef.current = new Date();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Get today's date in YYYY-MM-DD format for min date
   const today = new Date().toISOString().split("T")[0];
@@ -128,7 +137,7 @@ export default function AppointmentForm({
   };
 
   // Generate time options based on selected schedule (20-min intervals)
-  const getTimeOptions = () => {
+  const timeOptions = useMemo(() => {
     const schedule = filteredSchedules.find(
       (s) => s.schedule_id?.toString() === selectedSchedule,
     );
@@ -136,6 +145,11 @@ export default function AppointmentForm({
     if (!schedule) return [];
 
     const times = [];
+    const now = currentTimeRef.current;
+    const isToday = appointmentDate === now.toISOString().split("T")[0];
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
     if (schedule.shift === "AM") {
       // Morning shift: 8:00 AM to 11:40 AM (20-min intervals)
       for (let totalMin = 8 * 60; totalMin < 12 * 60; totalMin += 20) {
@@ -144,6 +158,7 @@ export default function AppointmentForm({
         times.push({
           value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
           label: `${hour}:${minute.toString().padStart(2, "0")} AM`,
+          totalMin,
         });
       }
     } else if (schedule.shift === "PM") {
@@ -155,14 +170,25 @@ export default function AppointmentForm({
         times.push({
           value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
           label: `${displayHour}:${minute.toString().padStart(2, "0")} PM`,
+          totalMin,
         });
       }
     }
 
-    return times;
-  };
+    // Filter out past times if booking for today
+    if (isToday) {
+      const currentTotalMin = currentHour * 60 + currentMinute;
+      return times.filter((time) => {
+        // For PM times, check if the time slot has already passed
+        if (schedule.shift === "PM" && time.totalMin <= currentTotalMin) {
+          return false;
+        }
+        return true;
+      });
+    }
 
-  const timeOptions = getTimeOptions();
+    return times;
+  }, [filteredSchedules, selectedSchedule, appointmentDate]);
 
   // Determine if form fields should be disabled
   const isScheduleDisabled =

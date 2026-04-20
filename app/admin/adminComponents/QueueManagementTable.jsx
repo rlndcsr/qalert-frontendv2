@@ -469,8 +469,7 @@ export default function QueueManagementTable({
                                 Call
                               </button>
                             )}
-                            {(statusLower === "called" ||
-                              statusLower === "serving") && (
+                            {statusLower === "serving" && (
                               <button
                                 onClick={() => handleCompletePatient(queue)}
                                 className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
