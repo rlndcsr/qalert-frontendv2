@@ -21,6 +21,7 @@ import {
   CheckCircle,
   XCircle,
   Hash,
+  ArrowUpDown,
 } from "lucide-react";
 
 // Utility: initials from name
@@ -331,6 +332,9 @@ export default function QueueHistoryView() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Sort state
+  const [sortOrder, setSortOrder] = useState("desc"); // 'desc' = newest first, 'asc' = oldest first
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -459,9 +463,11 @@ export default function QueueHistoryView() {
       });
     }
 
-    // Sort by date descending (newest first)
-    return result.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    // Sort by date
+    return result.sort((a, b) =>
+      sortOrder === "desc"
+        ? new Date(b.created_at) - new Date(a.created_at)
+        : new Date(a.created_at) - new Date(b.created_at),
     );
   }, [
     queues,
@@ -471,6 +477,7 @@ export default function QueueHistoryView() {
     endDate,
     searchQuery,
     userMap,
+    sortOrder,
   ]);
 
   // Pagination
@@ -483,7 +490,7 @@ export default function QueueHistoryView() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, dateFilterType, startDate, endDate]);
+  }, [searchQuery, statusFilter, dateFilterType, startDate, endDate, sortOrder]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -707,6 +714,16 @@ export default function QueueHistoryView() {
                   </div>
                 </div>
               )}
+
+              {/* Sort order toggle */}
+              <button
+                onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 rounded-lg transition-colors cursor-pointer"
+                title={sortOrder === "desc" ? "Showing newest first" : "Showing oldest first"}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+              </button>
 
               {/* Search */}
               <div className="relative">
