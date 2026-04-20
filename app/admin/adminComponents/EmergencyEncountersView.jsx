@@ -610,7 +610,10 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
   useEffect(() => {
     if (isOpen) {
       const now = new Date();
-      const date = now.toISOString().split("T")[0];
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const date = `${year}-${month}-${day}`;
       const time = now.toTimeString().slice(0, 5);
       setFormData({
         patient_name: "",
