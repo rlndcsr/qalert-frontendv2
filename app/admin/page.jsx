@@ -678,16 +678,18 @@ export default function AdminPortal() {
         </header>
       )}
 
-      {/* AdminHeader - always show */}
-      <AdminHeader
-        isAuthenticated={isAuthenticated}
-        adminUser={adminUser}
-        isUserMenuOpen={isUserMenuOpen}
-        setIsUserMenuOpen={setIsUserMenuOpen}
-        handleLogout={handleLogout}
-        isLoggingOut={isLoggingOut}
-        isSidebarExpanded={isSidebarExpanded}
-      />
+      {/* AdminHeader - only show when authenticated */}
+      {isAuthenticated && (
+        <AdminHeader
+          isAuthenticated={isAuthenticated}
+          adminUser={adminUser}
+          isUserMenuOpen={isUserMenuOpen}
+          setIsUserMenuOpen={setIsUserMenuOpen}
+          handleLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+          isSidebarExpanded={isSidebarExpanded}
+        />
+      )}
 
       {/* Main Content */}
       <main
@@ -696,7 +698,7 @@ export default function AdminPortal() {
             ? `pt-20 lg:pt-24 ${
                 isSidebarExpanded ? "lg:pl-[272px]" : "lg:pl-[80px]"
               }`
-            : ""
+            : "pt-0"
         }`}
       >
         <AnimatePresence mode="wait">
