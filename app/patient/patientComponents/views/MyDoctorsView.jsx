@@ -15,6 +15,8 @@ const FILTER_OPTIONS = [
   { id: "Wednesday", label: "Wednesday" },
   { id: "Thursday", label: "Thursday" },
   { id: "Friday", label: "Friday" },
+  { id: "Saturday", label: "Saturday" },
+  { id: "Sunday", label: "Sunday" },
 ];
 
 // Day abbreviation to full name mapping for schedule matching
