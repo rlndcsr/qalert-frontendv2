@@ -368,8 +368,10 @@ function BookingPanel({
   }, [selectedDate, getSchedulesForDate]);
 
   const timeOptions = useMemo(() => {
+    if (!selectedSchedule) return [];
+    const [schedId] = selectedSchedule.split("-");
     const schedule = availableSchedules.find(
-      (s) => s.schedule_id?.toString() === selectedSchedule,
+      (s) => s.schedule_id?.toString() === schedId,
     );
     if (!schedule) return [];
 
@@ -403,7 +405,8 @@ function BookingPanel({
       return;
     }
     setIsLoadingBookedSlots(true);
-    fetchBookedSlotsForDate(selectedDate, selectedSchedule)
+    const [schedId] = selectedSchedule.split("-");
+    fetchBookedSlotsForDate(selectedDate, schedId)
       .then((slots) => setBookedSlots(slots))
       .finally(() => setIsLoadingBookedSlots(false));
   }, [selectedDate, selectedSchedule, fetchBookedSlotsForDate]);
@@ -423,7 +426,8 @@ function BookingPanel({
     const formattedTime = appointmentTime.includes(":")
       ? appointmentTime.substring(0, 5)
       : appointmentTime;
-    onSubmit(selectedSchedule, selectedDate, formattedTime, selectedPurpose);
+    const [schedId] = selectedSchedule.split("-");
+    onSubmit(schedId, selectedDate, formattedTime, selectedPurpose);
   };
 
   useEffect(() => {
@@ -518,14 +522,25 @@ function BookingPanel({
               <div className="space-y-2">
                 {availableSchedules.map((schedule) => (
                   <DoctorCard
-                    key={schedule.schedule_id}
+                    key={`${schedule.schedule_id}-${schedule.doctor_id}`}
                     schedule={schedule}
                     isSelected={
-                      selectedSchedule === schedule.schedule_id?.toString()
+                      selectedSchedule === `${schedule.schedule_id}-${schedule.doctor_id}`
                     }
                     onClick={() => {
-                      setSelectedSchedule(schedule.schedule_id?.toString());
-                      setAppointmentTime("");
+                      const newKey = `${schedule.schedule_id}-${schedule.doctor_id}`;
+                      const newShift = schedule.shift;
+                      // Only clear time if shift changes (e.g., AM → PM or PM → AM)
+                      const prevKey = selectedSchedule;
+                      let sameShift = false;
+                      if (prevKey) {
+                        const prevSched = availableSchedules.find(
+                          (s) => `${s.schedule_id}-${s.doctor_id}` === prevKey,
+                        );
+                        sameShift = prevSched?.shift === newShift;
+                      }
+                      setSelectedSchedule(newKey);
+                      if (!sameShift) setAppointmentTime("");
                       setErrors((prev) => ({ ...prev, schedule: null }));
                     }}
                   />

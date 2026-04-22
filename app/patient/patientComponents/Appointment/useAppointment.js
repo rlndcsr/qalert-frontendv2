@@ -255,45 +255,34 @@ export function useAppointment() {
       console.log("[fetchSchedules] doctorSchedules:", doctorSchedules);
       console.log("[fetchSchedules] doctors:", doctors);
 
-      // Enrich schedules with doctor info
-      const enrichedSchedules = list.map((schedule) => {
-        // Use loose equality (==) to handle string/number type mismatches
-        const ds = doctorSchedules.find(
+      // Enrich schedules with doctor info - handle multiple doctors per schedule
+      const enrichedSchedules = [];
+      list.forEach((schedule) => {
+        // Find all doctor_schedule entries for this schedule
+        const matchingDoctorSchedules = doctorSchedules.filter(
           (d) => d.schedule_id == schedule.schedule_id,
         );
 
-        // Also try to find doctor directly from schedule if it has doctor_id
-        const directDoctorId = schedule.doctor_id || ds?.doctor_id;
-        const doctor = directDoctorId
-          ? doctors.find((doc) => doc.doctor_id == directDoctorId)
-          : null;
+        if (matchingDoctorSchedules.length === 0) return;
 
-        // Debug: Log when we can't find a match
-        if (!doctor) {
-          console.log(
-            `[fetchSchedules] No doctor found for schedule_id=${schedule.schedule_id}, day=${schedule.day}`,
-            { ds, directDoctorId, schedule },
-          );
-        }
+        // Create an entry for each doctor with that schedule
+        matchingDoctorSchedules.forEach((ds) => {
+          const directDoctorId = ds?.doctor_id;
+          const doctor = directDoctorId
+            ? doctors.find((doc) => doc.doctor_id == directDoctorId)
+            : null;
 
-        return {
-          ...schedule,
-          doctor_name: doctor?.doctor_name || null, // Use null instead of "Unknown Doctor"
-          doctor_id: directDoctorId || null,
-        };
+          if (doctor) {
+            enrichedSchedules.push({
+              ...schedule,
+              doctor_name: doctor.doctor_name,
+              doctor_id: directDoctorId,
+            });
+          }
+        });
       });
 
-      // Filter out schedules without a valid doctor (no "Unknown Doctor" entries)
-      const validSchedules = enrichedSchedules.filter(
-        (schedule) => schedule.doctor_name !== null,
-      );
-
-      console.log(
-        "[fetchSchedules] Valid schedules after filtering:",
-        validSchedules,
-      );
-
-      setSchedules(validSchedules);
+      setSchedules(enrichedSchedules);
     } catch (err) {
       console.error("[fetchSchedules] Error:", err);
       sileo.error({

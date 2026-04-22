@@ -584,6 +584,7 @@ export default function PatientPage() {
 
     setIsFetchingDoctor(true);
     setIsLoadingDoctor(true);
+    const token = getAuthToken();
     try {
       // Get current day and shift
       const now = new Date();
@@ -611,18 +612,21 @@ export default function PatientPage() {
             headers: {
               Accept: "application/json",
               "ngrok-skip-browser-warning": true,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
           }),
           fetch(`${backendBaseUrl}/schedules`, {
             headers: {
               Accept: "application/json",
               "ngrok-skip-browser-warning": true,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
           }),
           fetch(`${backendBaseUrl}/doctor-schedule`, {
             headers: {
               Accept: "application/json",
               "ngrok-skip-browser-warning": true,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
           }),
         ]);
@@ -675,6 +679,7 @@ export default function PatientPage() {
           headers: {
             Accept: "application/json",
             "ngrok-skip-browser-warning": true,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         });
 
