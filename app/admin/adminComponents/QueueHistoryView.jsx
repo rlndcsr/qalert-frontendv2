@@ -490,7 +490,14 @@ export default function QueueHistoryView() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, dateFilterType, startDate, endDate, sortOrder]);
+  }, [
+    searchQuery,
+    statusFilter,
+    dateFilterType,
+    startDate,
+    endDate,
+    sortOrder,
+  ]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -717,9 +724,15 @@ export default function QueueHistoryView() {
 
               {/* Sort order toggle */}
               <button
-                onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+                onClick={() =>
+                  setSortOrder((o) => (o === "desc" ? "asc" : "desc"))
+                }
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 rounded-lg transition-colors cursor-pointer"
-                title={sortOrder === "desc" ? "Showing newest first" : "Showing oldest first"}
+                title={
+                  sortOrder === "desc"
+                    ? "Showing newest first"
+                    : "Showing oldest first"
+                }
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
                 {sortOrder === "desc" ? "Newest First" : "Oldest First"}
@@ -978,7 +991,7 @@ export default function QueueHistoryView() {
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
                         <span>
-                          Duration: {queue.session_duration_minutes} min
+                          Duration: {queue.session_duration_minutes} mins
                         </span>
                       </div>
                     )}
