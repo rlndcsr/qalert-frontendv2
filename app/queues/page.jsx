@@ -49,7 +49,7 @@ export default function QueueDisplay() {
   const [scheduleShiftMap, setScheduleShiftMap] = useState({});
   const [scheduleDoctorMap, setScheduleDoctorMap] = useState({});
   const [doctorNameMap, setDoctorNameMap] = useState({});
-  const [shiftDoctorMap, setShiftDoctorMap] = useState({ AM: null, PM: null });
+  const [shiftDoctorMap, setShiftDoctorMap] = useState({ AM: [], PM: [] });
   const previousSchedulesDataRef = useRef(null);
   const previousScheduleDoctorRef = useRef(null);
   const previousDoctorNameRef = useRef(null);
@@ -240,7 +240,8 @@ export default function QueueDisplay() {
           }
 
           // Build AM/PM shift doctor map for today (reuses schedList)
-          const shiftDoctorMap = { AM: null, PM: null };
+          // Each shift now holds an array of doctor names for multiple doctors
+          const shiftDoctorMap = { AM: [], PM: [] };
           if (schedList.length > 0) {
             // Get today's day abbreviation
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -250,7 +251,10 @@ export default function QueueDisplay() {
               if (sched.day === todayDay && (sched.shift === "AM" || sched.shift === "PM")) {
                 const doctorId = scheduleDoctorMap[String(sched.schedule_id)];
                 if (doctorId) {
-                  shiftDoctorMap[sched.shift] = doctorNameMap[doctorId] || null;
+                  const docName = doctorNameMap[doctorId] || null;
+                  if (docName && !shiftDoctorMap[sched.shift].includes(docName)) {
+                    shiftDoctorMap[sched.shift].push(docName);
+                  }
                 }
               }
             });
@@ -732,9 +736,109 @@ export default function QueueDisplay() {
               </div>
             ) : waiting.length > 0 ? (
               (() => {
-                // Separate AM and PM queues
+                // Group waiting entries by shift and doctor
                 const amQueue = waiting.filter((w) => w.shift === "AM");
                 const pmQueue = waiting.filter((w) => w.shift === "PM");
+
+                // Group by doctor name within AM and PM
+                const groupByDoctor = (queue) => {
+                  const groups = {};
+                  queue.forEach((w) => {
+                    const doc = w.doctor || "Unknown";
+                    if (!groups[doc]) groups[doc] = [];
+                    groups[doc].push(w);
+                  });
+                  return groups;
+                };
+
+                const amByDoctor = groupByDoctor(amQueue);
+                const pmByDoctor = groupByDoctor(pmQueue);
+
+                // Collect all unique doctors per shift
+                const amDoctors = shiftDoctorMap.AM || [];
+                const pmDoctors = shiftDoctorMap.PM || [];
+
+                // Build doctor columns - for each shift, show each doctor's queue in a sub-column
+                const renderDoctorColumns = (doctors, queueByDoctor, shiftLabel) => {
+                  if (doctors.length === 0 && Object.keys(queueByDoctor).length === 0) {
+                    return (
+                      <div className="text-xs text-gray-400 text-center py-4">No {shiftLabel} queues</div>
+                    );
+                  }
+                  // If only one doctor (or none tracked), show a simple list
+                  const allDoctors = doctors.length > 0 ? doctors : Object.keys(queueByDoctor);
+                  if (allDoctors.length <= 1) {
+                    const entries = allDoctors.flatMap((d) => queueByDoctor[d] || []);
+                    return entries.length > 0 ? (
+                      entries.map((w) => (
+                        <div
+                          key={w.number}
+                          className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
+                          style={{ background: "linear-gradient(to right, #F1F5F9, transparent)" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
+                              style={{ backgroundColor: "#E8EDF2", borderColor: "#374D6C", color: "#374D6C" }}
+                            >
+                              <span className="text-sm font-black">{formatQueueNumber(w.number)}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] text-gray-500 truncate">{w.id_number}</p>
+                              {w.scheduledTime && (
+                                <p className="text-[10px] text-[#374D6C] font-medium">{formatTime(w.scheduledTime)}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center py-4">No {shiftLabel} queues</p>
+                    );
+                  }
+
+                  // Multiple doctors - render as sub-columns per doctor
+                  return (
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(allDoctors.length, 3)}, 1fr)` }}>
+                      {allDoctors.map((docName) => {
+                        const entries = queueByDoctor[docName] || [];
+                        return (
+                          <div key={docName} className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 px-1 bg-slate-100 rounded-lg py-1">
+                              <div className="w-2 h-2 rounded-full bg-[#374D6C]"></div>
+                              <span className="text-[10px] font-semibold text-[#374D6C] truncate">{docName}</span>
+                              <span className="text-[10px] text-gray-400 ml-auto">{entries.length}</span>
+                            </div>
+                            {entries.length > 0 ? entries.map((w) => (
+                              <div
+                                key={w.number}
+                                className="rounded-xl p-1.5 border border-slate-200 hover:shadow-sm transition-all"
+                                style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <div
+                                    className="rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0 shadow-sm border text-[10px] font-black"
+                                    style={{ backgroundColor: "#E8EDF2", borderColor: "#374D6C", color: "#374D6C" }}
+                                  >
+                                    {formatQueueNumber(w.number)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[9px] text-gray-400 truncate">{w.id_number}</p>
+                                    {w.scheduledTime && (
+                                      <p className="text-[9px] text-[#374D6C] font-medium">{formatTime(w.scheduledTime)}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )) : (
+                              <p className="text-[10px] text-gray-300 text-center py-1">No patients</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                };
 
                 return (
                   <div className="grid grid-cols-2 gap-3">
@@ -742,100 +846,20 @@ export default function QueueDisplay() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 px-1">
                         <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">AM</span>
-                        {shiftDoctorMap.AM && (
-                          <span className="text-sm text-gray-600 font-medium truncate">{shiftDoctorMap.AM}</span>
-                        )}
                         <div className="flex-1 h-px bg-[#374D6C]/20"></div>
                         <span className="text-xs text-gray-500">{amQueue.length}</span>
                       </div>
-                      {amQueue.length > 0 ? (
-                        amQueue.map((w) => (
-                          <div
-                            key={w.number}
-                            className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
-                            style={{
-                              background: "linear-gradient(to right, #F1F5F9, transparent)",
-                            }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
-                                style={{
-                                  backgroundColor: "#E8EDF2",
-                                  borderColor: "#374D6C",
-                                  color: "#374D6C",
-                                }}
-                              >
-                                <span className="text-sm font-black">
-                                  {formatQueueNumber(w.number)}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[10px] text-gray-500 truncate">
-                                  {w.id_number}
-                                </p>
-                                {w.scheduledTime && (
-                                  <p className="text-[10px] text-[#374D6C] font-medium">
-                                    {formatTime(w.scheduledTime)}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400 text-center py-4">No AM queues</p>
-                      )}
+                      {renderDoctorColumns(amDoctors, amByDoctor, "AM")}
                     </div>
 
                     {/* PM Column */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 px-1">
                         <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">PM</span>
-                        {shiftDoctorMap.PM && (
-                          <span className="text-sm text-gray-600 font-medium truncate">{shiftDoctorMap.PM}</span>
-                        )}
                         <div className="flex-1 h-px bg-[#374D6C]/20"></div>
                         <span className="text-xs text-gray-500">{pmQueue.length}</span>
                       </div>
-                      {pmQueue.length > 0 ? (
-                        pmQueue.map((w) => (
-                          <div
-                            key={w.number}
-                            className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
-                            style={{
-                              background: "linear-gradient(to right, #F1F5F9, transparent)",
-                            }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
-                                style={{
-                                  backgroundColor: "#E8EDF2",
-                                  borderColor: "#374D6C",
-                                  color: "#374D6C",
-                                }}
-                              >
-                                <span className="text-sm font-black">
-                                  {formatQueueNumber(w.number)}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[10px] text-gray-500 truncate">
-                                  {w.id_number}
-                                </p>
-                                {w.scheduledTime && (
-                                  <p className="text-[10px] text-[#374D6C] font-medium">
-                                    {formatTime(w.scheduledTime)}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400 text-center py-4">No PM queues</p>
-                      )}
+                      {renderDoctorColumns(pmDoctors, pmByDoctor, "PM")}
                     </div>
                   </div>
                 );
