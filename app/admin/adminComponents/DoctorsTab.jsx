@@ -31,6 +31,11 @@ export default function DoctorsTab() {
   /** Snapshot when modal opened — used to detect deletes and updates */
   const [initialScheduleSnapshot, setInitialScheduleSnapshot] = useState([]);
   const [showDeleteDoctorConfirm, setShowDeleteDoctorConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredDoctors = doctors.filter((d) =>
+    (d.doctor_name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   const fetchAll = async () => {
     setLoading(true);
@@ -364,6 +369,15 @@ export default function DoctorsTab() {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
       <h2 className="text-xl font-semibold mb-4">Doctors</h2>
+      <div className="mb-4 flex gap-2">
+        <input
+          type="text"
+          placeholder="Search doctors..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#00968a] focus:ring-2 focus:ring-[#00968a]/20"
+        />
+      </div>
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, idx) => (
@@ -380,7 +394,7 @@ export default function DoctorsTab() {
         </div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
-      ) : doctors.length === 0 ? (
+      ) : filteredDoctors.length === 0 ? (
         <div className="text-gray-500">No doctors found.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -403,7 +417,7 @@ export default function DoctorsTab() {
             </div>
           </div>
           {/* Doctor Cards */}
-          {doctors.map((doctor) => {
+          {filteredDoctors.map((doctor) => {
             // Find all doctorSchedules for this doctor
             const schedulesForDoctor = doctorSchedules.filter(
               (ds) => ds.doctor_id === doctor.doctor_id,
