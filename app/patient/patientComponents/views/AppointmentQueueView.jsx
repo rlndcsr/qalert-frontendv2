@@ -252,8 +252,13 @@ function UserQueueCard({ userQueue, reasonCategories }) {
 
   const status = userQueue.queue_status;
   const isCompleted = status === "completed";
-  const isActive = status === "waiting" || status === "called" || status === "now_serving";
-  const accentColor = isCompleted ? "#4ad294" : isActive ? "#4ad294" : "#94a3b8";
+  const isActive =
+    status === "waiting" || status === "called" || status === "now_serving";
+  const accentColor = isCompleted
+    ? "#4ad294"
+    : isActive
+      ? "#4ad294"
+      : "#94a3b8";
 
   if (isCompleted) {
     return (
@@ -286,18 +291,26 @@ function UserQueueCard({ userQueue, reasonCategories }) {
             </div>
             <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
               <CheckCircle2 className="w-4 h-4 text-white" />
-              <span className="text-white text-xs font-semibold">Completed</span>
+              <span className="text-white text-xs font-semibold">
+                Completed
+              </span>
             </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">Queue Number</p>
-              <p className="text-2xl font-bold text-white">#{formattedQueueNumber}</p>
+              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">
+                Queue Number
+              </p>
+              <p className="text-2xl font-bold text-white">
+                #{formattedQueueNumber}
+              </p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">Purpose</p>
+              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">
+                Purpose
+              </p>
               <p className="text-sm font-semibold text-white truncate mt-1">
                 {getReasonCategoryName(userQueue.reason_category_id)}
               </p>
@@ -788,7 +801,7 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
         </div>
 
         {/* Proceed hint */}
-        <div
+        {/* <div
           className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 border ${
             isCritical
               ? "bg-red-50 border-red-200"
@@ -807,7 +820,7 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
             </strong>{" "}
             before your slot may be reassigned.
           </p>
-        </div>
+        </div> */}
       </div>
     </motion.div>
   );
