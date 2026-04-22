@@ -291,7 +291,7 @@ export default function CalledPatientDisplay({
                         ? "Now Serving"
                         : "Called"}
                     </span>
-                    {calledPatient.queue_status === "called" && (
+                    {/* {calledPatient.queue_status === "called" && (
                       <MiniCountdown
                         queueEntryId={calledPatient.queue_entry_id}
                         onExpire={() =>
@@ -303,7 +303,7 @@ export default function CalledPatientDisplay({
                       <ServingCountdown
                         queueEntryId={calledPatient.queue_entry_id}
                       />
-                    )}
+                    )} */}
                   </div>
                 </div>
                 <p className="text-sm text-gray-700 mb-3">

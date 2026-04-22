@@ -623,10 +623,10 @@ function BookingPanel({
                 transition={{ duration: 0.3 }}
               >
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <Timer className="w-4 h-4 text-gray-400" />
                     <span>Appointment Time</span>
-                  </div>
+                  </div> */}
                 </label>
                 {isLoadingBookedSlots ? (
                   <div className="h-12 bg-gray-50 rounded-xl border flex items-center justify-center">

@@ -717,9 +717,8 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
 
       {/* Body */}
       <div className="px-6 py-5 flex flex-col items-center gap-4">
-        {/* Circular Ring Timer */}
-        <div className="relative">
-          {/* Pulse aura when critical */}
+        {/* Circular Ring Timer - COMMENTED OUT */}
+        {/* <div className="relative">
           {isCritical && (
             <motion.div
               className="absolute inset-0 rounded-full"
@@ -737,7 +736,6 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
             height={RING_SIZE}
             style={{ transform: "rotate(-90deg)" }}
           >
-            {/* Track */}
             <circle
               cx={RING_CENTER}
               cy={RING_CENTER}
@@ -747,7 +745,6 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
               strokeWidth={RING_STROKE}
               strokeLinecap="round"
             />
-            {/* Progress */}
             <motion.circle
               cx={RING_CENTER}
               cy={RING_CENTER}
@@ -762,7 +759,6 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
               transition={{ duration: 0.5, ease: "linear" }}
             />
           </svg>
-          {/* Center text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <motion.span
               key={secondsLeft}
@@ -779,7 +775,7 @@ function CalledCountdown({ queueEntryId, queueNumber }) {
               remaining
             </span>
           </div>
-        </div>
+        </div> */}
 
         {/* Status message */}
         <div className="text-center">
