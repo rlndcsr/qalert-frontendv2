@@ -410,7 +410,7 @@ export function useAppointment() {
 
   // Book an appointment
   const bookAppointment = useCallback(
-    async (scheduleId, appointmentDate, appointmentTime, reasonCategoryId) => {
+    async (scheduleId, appointmentDate, appointmentTime, reasonCategoryId, doctorId) => {
       const token = getAuthToken();
       if (!token) {
         sileo.error({
@@ -442,6 +442,7 @@ export function useAppointment() {
         body: JSON.stringify({
           user_id: userId,
           schedule_id: parseInt(scheduleId),
+          doctor_id: doctorId ? parseInt(doctorId) : null,
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           reason_category_id: parseInt(reasonCategoryId),

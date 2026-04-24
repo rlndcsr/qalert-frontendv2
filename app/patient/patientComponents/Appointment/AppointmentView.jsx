@@ -369,9 +369,9 @@ function BookingPanel({
 
   const timeOptions = useMemo(() => {
     if (!selectedSchedule) return [];
-    const [schedId] = selectedSchedule.split("-");
+    const [schedId, docId] = selectedSchedule.split("-");
     const schedule = availableSchedules.find(
-      (s) => s.schedule_id?.toString() === schedId,
+      (s) => s.schedule_id?.toString() === schedId && s.doctor_id?.toString() === docId,
     );
     if (!schedule) return [];
 
@@ -426,8 +426,8 @@ function BookingPanel({
     const formattedTime = appointmentTime.includes(":")
       ? appointmentTime.substring(0, 5)
       : appointmentTime;
-    const [schedId] = selectedSchedule.split("-");
-    onSubmit(schedId, selectedDate, formattedTime, selectedPurpose);
+    const [schedId, doctorId] = selectedSchedule.split("-");
+    onSubmit(schedId, selectedDate, formattedTime, selectedPurpose, doctorId);
   };
 
   useEffect(() => {
@@ -716,7 +716,11 @@ export default function AppointmentView() {
   const isLoading = isLoadingAppointments || isLoadingSchedules;
 
   const appointmentSchedule = activeAppointment
-    ? schedules.find((s) => s.schedule_id === activeAppointment.schedule_id)
+    ? schedules.find(
+        (s) =>
+          s.schedule_id === activeAppointment.schedule_id &&
+          s.doctor_id === activeAppointment.doctor_id,
+      )
     : null;
 
   if (isLoading) {

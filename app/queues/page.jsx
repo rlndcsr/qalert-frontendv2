@@ -44,6 +44,8 @@ export default function QueueDisplay() {
   // Appointment to schedule mapping
   const [aptScheduleMap, setAptScheduleMap] = useState({});
   const previousAptScheduleRef = useRef(null);
+  const [aptDoctorMap, setAptDoctorMap] = useState({});
+  const previousAptDoctorRef = useRef(null);
 
   // Schedule shift and doctor maps
   const [scheduleShiftMap, setScheduleShiftMap] = useState({});
@@ -181,6 +183,7 @@ export default function QueueDisplay() {
           // Build appointment time map and appointment-to-schedule map keyed by appointment_id (as string)
           const timeMap = {};
           const aptScheduleMap = {};
+          const aptDoctorMap = {};
           if (appointmentsResponse.ok) {
             const aptData = await appointmentsResponse.json();
             const aptList = Array.isArray(aptData)
@@ -192,6 +195,8 @@ export default function QueueDisplay() {
                   timeMap[String(apt.appointment_id)] = apt.appointment_time;
                 if (apt.schedule_id != null)
                   aptScheduleMap[String(apt.appointment_id)] = String(apt.schedule_id);
+                if (apt.doctor_id != null)
+                  aptDoctorMap[String(apt.appointment_id)] = String(apt.doctor_id);
               }
             });
           }
@@ -285,6 +290,11 @@ export default function QueueDisplay() {
           if (!isDataEqual(aptScheduleMap, previousAptScheduleRef.current)) {
             previousAptScheduleRef.current = aptScheduleMap;
             setAptScheduleMap(aptScheduleMap);
+          }
+
+          if (!isDataEqual(aptDoctorMap, previousAptDoctorRef.current)) {
+            previousAptDoctorRef.current = aptDoctorMap;
+            setAptDoctorMap(aptDoctorMap);
           }
 
           if (!isDataEqual({ shiftMap }, previousSchedulesDataRef.current)) {
@@ -381,19 +391,22 @@ export default function QueueDisplay() {
       const aptTime = entry.appointment_id
         ? appointmentTimeMap[String(entry.appointment_id)]
         : null;
-      // Get schedule_id from appointment, then look up shift and doctor
+      // Get schedule_id and doctor_id from appointment
       const scheduleId = entry.appointment_id
         ? aptScheduleMap[String(entry.appointment_id)]
         : null;
+      const doctorId = entry.appointment_id
+        ? aptDoctorMap[String(entry.appointment_id)]
+        : null;
       const shift = scheduleId ? scheduleShiftMap[scheduleId] || null : null;
-      // scheduleDoctorMap[schedule_id] -> array of doctor_ids, then doctorNameMap[doctor_id] -> doctor_name
-      const doctorIds = scheduleId ? scheduleDoctorMap[scheduleId] || null : null;
-      // Get all doctor names for this schedule
-      const doctors = doctorIds && Array.isArray(doctorIds)
-        ? doctorIds.map((id) => doctorNameMap[id] || null).filter(Boolean)
+      // Get the specific doctor for this appointment
+      const doctor = doctorId ? doctorNameMap[doctorId] || null : null;
+      // scheduleDoctorMap[schedule_id] -> array of all doctor_ids for this schedule
+      const allDoctorIds = scheduleId ? scheduleDoctorMap[scheduleId] || null : null;
+      // Get all doctor names for this schedule (for display purposes)
+      const doctors = allDoctorIds && Array.isArray(allDoctorIds)
+        ? allDoctorIds.map((id) => doctorNameMap[id] || null).filter(Boolean)
         : [];
-      // Use first doctor name as primary doctor, or null
-      const doctor = doctors.length > 0 ? doctors[0] : null;
       return {
         number: entry.queue_number,
         name: users[entry.user_id]?.name || "Unknown",
@@ -416,7 +429,7 @@ export default function QueueDisplay() {
       waiting: waitingData,
       totalInQueue: total,
     };
-  }, [queueEntries, users, isLoadingData, appointmentTimeMap, aptScheduleMap, scheduleShiftMap, scheduleDoctorMap, doctorNameMap, shiftDoctorMap]);
+  }, [queueEntries, users, isLoadingData, appointmentTimeMap, aptScheduleMap, aptDoctorMap, scheduleShiftMap, scheduleDoctorMap, doctorNameMap, shiftDoctorMap]);
 
   // Update time only on client side after mount
   useEffect(() => {
