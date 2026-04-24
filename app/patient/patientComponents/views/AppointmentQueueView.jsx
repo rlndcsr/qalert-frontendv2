@@ -6,7 +6,6 @@ import {
   ClipboardList,
   RefreshCw,
   Hash,
-  Activity,
   Users,
   Tag,
   ExternalLink,
@@ -20,6 +19,7 @@ import {
   BellRing,
   Navigation2,
   TriangleAlert,
+  Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -235,7 +235,7 @@ function NoServingCard() {
 }
 
 // ─── User Queue Card ────────────────────────────────────────────────────────
-function UserQueueCard({ userQueue, reasonCategories }) {
+function UserQueueCard({ userQueue, reasonCategories, aptDoctorMap, doctorNameMap }) {
   const formattedQueueNumber = userQueue.queue_number
     ? String(userQueue.queue_number).padStart(3, "0")
     : "—";
@@ -248,6 +248,14 @@ function UserQueueCard({ userQueue, reasonCategories }) {
       (cat) => cat.reason_category_id === categoryId,
     );
     return category?.name || "—";
+  };
+
+  // Get doctor name from appointment's doctor_id
+  const getDoctorName = () => {
+    if (!userQueue.appointment_id) return "—";
+    const doctorId = aptDoctorMap[String(userQueue.appointment_id)];
+    if (!doctorId) return "—";
+    return doctorNameMap[doctorId] || "—";
   };
 
   const status = userQueue.queue_status;
@@ -372,24 +380,14 @@ function UserQueueCard({ userQueue, reasonCategories }) {
             accent
           />
           <QueueInfoItem
-            icon={Activity}
-            label="Status"
-            value={
-              status === "now_serving"
-                ? "Now Serving"
-                : status === "called"
-                  ? "Called"
-                  : status === "completed"
-                    ? "Completed"
-                    : status === "cancelled"
-                      ? "Cancelled"
-                      : "Waiting"
-            }
-          />
-          <QueueInfoItem
             icon={Tag}
             label="Category"
             value={getReasonCategoryName(userQueue.reason_category_id)}
+          />
+          <QueueInfoItem
+            icon={Stethoscope}
+            label="Doctor"
+            value={getDoctorName()}
           />
         </div>
       </div>
@@ -438,8 +436,8 @@ const fetchQueueData = async () => {
     throw new Error("User ID not found");
   }
 
-  // Fetch queues and reason categories in parallel
-  const [queueResponse, reasonCategories] = await Promise.all([
+  // Fetch queues, reason categories, appointments, and doctors in parallel
+  const [queueResponse, reasonCategories, appointmentsResponse, doctorsResponse] = await Promise.all([
     fetch(`${API_BASE_URL}/queues`, {
       headers: {
         Accept: "application/json",
@@ -448,10 +446,52 @@ const fetchQueueData = async () => {
       },
     }),
     fetchReasonCategories(),
+    fetch(`${API_BASE_URL}/appointments`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+    }),
+    fetch(`${API_BASE_URL}/doctors`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+    }),
   ]);
 
   if (!queueResponse.ok) {
     throw new Error("Failed to fetch queue data");
+  }
+
+  // Build doctor name map
+  const doctorNameMap = {};
+  if (doctorsResponse.ok) {
+    const doctorsData = await doctorsResponse.json();
+    const doctorsList = Array.isArray(doctorsData)
+      ? doctorsData
+      : doctorsData?.data || doctorsData?.doctors || [];
+    doctorsList.forEach((doc) => {
+      if (doc.doctor_id != null) {
+        doctorNameMap[String(doc.doctor_id)] = doc.doctor_name || null;
+      }
+    });
+  }
+
+  // Build appointment-to-doctor map
+  const aptDoctorMap = {};
+  if (appointmentsResponse.ok) {
+    const aptData = await appointmentsResponse.json();
+    const aptList = Array.isArray(aptData)
+      ? aptData
+      : aptData?.data || aptData?.appointments || [];
+    aptList.forEach((apt) => {
+      if (apt.appointment_id != null && apt.doctor_id != null) {
+        aptDoctorMap[String(apt.appointment_id)] = String(apt.doctor_id);
+      }
+    });
   }
 
   const data = await queueResponse.json();
@@ -493,7 +533,7 @@ const fetchQueueData = async () => {
   );
   const userQueue = activeUserEntry || sortedUserEntries[0] || null;
 
-  return { userQueue, nowServingQueue, reasonCategories };
+  return { userQueue, nowServingQueue, reasonCategories, aptDoctorMap, doctorNameMap };
 };
 
 // Service to fetch future appointments
@@ -908,6 +948,8 @@ export default function AppointmentQueueView() {
   const [nowServingQueue, setNowServingQueue] = useState(null);
   const [reasonCategories, setReasonCategories] = useState([]);
   const [futureAppointment, setFutureAppointment] = useState(null);
+  const [aptDoctorMap, setAptDoctorMap] = useState({});
+  const [doctorNameMap, setDoctorNameMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -937,6 +979,8 @@ export default function AppointmentQueueView() {
       setNowServingQueue(queueData.nowServingQueue);
       setReasonCategories(queueData.reasonCategories);
       setFutureAppointment(futureApt);
+      setAptDoctorMap(queueData.aptDoctorMap || {});
+      setDoctorNameMap(queueData.doctorNameMap || {});
     } catch (err) {
       console.error("Error fetching queue data:", err);
       setError(err.message || "Failed to load queue data");
@@ -1092,6 +1136,8 @@ export default function AppointmentQueueView() {
           <UserQueueCard
             userQueue={userQueue}
             reasonCategories={reasonCategories}
+            aptDoctorMap={aptDoctorMap}
+            doctorNameMap={doctorNameMap}
           />
         </div>
       )}
