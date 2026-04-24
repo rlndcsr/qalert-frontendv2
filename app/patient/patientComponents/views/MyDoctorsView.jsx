@@ -221,9 +221,12 @@ export default function MyDoctorsView() {
 
   // Filter doctors based on active filter and search term
   const filteredDoctors = useMemo(() => {
-    let result = activeFilter === "all"
-      ? activeDoctors
-      : activeDoctors.filter((doctor) => doctorHasScheduleOnDay(doctor, activeFilter));
+    let result =
+      activeFilter === "all"
+        ? activeDoctors
+        : activeDoctors.filter((doctor) =>
+            doctorHasScheduleOnDay(doctor, activeFilter),
+          );
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
