@@ -211,7 +211,7 @@ export default function QueueDisplay() {
             });
           }
 
-          // Build schedule-to-doctor map using doctor_schedule table
+          // Build schedule-to-doctor map using doctor_schedule table (stores ARRAY of doctor_ids per schedule)
           const scheduleDoctorMap = {};
           if (doctorSchedulesResponse.ok) {
             const dsData = await doctorSchedulesResponse.json();
@@ -220,7 +220,11 @@ export default function QueueDisplay() {
               : dsData?.data || dsData?.doctor_schedules || [];
             dsList.forEach((ds) => {
               if (ds.schedule_id != null && ds.doctor_id != null) {
-                scheduleDoctorMap[String(ds.schedule_id)] = String(ds.doctor_id);
+                const schedKey = String(ds.schedule_id);
+                if (!scheduleDoctorMap[schedKey]) {
+                  scheduleDoctorMap[schedKey] = [];
+                }
+                scheduleDoctorMap[schedKey].push(String(ds.doctor_id));
               }
             });
           }
@@ -249,12 +253,14 @@ export default function QueueDisplay() {
             // Find today's AM and PM schedules
             schedList.forEach((sched) => {
               if (sched.day === todayDay && (sched.shift === "AM" || sched.shift === "PM")) {
-                const doctorId = scheduleDoctorMap[String(sched.schedule_id)];
-                if (doctorId) {
-                  const docName = doctorNameMap[doctorId] || null;
-                  if (docName && !shiftDoctorMap[sched.shift].includes(docName)) {
-                    shiftDoctorMap[sched.shift].push(docName);
-                  }
+                const doctorIds = scheduleDoctorMap[String(sched.schedule_id)];
+                if (doctorIds && Array.isArray(doctorIds)) {
+                  doctorIds.forEach((doctorId) => {
+                    const docName = doctorNameMap[doctorId] || null;
+                    if (docName && !shiftDoctorMap[sched.shift].includes(docName)) {
+                      shiftDoctorMap[sched.shift].push(docName);
+                    }
+                  });
                 }
               }
             });
@@ -380,9 +386,14 @@ export default function QueueDisplay() {
         ? aptScheduleMap[String(entry.appointment_id)]
         : null;
       const shift = scheduleId ? scheduleShiftMap[scheduleId] || null : null;
-      // scheduleDoctorMap[schedule_id] -> doctor_id, then doctorNameMap[doctor_id] -> doctor_name
-      const doctorId = scheduleId ? scheduleDoctorMap[scheduleId] || null : null;
-      const doctor = doctorId ? doctorNameMap[doctorId] || null : null;
+      // scheduleDoctorMap[schedule_id] -> array of doctor_ids, then doctorNameMap[doctor_id] -> doctor_name
+      const doctorIds = scheduleId ? scheduleDoctorMap[scheduleId] || null : null;
+      // Get all doctor names for this schedule
+      const doctors = doctorIds && Array.isArray(doctorIds)
+        ? doctorIds.map((id) => doctorNameMap[id] || null).filter(Boolean)
+        : [];
+      // Use first doctor name as primary doctor, or null
+      const doctor = doctors.length > 0 ? doctors[0] : null;
       return {
         number: entry.queue_number,
         name: users[entry.user_id]?.name || "Unknown",
@@ -391,6 +402,7 @@ export default function QueueDisplay() {
         scheduledTime: aptTime || null,
         shift,
         doctor,
+        doctors,  // All doctors for this queue entry
       };
     });
 
@@ -734,7 +746,7 @@ export default function QueueDisplay() {
                   </div>
                 ))}
               </div>
-            ) : waiting.length > 0 ? (
+            ) : (
               (() => {
                 // Group waiting entries by shift and doctor
                 const amQueue = waiting.filter((w) => w.shift === "AM");
@@ -744,6 +756,7 @@ export default function QueueDisplay() {
                 const groupByDoctor = (queue) => {
                   const groups = {};
                   queue.forEach((w) => {
+                    // Use the primary assigned doctor for this queue entry
                     const doc = w.doctor || "Unknown";
                     if (!groups[doc]) groups[doc] = [];
                     groups[doc].push(w);
@@ -758,6 +771,24 @@ export default function QueueDisplay() {
                 const amDoctors = shiftDoctorMap.AM || [];
                 const pmDoctors = shiftDoctorMap.PM || [];
 
+                // DEBUG: Extract unique doctors from queue data
+                const amDoctorsFromQueue = Object.keys(amByDoctor);
+                const pmDoctorsFromQueue = Object.keys(pmByDoctor);
+
+                // DEBUG: Combined unique doctors (from schedule + queue data)
+                const amDoctorsCombined = Array.from(new Set([...amDoctors, ...amDoctorsFromQueue]));
+                const pmDoctorsCombined = Array.from(new Set([...pmDoctors, ...pmDoctorsFromQueue]));
+
+                // DEBUG: Render unique doctors per shift
+                const renderDebugDoctors = (shiftLabel, scheduleDocs, queueDocs, combinedDocs) => (
+                  <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-[10px]">
+                    <p className="font-bold text-yellow-700">{shiftLabel} Doctors Debug:</p>
+                    <p className="text-yellow-600">From schedule: [{scheduleDocs.join(", ")}]</p>
+                    <p className="text-yellow-600">From queue data: [{queueDocs.join(", ")}]</p>
+                    <p className="text-yellow-700 font-semibold">Combined (deduped): [{combinedDocs.join(", ")}]</p>
+                  </div>
+                );
+
                 // Build doctor columns - for each shift, show each doctor's queue in a sub-column
                 const renderDoctorColumns = (doctors, queueByDoctor, shiftLabel) => {
                   if (doctors.length === 0 && Object.keys(queueByDoctor).length === 0) {
@@ -765,35 +796,44 @@ export default function QueueDisplay() {
                       <div className="text-xs text-gray-400 text-center py-4">No {shiftLabel} queues</div>
                     );
                   }
-                  // If only one doctor (or none tracked), show a simple list
-                  const allDoctors = doctors.length > 0 ? doctors : Object.keys(queueByDoctor);
+                  // Combine doctors from schedule AND doctors from queue data to get all doctors with queues
+                  const allDoctorsSet = new Set([...doctors, ...Object.keys(queueByDoctor)]);
+                  const allDoctors = Array.from(allDoctorsSet);
                   if (allDoctors.length <= 1) {
+                    const singleDoctorName = allDoctors.length === 1 ? allDoctors[0] : (Object.keys(queueByDoctor)[0] || "Unknown");
                     const entries = allDoctors.flatMap((d) => queueByDoctor[d] || []);
-                    return entries.length > 0 ? (
-                      entries.map((w) => (
-                        <div
-                          key={w.number}
-                          className="rounded-2xl p-2 border border-slate-200 hover:shadow-md transition-all"
-                          style={{ background: "linear-gradient(to right, #F1F5F9, transparent)" }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0 shadow-sm border"
-                              style={{ backgroundColor: "#E8EDF2", borderColor: "#374D6C", color: "#374D6C" }}
-                            >
-                              <span className="text-sm font-black">{formatQueueNumber(w.number)}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[10px] text-gray-500 truncate">{w.id_number}</p>
-                              {w.scheduledTime && (
-                                <p className="text-[10px] text-[#374D6C] font-medium">{formatTime(w.scheduledTime)}</p>
-                              )}
+                    return (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 px-1 bg-slate-100 rounded-lg py-1">
+                          <div className="w-2 h-2 rounded-full bg-[#374D6C]"></div>
+                          <span className="text-[10px] font-semibold text-[#374D6C] truncate">{singleDoctorName}</span>
+                          <span className="text-[10px] text-gray-400 ml-auto">{entries.length}</span>
+                        </div>
+                        {entries.length > 0 ? entries.map((w) => (
+                          <div
+                            key={w.number}
+                            className="rounded-xl p-1.5 border border-slate-200 hover:shadow-sm transition-all"
+                            style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className="rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0 shadow-sm border text-[10px] font-black"
+                                style={{ backgroundColor: "#E8EDF2", borderColor: "#374D6C", color: "#374D6C" }}
+                              >
+                                {formatQueueNumber(w.number)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[9px] text-gray-400 truncate">{w.id_number}</p>
+                                {w.scheduledTime && (
+                                  <p className="text-[9px] text-[#374D6C] font-medium">{formatTime(w.scheduledTime)}</p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-gray-400 text-center py-4">No {shiftLabel} queues</p>
+                        )) : (
+                          <p className="text-[10px] text-gray-300 text-center py-1">No patients</p>
+                        )}
+                      </div>
                     );
                   }
 
@@ -849,7 +889,8 @@ export default function QueueDisplay() {
                         <div className="flex-1 h-px bg-[#374D6C]/20"></div>
                         <span className="text-xs text-gray-500">{amQueue.length}</span>
                       </div>
-                      {renderDoctorColumns(amDoctors, amByDoctor, "AM")}
+                      {renderDebugDoctors("AM", amDoctors, amDoctorsFromQueue, amDoctorsCombined)}
+                      {renderDoctorColumns(amDoctorsCombined, amByDoctor, "AM")}
                     </div>
 
                     {/* PM Column */}
@@ -859,17 +900,12 @@ export default function QueueDisplay() {
                         <div className="flex-1 h-px bg-[#374D6C]/20"></div>
                         <span className="text-xs text-gray-500">{pmQueue.length}</span>
                       </div>
-                      {renderDoctorColumns(pmDoctors, pmByDoctor, "PM")}
+                      {renderDebugDoctors("PM", pmDoctors, pmDoctorsFromQueue, pmDoctorsCombined)}
+                      {renderDoctorColumns(pmDoctorsCombined, pmByDoctor, "PM")}
                     </div>
                   </div>
                 );
               })()
-            ) : (
-              <div className="text-left text-gray-500 p-2">
-                <p className="text-sm md:text-base font-medium">
-                  No one's in the queue right now.
-                </p>
-              </div>
             )}
           </div>
 
