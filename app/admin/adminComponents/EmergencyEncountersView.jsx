@@ -154,62 +154,69 @@ function ViewModal({ encounter, isOpen, onClose }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Emergency Encounter Details
-                  </h2>
+              <div className="bg-gradient-to-r from-green-50 to-teal-50 px-6 py-4 border-b border-green-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-green-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Emergency Encounter Details
+                    </h2>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
               </div>
 
               <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-130px)] space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                    <User className="w-6 h-6 text-red-600" />
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <User className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-gray-900">
                       {encounter.patient_name}
                     </h3>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      Emergency
-                    </span>
                   </div>
                 </div>
 
-                <div className="grid gap-3 pt-2">
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-3 text-sm">
-                    <CreditCard className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">ID Number:</span>
-                    <span className="text-gray-900 font-medium">
+                    <CreditCard className="w-3 h-3 text-gray-800" />
+                    <span className="text-gray-800 font-bold text-xs">
+                      ID Number:
+                    </span>
+                    <span className="text-gray-500 font-medium text-xs">
                       {encounter.id_number || "—"}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">Contact:</span>
-                    <span className="text-gray-900 font-medium">
+                    <Phone className="w-3 h-3 text-gray-800" />
+                    <span className="text-gray-800 font-bold text-xs">
+                      Contact:
+                    </span>
+                    <span className="text-gray-500 font-medium text-xs">
                       {encounter.contact_number}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">Date:</span>
-                    <span className="text-gray-900 font-medium">
+                    <Calendar className="w-3 h-3 text-gray-800" />
+                    <span className="text-gray-800 font-bold text-xs">
+                      Date:
+                    </span>
+                    <span className="text-gray-500 font-medium text-xs">
                       {formatDate(encounter.date)}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">Time:</span>
-                    <span className="text-gray-900 font-medium">
+                    <Clock className="w-3 h-3 text-gray-800" />
+                    <span className="text-gray-800 font-bold text-xs">
+                      Time:
+                    </span>
+                    <span className="text-gray-500 font-medium text-xs">
                       {formatTime(encounter.time)}
                     </span>
                   </div>
@@ -217,12 +224,12 @@ function ViewModal({ encounter, isOpen, onClose }) {
 
                 <div className="border-t border-gray-100 pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
+                    <FileText className="w-3 h-3 text-gray-400" />
                     <span className="text-sm font-medium text-gray-700">
                       Details
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
                     {encounter.details}
                   </p>
                 </div>
@@ -231,7 +238,7 @@ function ViewModal({ encounter, isOpen, onClose }) {
               <div className="px-6 py-4 border-t border-gray-100">
                 <button
                   onClick={onClose}
-                  className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-green-100 hover:bg-green-200 text-green-700 font-medium rounded-lg transition-colors cursor-pointer"
                 >
                   Close
                 </button>
