@@ -40,7 +40,9 @@ const DATE_RANGE_OPTIONS = [
 // ─── Date Range Filter Component ───────────────────────────────────────────
 function DateRangeFilter({ activeRange, onRangeChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const activeOption = DATE_RANGE_OPTIONS.find((opt) => opt.id === activeRange) || DATE_RANGE_OPTIONS[0];
+  const activeOption =
+    DATE_RANGE_OPTIONS.find((opt) => opt.id === activeRange) ||
+    DATE_RANGE_OPTIONS[0];
 
   return (
     <div className="relative">
@@ -50,12 +52,17 @@ function DateRangeFilter({ activeRange, onRangeChange }) {
       >
         <CalendarRange className="w-4 h-4 text-[#4ad294]" />
         <span>{activeOption.label}</span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,8 +81,12 @@ function DateRangeFilter({ activeRange, onRangeChange }) {
                     : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
-                {activeRange === option.id && <CheckCircle2 className="w-4 h-4" />}
-                <span className={activeRange === option.id ? "ml-0" : "ml-6"}>{option.label}</span>
+                {activeRange === option.id && (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                <span className={activeRange === option.id ? "ml-0" : "ml-6"}>
+                  {option.label}
+                </span>
               </button>
             ))}
           </motion.div>
@@ -330,50 +341,6 @@ const fetchDoctors = async () => {
   }
 };
 
-// Service to fetch doctor schedules
-const fetchDoctorSchedules = async () => {
-  const headers = {
-    Accept: "application/json",
-    "ngrok-skip-browser-warning": "true",
-  };
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/doctor-schedule`, {
-      headers,
-    });
-
-    if (!response.ok) {
-      console.warn("Failed to fetch doctor schedules");
-      return [];
-    }
-
-    const data = await response.json();
-    return Array.isArray(data) ? data : data?.data || [];
-  } catch (err) {
-    console.warn("Error fetching doctor schedules:", err);
-    return [];
-  }
-};
-
-// Helper function to resolve doctor name from schedule_id
-const resolveDoctorName = (scheduleId, doctorSchedules, doctors) => {
-  if (!scheduleId || !doctorSchedules || !doctors) return null;
-
-  // Find the doctor-schedule entry that matches this schedule_id
-  const doctorSchedule = doctorSchedules.find(
-    (ds) => ds.schedule_id === scheduleId,
-  );
-
-  if (!doctorSchedule) return null;
-
-  // Find the doctor that matches the doctor_id
-  const doctor = doctors.find(
-    (doc) => doc.doctor_id === doctorSchedule.doctor_id,
-  );
-
-  return doctor?.doctor_name || null;
-};
-
 // Service to fetch user's queue history
 const fetchUserHistory = async () => {
   const token = getAuthToken();
@@ -394,7 +361,7 @@ const fetchUserHistory = async () => {
   }
 
   // Fetch all required data in parallel
-  const [queueResponse, reasonCategories, doctors, doctorSchedules] =
+  const [queueResponse, reasonCategories, doctors, appointmentsResponse] =
     await Promise.all([
       fetch(`${API_BASE_URL}/queues`, {
         headers: {
@@ -405,11 +372,39 @@ const fetchUserHistory = async () => {
       }),
       fetchReasonCategories(),
       fetchDoctors(),
-      fetchDoctorSchedules(),
+      fetch(`${API_BASE_URL}/appointments`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      }),
     ]);
 
   if (!queueResponse.ok) {
     throw new Error("Failed to fetch queue history");
+  }
+
+  // Build doctor name map (doctor_id → doctor_name)
+  const doctorNameMap = {};
+  doctors.forEach((doc) => {
+    if (doc.doctor_id != null) {
+      doctorNameMap[String(doc.doctor_id)] = doc.doctor_name || null;
+    }
+  });
+
+  // Build appointment-to-doctor map (appointment_id → doctor_id)
+  let aptDoctorMap = {};
+  if (appointmentsResponse.ok) {
+    const aptData = await appointmentsResponse.json();
+    const aptList = Array.isArray(aptData)
+      ? aptData
+      : aptData?.data || aptData?.appointments || [];
+    aptList.forEach((apt) => {
+      if (apt.appointment_id != null && apt.doctor_id != null) {
+        aptDoctorMap[String(apt.appointment_id)] = String(apt.doctor_id);
+      }
+    });
   }
 
   const data = await queueResponse.json();
@@ -438,7 +433,12 @@ const fetchUserHistory = async () => {
     return bTime - aTime;
   });
 
-  return { history: sortedEntries, reasonCategories, doctors, doctorSchedules };
+  return {
+    history: sortedEntries,
+    reasonCategories,
+    doctorNameMap,
+    aptDoctorMap,
+  };
 };
 
 // ─── Date grouping helper ───────────────────────────────────────────────────
@@ -467,8 +467,8 @@ function getDateGroup(dateStr) {
 export default function MyHistoryView() {
   const [history, setHistory] = useState([]);
   const [reasonCategories, setReasonCategories] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [doctorSchedules, setDoctorSchedules] = useState([]);
+  const [doctorNameMap, setDoctorNameMap] = useState({});
+  const [aptDoctorMap, setAptDoctorMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -480,12 +480,12 @@ export default function MyHistoryView() {
     setError(null);
 
     try {
-      const { history, reasonCategories, doctors, doctorSchedules } =
+      const { history, reasonCategories, doctorNameMap, aptDoctorMap } =
         await fetchUserHistory();
       setHistory(history);
       setReasonCategories(reasonCategories);
-      setDoctors(doctors);
-      setDoctorSchedules(doctorSchedules);
+      setDoctorNameMap(doctorNameMap);
+      setAptDoctorMap(aptDoctorMap);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError(err.message || "Failed to load history");
@@ -534,12 +534,12 @@ export default function MyHistoryView() {
       entries = entries.filter((entry) => {
         const reason = entry.reason?.toLowerCase() || "";
         const queueNum = String(entry.queue_number || "");
-        const doctor =
-          resolveDoctorName(
-            entry.schedule_id,
-            doctorSchedules,
-            doctors,
-          )?.toLowerCase() || "";
+        // Get doctor name via appointment_id → doctor_id → doctor_name
+        const aptId = entry.appointment_id
+          ? aptDoctorMap[String(entry.appointment_id)]
+          : null;
+        const docId = aptId ? doctorNameMap[aptId] : null;
+        const doctor = docId ? docId.toLowerCase() : "";
 
         // Resolve the reason category name from its ID
         const categoryId =
@@ -567,8 +567,8 @@ export default function MyHistoryView() {
     activeFilter,
     dateRange,
     searchQuery,
-    doctorSchedules,
-    doctors,
+    doctorNameMap,
+    aptDoctorMap,
     reasonCategories,
   ]);
 
@@ -625,7 +625,10 @@ export default function MyHistoryView() {
 
         <div className="flex items-center gap-2">
           {!isLoading && !error && history.length > 0 && (
-            <DateRangeFilter activeRange={dateRange} onRangeChange={setDateRange} />
+            <DateRangeFilter
+              activeRange={dateRange}
+              onRangeChange={setDateRange}
+            />
           )}
           <button
             onClick={fetchData}
@@ -788,19 +791,24 @@ export default function MyHistoryView() {
               <div key={group.label}>
                 <DateGroupLabel label={group.label} />
                 <div className="space-y-2.5 mb-4">
-                  {group.entries.map((entry, index) => (
-                    <HistoryCard
-                      key={entry.queue_entry_id || `${group.label}-${index}`}
-                      entry={entry}
-                      index={index}
-                      reasonCategories={reasonCategories}
-                      doctorName={resolveDoctorName(
-                        entry.schedule_id,
-                        doctorSchedules,
-                        doctors,
-                      )}
-                    />
-                  ))}
+                  {group.entries.map((entry, index) => {
+                    // Resolve doctor name via appointment_id → doctor_id
+                    const aptId = entry.appointment_id
+                      ? aptDoctorMap[String(entry.appointment_id)]
+                      : null;
+                    const resolvedDoctor = aptId
+                      ? doctorNameMap[aptId] || null
+                      : null;
+                    return (
+                      <HistoryCard
+                        key={entry.queue_entry_id || `${group.label}-${index}`}
+                        entry={entry}
+                        index={index}
+                        reasonCategories={reasonCategories}
+                        doctorName={resolvedDoctor}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}

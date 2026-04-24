@@ -235,7 +235,12 @@ function NoServingCard() {
 }
 
 // ─── User Queue Card ────────────────────────────────────────────────────────
-function UserQueueCard({ userQueue, reasonCategories, aptDoctorMap, doctorNameMap }) {
+function UserQueueCard({
+  userQueue,
+  reasonCategories,
+  aptDoctorMap,
+  doctorNameMap,
+}) {
   const formattedQueueNumber = userQueue.queue_number
     ? String(userQueue.queue_number).padStart(3, "0")
     : "—";
@@ -437,7 +442,12 @@ const fetchQueueData = async () => {
   }
 
   // Fetch queues, reason categories, appointments, and doctors in parallel
-  const [queueResponse, reasonCategories, appointmentsResponse, doctorsResponse] = await Promise.all([
+  const [
+    queueResponse,
+    reasonCategories,
+    appointmentsResponse,
+    doctorsResponse,
+  ] = await Promise.all([
     fetch(`${API_BASE_URL}/queues`, {
       headers: {
         Accept: "application/json",
@@ -533,7 +543,13 @@ const fetchQueueData = async () => {
   );
   const userQueue = activeUserEntry || sortedUserEntries[0] || null;
 
-  return { userQueue, nowServingQueue, reasonCategories, aptDoctorMap, doctorNameMap };
+  return {
+    userQueue,
+    nowServingQueue,
+    reasonCategories,
+    aptDoctorMap,
+    doctorNameMap,
+  };
 };
 
 // Service to fetch future appointments
