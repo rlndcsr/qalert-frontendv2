@@ -372,16 +372,18 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Edit Emergency Encounter
-                </h2>
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+              <div className="bg-gradient-to-r from-green-50 to-teal-50 px-6 py-4 border-b border-green-100">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Edit Emergency Encounter
+                  </h2>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
               </div>
 
               <form
@@ -390,7 +392,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
               >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Patient Name <span className="text-red-500">*</span>
+                    Patient Name <span className="text-green-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -420,7 +422,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Number <span className="text-red-500">*</span>
+                    Contact Number <span className="text-green-600">*</span>
                   </label>
                   <input
                     type="tel"
@@ -439,7 +441,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date <span className="text-red-500">*</span>
+                      Date <span className="text-green-600">*</span>
                     </label>
                     <input
                       type="date"
@@ -452,7 +454,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time <span className="text-red-500">*</span>
+                      Time <span className="text-green-600">*</span>
                     </label>
                     <input
                       type="time"
@@ -467,7 +469,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Details <span className="text-red-500">*</span>
+                    Details <span className="text-green-600">*</span>
                   </label>
                   <textarea
                     value={formData.details}
@@ -561,8 +563,8 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
               <div className="px-6 py-5 text-center">
-                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                  <Trash2 className="w-8 h-8 text-red-600" />
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-green-600" />
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">
                   Delete Emergency Encounter
@@ -586,7 +588,7 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isDeleting && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {isDeleting ? "Deleting..." : "Delete"}
@@ -694,19 +696,21 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#00968a]" />
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Add New Emergency Encounter
-                  </h2>
+              <div className="bg-gradient-to-r from-green-50 to-teal-50 px-6 py-4 border-b border-green-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-green-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Add New Emergency Encounter
+                    </h2>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
               </div>
 
               <form
@@ -715,7 +719,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
               >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Patient Name <span className="text-red-500">*</span>
+                    Patient Name <span className="text-green-600">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -754,7 +758,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Number <span className="text-red-500">*</span>
+                    Contact Number <span className="text-green-600">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -776,7 +780,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date <span className="text-red-500">*</span>
+                      Date <span className="text-green-600">*</span>
                     </label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -792,7 +796,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time <span className="text-red-500">*</span>
+                      Time <span className="text-green-600">*</span>
                     </label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -810,7 +814,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Details <span className="text-red-500">*</span>
+                    Details <span className="text-green-600">*</span>
                   </label>
                   <div className="relative">
                     <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -1200,9 +1204,9 @@ export default function EmergencyEncountersView() {
                   {encounters.length} total
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-xs font-medium text-red-700">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs font-medium text-green-700">
                   {todayCount} today
                 </span>
               </div>
@@ -1438,13 +1442,13 @@ export default function EmergencyEncountersView() {
                     {/* Patient */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-red-700">
+                        <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-green-700">
                             {getInitials(encounter.patient_name)}
                           </span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p className="text-xs font-semibold text-gray-900 truncate ">
                             {encounter.patient_name}
                           </p>
                         </div>
@@ -1460,14 +1464,14 @@ export default function EmergencyEncountersView() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5 text-sm text-gray-600">
                         <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="font-medium">
+                        <span className="text-xs font-medium">
                           {encounter.contact_number}
                         </span>
                       </div>
                     </td>
                     {/* Date & Time */}
                     <td className="px-5 py-4">
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-xs font-medium text-gray-800">
                         {formatDate(encounter.date)}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -1476,7 +1480,7 @@ export default function EmergencyEncountersView() {
                     </td>
                     {/* Details */}
                     <td className="px-5 py-4 max-w-[240px]">
-                      <p className="text-sm text-gray-600 line-clamp-2 leading-snug">
+                      <p className="text-xs text-gray-600 line-clamp-2 leading-snug">
                         {encounter.details}
                       </p>
                     </td>
@@ -1576,8 +1580,8 @@ export default function EmergencyEncountersView() {
               >
                 {/* Card top accent */}
                 <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-red-700">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-green-700">
                       {getInitials(encounter.patient_name)}
                     </span>
                   </div>
@@ -1589,7 +1593,7 @@ export default function EmergencyEncountersView() {
                       {encounter.id_number || "No ID"}
                     </p>
                   </div>
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wide">
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-wide">
                     Emergency
                   </span>
                 </div>
