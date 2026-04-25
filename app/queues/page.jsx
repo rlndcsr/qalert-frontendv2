@@ -682,36 +682,35 @@ export default function QueueDisplay() {
 
           {/* Emergency Encounters */}
           {emergencyEncounters.length > 0 && (
-            <div className="rounded-3xl shadow-sm p-3 relative overflow-hidden flex-shrink-0 bg-white border-2 border-red-500">
-              <div className="flex items-center gap-3">
-                <div className="bg-red-50 rounded-2xl p-2 md:p-3 border border-red-200 shadow-sm">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-5 h-5 md:w-6 md:h-6 text-red-600"
+            <div className="rounded-2xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-red-50 border border-red-200">
+              <div className="flex items-center gap-2 mb-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-red-600 text-sm font-bold">
+                  Emergency ({emergencyEncounters.length})
+                </p>
+              </div>
+              <div className="space-y-2.5 max-h-32 overflow-y-auto">
+                {emergencyEncounters.map((enc, index) => (
+                  <div
+                    key={enc.id || index}
+                    className="flex items-center gap-3 pl-1"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-red-600 text-xs md:text-sm font-bold mb-1">
-                    Emergency ({emergencyEncounters.length})
-                  </p>
-                  <div className="space-y-1.5 max-h-24 overflow-y-auto">
-                    {emergencyEncounters.map((enc, index) => (
-                      <div key={enc.id || index} className="flex items-center">
-                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate max-w-[120px]">
-                          {enc.patient_name}
-                        </p>
-                      </div>
-                    ))}
+                    <p className="text-xs font-medium text-gray-800 truncate flex-1">
+                      {enc.id_number || enc.patient_id || "—"}
+                    </p>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           )}
