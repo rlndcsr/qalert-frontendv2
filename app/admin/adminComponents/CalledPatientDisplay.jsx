@@ -133,6 +133,7 @@ const API_BASE_URL = "/api/proxy";
 export default function CalledPatientDisplay({
   calledPatients,
   userMap,
+  reasonCategoryMap = {},
   setQueues,
   setCalledPatients,
 }) {
@@ -307,7 +308,9 @@ export default function CalledPatientDisplay({
                   </div>
                 </div>
                 <p className="text-sm text-gray-700 mb-3">
-                  {calledPatient.reason}
+                  {reasonCategoryMap[calledPatient.reason_category_id] ||
+                    calledPatient.reason ||
+                    "—"}
                 </p>
                 <div className="flex items-center gap-2">
                   <svg

@@ -76,6 +76,9 @@ export default function AdminPortal() {
   // Called patients state (supports multiple called patients)
   const [calledPatients, setCalledPatients] = useState([]);
 
+  // Reason category lookup for displaying reason names
+  const [reasonCategoryMap, setReasonCategoryMap] = useState({});
+
   // Month selector state for analytics
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(
@@ -147,6 +150,32 @@ export default function AdminPortal() {
       console.error("Error fetching users:", error);
     }
   }, []);
+
+  // Fetch reason categories for reason name lookup
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    fetch(`${API_BASE_URL}/reason-categories`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "ngrok-skip-browser-warning": true,
+      },
+    })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        const list = Array.isArray(data)
+          ? data
+          : data?.data || data?.reason_categories || [];
+        const map = {};
+        list.forEach((c) => {
+          if (c.reason_category_id) map[c.reason_category_id] = c.name;
+        });
+        setReasonCategoryMap(map);
+      })
+      .catch((err) => console.error("Error fetching reason categories:", err));
+  }, [isAuthenticated]);
 
   // Initial data load when authenticated
   useEffect(() => {
@@ -587,6 +616,7 @@ export default function AdminPortal() {
             <CalledPatientDisplay
               calledPatients={calledPatients}
               userMap={userMap}
+              reasonCategoryMap={reasonCategoryMap}
               setQueues={setQueues}
               setCalledPatients={setCalledPatients}
             />
