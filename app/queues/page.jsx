@@ -507,7 +507,7 @@ export default function QueueDisplay() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-3 bg-white/95 px-3 md:px-4 py-1.5 md:py-2 rounded-2xl shadow-sm border border-slate-300/70">
+        <div className="flex items-center gap-2 md:gap-3 bg-white/95 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-sm border border-slate-300/70">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -558,7 +558,7 @@ export default function QueueDisplay() {
         <div className="col-span-1 md:col-span-4 flex flex-col gap-3 md:gap-4 min-h-0">
           {/* Now Serving */}
           <div
-            className="rounded-3xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden border border-[#5D7391]"
+            className="rounded-xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden border border-[#5D7391]"
             style={{
               background:
                 "linear-gradient(to bottom right, #374D6C, #4A6280, #374D6C)",
@@ -616,7 +616,7 @@ export default function QueueDisplay() {
 
           {/* Please Proceed */}
           <div
-            className="rounded-3xl shadow-lg p-3 relative overflow-hidden flex-shrink-0 border border-[#8AA0B8]"
+            className="rounded-xl shadow-lg p-3 relative overflow-hidden flex-shrink-0 border border-[#8AA0B8]"
             style={{
               background: "linear-gradient(to bottom right, #5A7A9A, #6B8CAC)",
             }}
@@ -682,7 +682,7 @@ export default function QueueDisplay() {
 
           {/* Emergency Encounters */}
           {emergencyEncounters.length > 0 && (
-            <div className="rounded-2xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-red-50 border border-red-200">
+            <div className="rounded-xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-red-50 border border-red-200">
               <div className="flex items-center gap-2 mb-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -717,7 +717,7 @@ export default function QueueDisplay() {
         </div>
 
         {/* Right Column - Waiting Queue */}
-        <div className="col-span-1 md:col-span-8 bg-white/95 rounded-3xl shadow-lg border border-slate-300/70 flex flex-col overflow-hidden min-h-0">
+        <div className="col-span-1 md:col-span-8 bg-white/95 rounded-xl border border-slate-300/70 flex flex-col overflow-hidden min-h-0">
           <div
             className="px-3 md:px-4 py-2 md:py-2.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0"
             style={{
@@ -1006,37 +1006,6 @@ export default function QueueDisplay() {
                 );
               })()
             )}
-          </div>
-
-          {/* Bottom Info Section */}
-          <div
-            className="px-3 md:px-4 py-2 md:py-2.5 border-t border-slate-200 flex-shrink-0"
-            style={{ backgroundColor: "#EFF3F7" }}
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className="rounded-lg p-1.5 md:p-2"
-                style={{ backgroundColor: "#374D6C" }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-3.5 h-3.5 md:w-4 md:h-4 text-white"
-                >
-                  <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                  <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] md:text-xs font-semibold text-gray-900">
-                  SMS Notifications
-                </p>
-                <p className="text-[9px] md:text-[10px] text-gray-600">
-                  You'll receive alerts when ready
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
