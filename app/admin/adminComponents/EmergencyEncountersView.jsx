@@ -372,14 +372,14 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="bg-gradient-to-r from-green-50 to-teal-50 px-6 py-4 border-b border-green-100">
+              <div className=" bg-blue-100 px-6 py-4 border-b border-blue-100">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Edit Emergency Encounter
                   </h2>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -494,12 +494,12 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2.5 bg-[#00968a] hover:bg-[#007a70] text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting && (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   )}
-                  {isSubmitting ? "Saving..." : "Save Changes"}
+                  {isSubmitting ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>
@@ -563,8 +563,8 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
               <div className="px-6 py-5 text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <Trash2 className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-red-600" />
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">
                   Delete Emergency Encounter
@@ -588,7 +588,7 @@ function DeleteModal({ encounter, isOpen, onClose, onConfirm }) {
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isDeleting && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {isDeleting ? "Deleting..." : "Delete"}
@@ -696,17 +696,17 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="bg-gradient-to-r from-green-50 to-teal-50 px-6 py-4 border-b border-green-100">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-green-600" />
+                    <Plus className="w-5 h-5 text-blue-600" />
                     <h2 className="text-lg font-semibold text-gray-900">
                       Add New Emergency Encounter
                     </h2>
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -842,7 +842,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2.5 bg-[#00968a] hover:bg-[#007a70] text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting && (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1515,7 +1515,7 @@ export default function EmergencyEncountersView() {
                         <div className="inline-flex items-center border border-gray-200 rounded-lg overflow-hidden divide-x divide-gray-200 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setViewEncounter(encounter)}
-                            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+                            className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 transition-colors cursor-pointer"
                             title="View details"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -1643,7 +1643,7 @@ export default function EmergencyEncountersView() {
                 <div className="flex items-center border-t border-gray-100 divide-x divide-gray-100">
                   <button
                     onClick={() => setViewEncounter(encounter)}
-                    className="flex-1 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 text-xs font-semibold text-green-600 hover:bg-green-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
