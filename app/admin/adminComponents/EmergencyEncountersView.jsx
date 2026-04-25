@@ -392,7 +392,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
               >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Patient Name <span className="text-green-600">*</span>
+                    Patient Name <span className="text-blue-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -422,7 +422,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Number <span className="text-green-600">*</span>
+                    Contact Number <span className="text-blue-600">*</span>
                   </label>
                   <input
                     type="tel"
@@ -441,7 +441,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date <span className="text-green-600">*</span>
+                      Date <span className="text-blue-600">*</span>
                     </label>
                     <input
                       type="date"
@@ -454,7 +454,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time <span className="text-green-600">*</span>
+                      Time <span className="text-blue-600">*</span>
                     </label>
                     <input
                       type="time"
@@ -469,7 +469,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Details <span className="text-green-600">*</span>
+                    Details <span className="text-blue-600">*</span>
                   </label>
                   <textarea
                     value={formData.details}
