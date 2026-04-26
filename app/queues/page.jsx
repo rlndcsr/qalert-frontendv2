@@ -66,7 +66,8 @@ export default function QueueDisplay() {
   // Helper to get auth token from localStorage
   const getAuthToken = useCallback(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
+      // Try adminToken first (used by admin/authenticated pages), fallback to token
+      return localStorage.getItem("adminToken") || localStorage.getItem("token");
     }
     return null;
   }, []);
