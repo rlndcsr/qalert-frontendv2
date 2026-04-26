@@ -183,7 +183,7 @@ export default function QueueManagementTable({
     });
   };
 
-  const handleCallAgain = async (queue) => {
+  const handleArrived = async (queue) => {
     const token = localStorage.getItem("adminToken");
     if (!token) {
       sileo.error({
@@ -204,7 +204,7 @@ export default function QueueManagementTable({
             Authorization: `Bearer ${token}`,
             "ngrok-skip-browser-warning": "true",
           },
-          body: JSON.stringify({ queue_status: "called" }),
+          body: JSON.stringify({ queue_status: "now_serving" }),
         },
       );
 
@@ -215,7 +215,7 @@ export default function QueueManagementTable({
       setQueues((prevQueues) =>
         prevQueues.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
-            ? { ...q, queue_status: "called" }
+            ? { ...q, queue_status: "now_serving" }
             : q,
         ),
       );
@@ -225,18 +225,18 @@ export default function QueueManagementTable({
           (p) => p.queue_entry_id === queue.queue_entry_id,
         );
         if (already) return prev;
-        return [...prev, { ...queue, queue_status: "called" }];
+        return [...prev, { ...queue, queue_status: "now_serving" }];
       });
 
       sileo.success({
-        title: "Patient Called Again",
-        description: `Queue #${queue.queue_number} moved to called patients.`,
+        title: "Patient Arrived",
+        description: `Queue #${queue.queue_number} is now being served.`,
       });
     } catch (error) {
-      console.error("Error calling patient again:", error);
+      console.error("Error marking patient as arrived:", error);
       sileo.error({
-        title: "Call failed",
-        description: "Failed to call patient. Please try again.",
+        title: "Update failed",
+        description: "Failed to mark patient as arrived. Please try again.",
       });
     }
   };
@@ -540,10 +540,10 @@ export default function QueueManagementTable({
                             )}
                             {statusLower === "no_show" && (
                               <button
-                                onClick={() => handleCallAgain(queue)}
-                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
+                                onClick={() => handleArrived(queue)}
+                                className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
                               >
-                                Call Again
+                                Arrived
                               </button>
                             )}
                           </div>
