@@ -107,6 +107,13 @@ function StatusBadge({ status }) {
       text: "text-red-600",
       border: "border-red-200",
     },
+    no_show: {
+      label: "No Show",
+      icon: XCircle,
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+    },
     waiting: {
       label: "Waiting",
       icon: Clock,
@@ -265,13 +272,16 @@ function UserQueueCard({
 
   const status = userQueue.queue_status;
   const isCompleted = status === "completed";
+  const isNoShow = status === "no_show";
   const isActive =
     status === "waiting" || status === "called" || status === "now_serving";
   const accentColor = isCompleted
     ? "#4ad294"
-    : isActive
-      ? "#4ad294"
-      : "#94a3b8";
+    : isNoShow
+      ? "#f59e0b"
+      : isActive
+        ? "#4ad294"
+        : "#94a3b8";
 
   if (isCompleted) {
     return (
@@ -361,8 +371,16 @@ function UserQueueCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#4ad294]/8 flex items-center justify-center">
-              <ClipboardList className="w-5 h-5 text-[#4ad294]" />
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isNoShow
+                  ? "bg-amber-100"
+                  : "bg-[#4ad294]/8"
+              }`}
+            >
+              <ClipboardList
+                className={`w-5 h-5 ${isNoShow ? "text-amber-600" : "text-[#4ad294]"}`}
+              />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-[#25323A]">

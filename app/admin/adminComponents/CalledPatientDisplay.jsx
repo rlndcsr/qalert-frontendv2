@@ -226,6 +226,21 @@ export default function CalledPatientDisplay({
         });
         localStorage.removeItem(`called_at_${patient.queue_entry_id}`);
         localStorage.removeItem(`serving_at_${patient.queue_entry_id}`);
+      } else if (newStatus === "no_show") {
+        sileo.success({
+          title: "No Show",
+          description: "Patient marked as no-show.",
+        });
+        setCalledPatients((prev) =>
+          prev.filter((p) => p.queue_entry_id !== patient.queue_entry_id),
+        );
+        setExpiredIds((prev) => {
+          const next = new Set(prev);
+          next.delete(patient.queue_entry_id);
+          return next;
+        });
+        localStorage.removeItem(`called_at_${patient.queue_entry_id}`);
+        localStorage.removeItem(`serving_at_${patient.queue_entry_id}`);
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -518,6 +533,19 @@ export default function CalledPatientDisplay({
                     Cancel Queue (No-show)
                   </button>
                 )}
+                {(calledPatient.queue_status === "called" ||
+                  calledPatient.queue_status === "now_serving") &&
+                  !expiredIds.has(calledPatient.queue_entry_id) && (
+                    <button
+                      onClick={() =>
+                        handleStatusChange(calledPatient, "no_show")
+                      }
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors hover:cursor-pointer"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Mark as No Show
+                    </button>
+                  )}
               </div>
             </div>
           ))}

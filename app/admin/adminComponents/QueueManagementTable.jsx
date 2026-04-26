@@ -183,6 +183,64 @@ export default function QueueManagementTable({
     });
   };
 
+  const handleCallAgain = async (queue) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      sileo.error({
+        title: "Authentication required",
+        description: "Please log in again.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/status/${queue.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({ queue_status: "called" }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update queue status");
+      }
+
+      setQueues((prevQueues) =>
+        prevQueues.map((q) =>
+          q.queue_entry_id === queue.queue_entry_id
+            ? { ...q, queue_status: "called" }
+            : q,
+        ),
+      );
+
+      setCalledPatients((prev) => {
+        const already = prev.some(
+          (p) => p.queue_entry_id === queue.queue_entry_id,
+        );
+        if (already) return prev;
+        return [...prev, { ...queue, queue_status: "called" }];
+      });
+
+      sileo.success({
+        title: "Patient Called Again",
+        description: `Queue #${queue.queue_number} moved to called patients.`,
+      });
+    } catch (error) {
+      console.error("Error calling patient again:", error);
+      sileo.error({
+        title: "Call failed",
+        description: "Failed to call patient. Please try again.",
+      });
+    }
+  };
+
   // Fetch reason categories and today's appointments for lookups
   const [reasonCategoryMap, setReasonCategoryMap] = useState({});
   // appointmentMap: keyed by appointment_id → appointment_time
@@ -401,6 +459,9 @@ export default function QueueManagementTable({
                     } else if (statusLower === "cancelled") {
                       statusClass = "bg-red-100 text-red-700";
                       statusLabel = "Cancelled";
+                    } else if (statusLower === "no_show") {
+                      statusClass = "bg-amber-100 text-amber-700";
+                      statusLabel = "No Show";
                     }
 
                     return (
@@ -475,6 +536,14 @@ export default function QueueManagementTable({
                                 className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
                               >
                                 Complete
+                              </button>
+                            )}
+                            {statusLower === "no_show" && (
+                              <button
+                                onClick={() => handleCallAgain(queue)}
+                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm hover:cursor-pointer"
+                              >
+                                Call Again
                               </button>
                             )}
                           </div>

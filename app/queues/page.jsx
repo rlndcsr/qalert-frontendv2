@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSystemStatus } from "../hooks/useSystemStatus";
 import { useSseEvents } from "../hooks/useSseEvents";
+import { XCircle } from "lucide-react";
 import Image from "next/image";
 
 // Constants
@@ -367,12 +368,13 @@ export default function QueueDisplay() {
   });
 
   // Process queue data
-  const { nowServing, ready, waiting, totalInQueue } = useMemo(() => {
+  const { nowServing, ready, waiting, noShow, totalInQueue } = useMemo(() => {
     if (isLoadingData || queueEntries.length === 0) {
       return {
         nowServing: [],
         ready: [],
         waiting: [],
+        noShow: [],
         totalInQueue: 0,
       };
     }
@@ -388,6 +390,10 @@ export default function QueueDisplay() {
 
     const waitingEntries = queueEntries
       .filter((entry) => entry.queue_status === "waiting")
+      .sort((a, b) => a.queue_number - b.queue_number);
+
+    const noShowEntries = queueEntries
+      .filter((entry) => entry.queue_status === "no_show")
       .sort((a, b) => a.queue_number - b.queue_number);
 
     // Now serving: all "now_serving" entries
@@ -441,6 +447,18 @@ export default function QueueDisplay() {
       };
     });
 
+    // No Show: all "no_show" entries
+    const noShowData = noShowEntries.map((entry) => {
+      const aptTime = entry.appointment_id
+        ? appointmentTimeMap[String(entry.appointment_id)]
+        : null;
+      return {
+        number: entry.queue_number,
+        id_number: users[entry.user_id]?.id_number || "",
+        scheduledTime: aptTime || null,
+      };
+    });
+
     // Total in queue (now_serving + called + waiting)
     const total =
       nowServingEntries.length + calledEntries.length + waitingEntries.length;
@@ -449,6 +467,7 @@ export default function QueueDisplay() {
       nowServing: nowServingData,
       ready: readyData,
       waiting: waitingData,
+      noShow: noShowData,
       totalInQueue: total,
     };
   }, [
@@ -680,6 +699,42 @@ export default function QueueDisplay() {
               </div>
             </div>
           </div>
+
+          {/* No Show */}
+          {noShow.length > 0 && (
+            <div className="rounded-xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-amber-50 border border-amber-200">
+              <div className="flex items-center gap-2 mb-3">
+                <XCircle className="w-4 h-4 md:w-5 md:h-5 text-amber-600 flex-shrink-0" />
+                <p className="text-amber-600 text-sm font-bold">
+                  No Show ({noShow.length})
+                </p>
+              </div>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {noShow.map((patient, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-amber-800 text-base md:text-lg font-black">
+                        {formatQueueNumber(patient.number)}
+                      </p>
+                      {patient.scheduledTime && (
+                        <p className="text-amber-600/80 text-[10px] md:text-xs">
+                          {formatTime(patient.scheduledTime)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-amber-600/80 text-[10px] md:text-xs">
+                        {patient.id_number}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Emergency Encounters */}
           {emergencyEncounters.length > 0 && (
