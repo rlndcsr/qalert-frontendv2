@@ -241,6 +241,9 @@ export const generateReportData = async (yearMonth, filters = {}) => {
     cancelledQueues: filteredQueues.filter(
       (q) => q.queue_status.toLowerCase() === "cancelled",
     ).length,
+    noShowQueues: filteredQueues.filter(
+      (q) => q.queue_status.toLowerCase() === "no_show",
+    ).length,
     waitingQueues: filteredQueues.filter(
       (q) => q.queue_status.toLowerCase() === "waiting",
     ).length,
@@ -285,6 +288,7 @@ export const convertToCSV = (reportData, monthLabel) => {
   csv += `Total Queue Entries,${summary.totalQueues}\n`;
   csv += `Completed,${summary.completedQueues}\n`;
   csv += `Cancelled,${summary.cancelledQueues}\n`;
+  csv += `No Show,${summary.noShowQueues}\n`;
   csv += `Waiting,${summary.waitingQueues}\n`;
   csv += `Emergency Encounters,${summary.emergencyEncounters}\n`;
   csv += `Unique Patients,${summary.uniquePatients}\n\n`;

@@ -150,6 +150,13 @@ function ViewModal({
       label: "Cancelled",
       icon: XCircle,
     },
+    no_show: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      label: "No Show",
+      icon: XCircle,
+    },
   };
 
   const statusKey = queue.queue_status?.toLowerCase() || "completed";
@@ -496,7 +503,7 @@ export default function QueueHistoryView() {
   const filteredQueues = useMemo(() => {
     let result = queues.filter((q) => {
       const status = q.queue_status?.toLowerCase();
-      return status === "completed" || status === "cancelled";
+      return status === "completed" || status === "cancelled" || status === "no_show";
     });
 
     if (statusFilter !== "all") {
@@ -593,6 +600,13 @@ export default function QueueHistoryView() {
       ).length,
     [filteredQueues],
   );
+  const noShowCount = useMemo(
+    () =>
+      filteredQueues.filter(
+        (q) => q.queue_status?.toLowerCase() === "no_show",
+      ).length,
+    [filteredQueues],
+  );
 
   // Get status config
   const getStatusConfig = (status) => {
@@ -611,6 +625,14 @@ export default function QueueHistoryView() {
         border: "border-red-200",
         dot: "bg-red-400",
         label: "Cancelled",
+        icon: XCircle,
+      },
+      no_show: {
+        bg: "bg-amber-50",
+        text: "text-amber-700",
+        border: "border-amber-200",
+        dot: "bg-amber-400",
+        label: "No Show",
         icon: XCircle,
       },
     };
@@ -668,6 +690,12 @@ export default function QueueHistoryView() {
               {cancelledCount} cancelled
             </span>
           </div>
+          <div className="px-3 py-1.5 bg-amber-50 rounded-lg flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span className="text-xs font-semibold text-amber-600">
+              {noShowCount} no show
+            </span>
+          </div>
           <button
             onClick={fetchData}
             disabled={isLoading}
@@ -700,7 +728,7 @@ export default function QueueHistoryView() {
             <div className="flex flex-wrap items-center gap-2">
               {/* Status filter */}
               <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5">
-                {["all", "completed", "cancelled"].map((status) => (
+                {["all", "completed", "cancelled", "no_show"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
@@ -710,7 +738,7 @@ export default function QueueHistoryView() {
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    {status}
+                    {status === "no_show" ? "no show" : status}
                   </button>
                 ))}
               </div>

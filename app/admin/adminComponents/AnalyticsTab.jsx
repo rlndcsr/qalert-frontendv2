@@ -110,6 +110,9 @@ export default function AnalyticsTab({
     const cancelled = selectedMonthQueues.filter(
       (q) => q.queue_status.toLowerCase() === "cancelled",
     ).length;
+    const noShow = selectedMonthQueues.filter(
+      (q) => q.queue_status.toLowerCase() === "no_show",
+    ).length;
     const activeInMonth = selectedMonthQueues.filter((q) =>
       ["waiting", "called", "now_serving"].includes(
         q.queue_status.toLowerCase(),
@@ -120,6 +123,7 @@ export default function AnalyticsTab({
       total: totalQueues,
       completed,
       cancelled,
+      noShow,
       active: activeInMonth,
     };
   }, [selectedMonthQueues]);
@@ -145,7 +149,7 @@ export default function AnalyticsTab({
 
           if (hourlyMap[hourLabel]) {
             hourlyMap[hourLabel].size += 1;
-            if (queue.queue_status === "completed") {
+            if (queue.queue_status === "completed" || queue.queue_status === "now_serving") {
               hourlyMap[hourLabel].served += 1;
             }
           }
@@ -191,6 +195,7 @@ export default function AnalyticsTab({
     () => [
       { name: "Completed", value: monthlyStats.completed },
       { name: "Cancelled", value: monthlyStats.cancelled },
+      { name: "No Show", value: monthlyStats.noShow },
     ],
     [monthlyStats],
   );
@@ -270,6 +275,17 @@ export default function AnalyticsTab({
       bg: "from-rose-50 to-rose-100",
       border: "border-rose-200",
       text: "text-rose-700",
+    },
+    {
+      label: "No Show (Month)",
+      value: monthlyStats.noShow,
+      sub: `${(
+        (monthlyStats.noShow / (monthlyStats.total || 1)) *
+        100
+      ).toFixed(0)}% no-show rate`,
+      bg: "from-amber-50 to-amber-100",
+      border: "border-amber-200",
+      text: "text-amber-700",
     },
     {
       label: "Unique Patients",
@@ -390,6 +406,17 @@ export default function AnalyticsTab({
                 </div>
                 <p className="text-lg font-bold text-orange-600">
                   {reportPreview.summary.emergencyEncounters}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <XCircle className="w-4 h-4 text-amber-600" />
+                  <span className="text-[10px] font-medium text-gray-500 uppercase">
+                    No Show
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-amber-600">
+                  {reportPreview.summary.noShowQueues}
                 </p>
               </div>
               <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
