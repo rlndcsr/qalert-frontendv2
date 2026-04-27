@@ -74,7 +74,7 @@ export default function DoctorCard({ doctor, schedules }) {
       return (
         <div
           key={`${schedule.day}-${schedule.shift}`}
-          className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"
+          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"
         >
           <div className="w-10 h-10 rounded-lg bg-[#4ad294]/10 flex items-center justify-center">
             <span className="text-xs font-semibold text-[#4ad294]">
@@ -107,11 +107,11 @@ export default function DoctorCard({ doctor, schedules }) {
       transition={{ duration: 0.3 }}
       className="group relative bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden hover:shadow-xl hover:border-[#4ad294]/20 transition-all duration-300"
     >
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Doctor Info Header */}
-        <div className="flex items-start gap-4 mb-4 pb-4 border-b border-gray-100">
+        <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-100">
           <div className="relative">
-            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 shadow-sm">
               <Image
                 src={getAvatarSrc()}
                 alt={doctor.doctor_name}
@@ -125,19 +125,19 @@ export default function DoctorCard({ doctor, schedules }) {
             </div>
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h3 className="text-base font-bold text-gray-900 leading-tight">
+            <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
               {doctor.doctor_name}
             </h3>
             <div className="flex items-center gap-1.5 mt-1">
               <Stethoscope className="w-3.5 h-3.5 text-[#4ad294]" />
-              <span className="text-xs text-gray-500">Medical Professional</span>
+              <span className="text-xs text-gray-500">Health Personnel</span>
             </div>
           </div>
         </div>
 
         {/* Schedule Section */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
             <Calendar className="w-4 h-4 text-gray-400" />
             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
               Available Schedule

@@ -9,7 +9,7 @@ const API_BASE_URL = "/api/proxy";
 
 // Filter options configuration
 const FILTER_OPTIONS = [
-  { id: "all", label: "All Doctors" },
+  { id: "all", label: "All" },
   { id: "Monday", label: "Monday" },
   { id: "Tuesday", label: "Tuesday" },
   { id: "Wednesday", label: "Wednesday" },
@@ -37,18 +37,18 @@ function DoctorCardSkeleton() {
       {/* Decorative gradient header */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-[#4ad294]/10 via-[#3bb882]/10 to-[#2fa872]/10" />
 
-      <div className="relative p-6 animate-pulse">
+      <div className="relative p-4 sm:p-6 animate-pulse">
         {/* Doctor info header */}
-        <div className="flex items-start gap-4 mb-6">
+        <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
           {/* Avatar skeleton */}
           <div className="flex-shrink-0">
-            <div className="w-20 h-20 rounded-2xl bg-gray-200" />
+            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gray-200" />
           </div>
 
           {/* Doctor details skeleton */}
           <div className="flex-1 pt-1 space-y-2">
-            <div className="h-5 w-32 bg-gray-200 rounded" />
-            <div className="h-6 w-40 bg-gray-200 rounded-full" />
+            <div className="h-5 w-24 sm:w-32 bg-gray-200 rounded" />
+            <div className="h-6 w-32 sm:w-40 bg-gray-200 rounded-full" />
           </div>
         </div>
 
@@ -73,7 +73,7 @@ function DayFilter({ activeFilter, onFilterChange }) {
   return (
     <div className="mb-8">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-2">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center sm:justify-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {FILTER_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -254,15 +254,17 @@ export default function MyDoctorsView() {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#4ad294]/10 flex items-center justify-center">
             <Stethoscope className="w-5 h-5 text-[#4ad294]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Doctors</h1>
-            <p className="text-sm text-gray-500">
-              View available doctors and their schedules
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Health Personnels
+            </h1>
+            <p className="hidden sm:block text-sm text-gray-500">
+              View available health personnels and their schedules
             </p>
           </div>
         </div>
@@ -270,10 +272,10 @@ export default function MyDoctorsView() {
         {/* Search bar */}
         <input
           type="text"
-          placeholder="Search doctors..."
+          placeholder="Search health personnels..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#4ad294] focus:ring-2 focus:ring-[#4ad294]/20"
+          className="w-full sm:w-auto rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#4ad294] focus:ring-2 focus:ring-[#4ad294]/20"
         />
       </div>
 
@@ -287,18 +289,18 @@ export default function MyDoctorsView() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-5 sm:grid-cols-1 lg:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <DoctorCardSkeleton key={i} />
           ))}
         </div>
       ) : error ? (
-        <div className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200/60 rounded-2xl p-10 text-center shadow-sm">
+        <div className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200/60 rounded-2xl p-6 sm:p-10 text-center shadow-sm">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 flex items-center justify-center">
             <RefreshCw className="w-8 h-8 text-red-500" />
           </div>
           <h3 className="text-lg font-bold text-red-700 mb-2">
-            Error Loading Doctors
+            Error Loading Health Personnels
           </h3>
           <p className="text-red-600 text-sm mb-6 max-w-md mx-auto">{error}</p>
           <button
@@ -309,32 +311,32 @@ export default function MyDoctorsView() {
           </button>
         </div>
       ) : activeDoctors.length === 0 ? (
-        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#4ad294]/20 to-[#3bb882]/20 flex items-center justify-center">
-            <Stethoscope className="w-10 h-10 text-[#4ad294]" />
+        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-6 sm:p-10 text-center shadow-sm">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-[#4ad294]/20 to-[#3bb882]/20 flex items-center justify-center">
+            <Stethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-[#4ad294]" />
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            No Doctors Available
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
+            No Health Personnels Available
           </h3>
           <p className="text-gray-600 text-sm max-w-sm mx-auto">
-            There are currently no active doctors in the system.
+            There are currently no active health personnels in the system.
           </p>
         </div>
       ) : filteredDoctors.length === 0 ? (
-        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-10 text-center shadow-sm">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-            <Calendar className="w-10 h-10 text-amber-600" />
+        <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200/60 rounded-2xl p-6 sm:p-10 text-center shadow-sm">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+            <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
           </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            No Doctors Available on {activeFilter}
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
+            No Health Personnels Available on {activeFilter}
           </h3>
           <p className="text-gray-600 text-sm max-w-sm mx-auto">
-            There are no doctors scheduled on this day. Try selecting a
-            different day.
+            There are no health personnels scheduled on this day. Try selecting
+            a different day.
           </p>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-5 sm:grid-cols-1 lg:grid-cols-2">
           {filteredDoctors.map((doctor) => (
             <DoctorCard
               key={doctor.doctor_id}
@@ -350,7 +352,7 @@ export default function MyDoctorsView() {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
             Showing {filteredDoctors.length} of {activeDoctors.length} active
-            doctor
+            health personnel
             {activeDoctors.length !== 1 ? "s" : ""}
             {activeFilter !== "all" && ` on ${activeFilter}`}
           </p>
