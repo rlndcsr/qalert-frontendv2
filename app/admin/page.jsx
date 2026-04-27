@@ -545,8 +545,8 @@ export default function AdminPortal() {
             Data Visualization
           </button>
         </div>
-        {/* Compact System Status Toggle */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
+        {/* Compact System Status Toggle - Hidden for now */}
+        {false && <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
           <div
             className={`w-3 h-3 rounded-full ${
               systemStatus ? "bg-green-500" : "bg-gray-400"
@@ -570,6 +570,7 @@ export default function AdminPortal() {
             />
           </button>
         </div>
+        }
       </motion.div>
 
       {/* Global Offline Banner */}
