@@ -141,7 +141,7 @@ export default function DoctorsTab() {
     if (!editingDoctor?.doctor_id) {
       sileo.error({
         title: "Delete failed",
-        description: "Doctor ID is missing.",
+        description: "Health Personnel ID is missing.",
       });
       return;
     }
@@ -157,13 +157,13 @@ export default function DoctorsTab() {
     if (!editingDoctor?.doctor_id) {
       sileo.error({
         title: "Delete failed",
-        description: "Doctor ID is missing.",
+        description: "Health Personnel ID is missing.",
       });
       return;
     }
 
     const name =
-      editingDoctor.doctor_name?.trim() || "this doctor";
+      editingDoctor.doctor_name?.trim() || "this health personnel";
 
     setEditLoading(true);
     try {
@@ -173,7 +173,7 @@ export default function DoctorsTab() {
           : null;
 
       const response = await fetch(
-        `${BACKEND_BASE}/doctors/${editingDoctor.doctor_id}`,
+        `${API_BASE_URL}/doctors/${editingDoctor.doctor_id}`,
         {
           method: "DELETE",
           headers: {
@@ -185,20 +185,20 @@ export default function DoctorsTab() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.message || "Failed to delete doctor");
+        throw new Error(errData?.message || "Failed to delete health personnel");
       }
 
       await fetchAll();
       setShowDeleteDoctorConfirm(false);
       closeEditDoctorModal(true);
       sileo.success({
-        title: "Doctor removed",
+        title: "Health Personnel removed",
         description: `${name} was deleted successfully.`,
       });
     } catch (err) {
       sileo.error({
         title: "Delete failed",
-        description: err.message || "Could not delete this doctor.",
+        description: err.message || "Could not delete this health personnel.",
       });
     } finally {
       setEditLoading(false);
@@ -210,7 +210,7 @@ export default function DoctorsTab() {
     if (!editingDoctor?.doctor_id) {
       sileo.error({
         title: "Update failed",
-        description: "Doctor ID is missing.",
+        description: "Health Personnel ID is missing.",
       });
       return;
     }
@@ -219,7 +219,7 @@ export default function DoctorsTab() {
     if (!trimmedName) {
       sileo.error({
         title: "Validation error",
-        description: "Doctor name is required.",
+        description: "Health Personnel name is required.",
       });
       return;
     }
@@ -353,13 +353,13 @@ export default function DoctorsTab() {
       await fetchAll();
       closeEditDoctorModal(true);
       sileo.success({
-        title: "Doctor updated",
-        description: "Doctor profile and schedules were saved.",
+        title: "Health Personnel updated",
+        description: "Health Personnel profile and schedules were saved.",
       });
     } catch (err) {
       sileo.error({
         title: "Update failed",
-        description: err.message || "Failed to update doctor.",
+        description: err.message || "Failed to update health personnel.",
       });
     } finally {
       setEditLoading(false);
@@ -368,11 +368,11 @@ export default function DoctorsTab() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-      <h2 className="text-xl font-semibold mb-4">Doctors</h2>
+      <h2 className="text-xl font-semibold mb-4">Health Personnels</h2>
       <div className="mb-4 flex gap-2">
         <input
           type="text"
-          placeholder="Search doctors..."
+          placeholder="Search health personnels..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#00968a] focus:ring-2 focus:ring-[#00968a]/20"
@@ -395,7 +395,7 @@ export default function DoctorsTab() {
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : filteredDoctors.length === 0 ? (
-        <div className="text-gray-500">No doctors found.</div>
+        <div className="text-gray-500">No health personnels found.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* Add Doctor Card - displayed first */}
@@ -403,17 +403,17 @@ export default function DoctorsTab() {
             className="bg-white border-2 border-dashed border-gray-300 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center hover:border-teal-400 transition-colors duration-200 cursor-pointer min-h-[220px]"
             style={{ minHeight: 220 }}
             tabIndex={0}
-            aria-label="Add Doctor"
+            aria-label="Add Health Personnel"
             onClick={() => setShowAddModal(true)}
           >
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <span className="text-3xl font-bold text-teal-500">+</span>
             </div>
             <div className="text-lg font-semibold text-gray-700 text-center mb-1">
-              Add Doctor
+              Add Health Personnel
             </div>
             <div className="text-sm text-gray-400 text-center">
-              Onboard a new medical specialist to the team
+              Onboard a new health personnel to the team
             </div>
           </div>
           {/* Doctor Cards */}
@@ -495,10 +495,10 @@ export default function DoctorsTab() {
                 <div className="flex items-center justify-between px-6 pt-5">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900">
-                      Edit Doctor Profile
+                      Edit Health Personnel Profile
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      Update the doctor name and assigned schedules.
+                      Update the health personnel name and assigned schedules.
                     </p>
                   </div>
                   <button
@@ -515,14 +515,14 @@ export default function DoctorsTab() {
                 <form onSubmit={handleUpdateDoctor} className="px-6 pb-5 pt-4">
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-slate-700">
-                      Doctor name
+                      Health Personnel name
                     </label>
                     <input
                       type="text"
                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#00968a] focus:ring-2 focus:ring-[#00968a]/20 disabled:bg-slate-50"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Enter doctor name"
+                      placeholder="Enter health personnel name"
                       autoFocus
                       disabled={editLoading}
                       required
@@ -625,7 +625,7 @@ export default function DoctorsTab() {
                       onClick={openDeleteDoctorConfirm}
                       disabled={editLoading}
                     >
-                      Delete doctor
+                      Delete health personnel
                     </button>
                     <div className="ml-auto flex items-center gap-2">
                       <button
@@ -661,12 +661,12 @@ export default function DoctorsTab() {
                   id="delete-doctor-title"
                   className="text-base font-semibold text-slate-900"
                 >
-                  Delete doctor?
+                  Delete health personnel?
                 </h4>
                 <p className="mt-2 text-sm text-slate-600">
                   This will permanently remove{" "}
                   <span className="font-medium text-slate-800">
-                    {editingDoctor.doctor_name?.trim() || "this doctor"}
+                    {editingDoctor.doctor_name?.trim() || "this health personnel"}
                   </span>
                   . This action cannot be undone.
                 </p>

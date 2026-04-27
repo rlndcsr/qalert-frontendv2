@@ -126,7 +126,7 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
       const doctorId =
         extractDoctorId(createdDoctor) ?? createdDoctorIdRef.current;
       if (doctorId == null || doctorId === "") {
-        throw new Error("Doctor ID was not returned after creating doctor");
+        throw new Error("Health Personnel ID was not returned after creating health personnel");
       }
 
       for (const sched of selectedSchedules) {
@@ -162,8 +162,8 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
       setDoctorName("");
       setSelectedSchedules([]);
       sileo.success({
-        title: "Doctor added successfully",
-        description: "Doctor profile and schedules were saved.",
+        title: "Health Personnel added successfully",
+        description: "Health Personnel profile and schedules were saved.",
       });
       onDoctorAdded && onDoctorAdded();
       onClose();
@@ -184,13 +184,13 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
         <div className="flex items-start justify-between px-6 pt-5">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              {isStep1 ? "Add New Doctor" : "Assign Doctor Schedules"}
+              {isStep1 ? "Add New Health Personnel" : "Assign Health Personnel Schedules"}
             </h3>
             <p className="mt-1 text-xs text-slate-500">
               Step {step} of 2 ·{" "}
               {isStep1
-                ? "Create the doctor profile to continue."
-                : "Choose one or more schedules for this doctor."}
+                ? "Create the health personnel profile to continue."
+                : "Choose one or more schedules for this health personnel."}
             </p>
           </div>
           {isStep1 && (
@@ -236,7 +236,7 @@ export default function AddDoctorModal({ open, onClose, onDoctorAdded }) {
             <form onSubmit={handleCreateDoctor} className="flex flex-col gap-4">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-700">
-                  Doctor name
+                  Health Personnel name
                 </label>
                 <input
                   type="text"

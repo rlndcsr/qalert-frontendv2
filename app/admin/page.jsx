@@ -532,7 +532,7 @@ export default function AdminPortal() {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
-            Doctors
+            Health Personnels
           </button>
           <button
             onClick={() => setActiveTab("analytics")}

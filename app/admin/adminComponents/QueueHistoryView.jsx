@@ -269,7 +269,7 @@ function ViewModal({
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Stethoscope className="w-3.5 h-3.5 text-[#00968a]" />
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-                      Doctor
+                      Health Personnel
                     </p>
                   </div>
                   <p className="text-sm font-semibold text-gray-800">
@@ -503,7 +503,9 @@ export default function QueueHistoryView() {
   const filteredQueues = useMemo(() => {
     let result = queues.filter((q) => {
       const status = q.queue_status?.toLowerCase();
-      return status === "completed" || status === "cancelled" || status === "no_show";
+      return (
+        status === "completed" || status === "cancelled" || status === "no_show"
+      );
     });
 
     if (statusFilter !== "all") {
@@ -602,9 +604,8 @@ export default function QueueHistoryView() {
   );
   const noShowCount = useMemo(
     () =>
-      filteredQueues.filter(
-        (q) => q.queue_status?.toLowerCase() === "no_show",
-      ).length,
+      filteredQueues.filter((q) => q.queue_status?.toLowerCase() === "no_show")
+        .length,
     [filteredQueues],
   );
 
@@ -843,7 +844,7 @@ export default function QueueHistoryView() {
                   { label: "Patient", sortable: false },
                   { label: "Date & Time", sortable: false },
                   { label: "Status", sortable: false },
-                  { label: "Doctor", sortable: false },
+                  { label: "Health Personnel", sortable: false },
                   { label: "Reason", sortable: false },
                   { label: "Duration", sortable: false },
                   { label: "", sortable: false },
