@@ -962,12 +962,12 @@ export default function QueueDisplay() {
                     );
                   }
 
-                  // Multiple doctors - render as sub-columns per doctor
+                  // Multiple doctors - render as sub-columns per doctor (2 per row)
                   return (
                     <div
                       className="grid gap-2"
                       style={{
-                        gridTemplateColumns: `repeat(${Math.min(allDoctors.length, 3)}, 1fr)`,
+                        gridTemplateColumns: "repeat(2, 1fr)",
                       }}
                     >
                       {allDoctors.map((docName) => {
@@ -1030,7 +1030,7 @@ export default function QueueDisplay() {
                 };
 
                 return (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* AM Column */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 px-1">
