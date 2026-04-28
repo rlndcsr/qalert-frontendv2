@@ -372,7 +372,7 @@ function EditModal({ encounter, isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className=" bg-blue-100 px-6 py-4 border-b border-blue-100">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Edit Emergency Encounter
@@ -696,17 +696,17 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-blue-600" />
+                    <Plus className="w-5 h-5 text-green-600" />
                     <h2 className="text-lg font-semibold text-gray-900">
                       Add New Emergency Encounter
                     </h2>
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -842,7 +842,7 @@ function AddEncounterModal({ isOpen, onClose, onSave }) {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-green-100 hover:bg-green-200 text-green-700 font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting && (
                     <RefreshCw className="w-4 h-4 animate-spin" />

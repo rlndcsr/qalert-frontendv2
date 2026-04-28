@@ -11,12 +11,12 @@ import Image from "next/image";
 const API_BASE_URL = "/api/proxy";
 
 export default function QueueDisplay() {
-  const router = useRouter();
   const {
     isOnline,
     isLoading: isStatusLoading,
     setIsOnline,
   } = useSystemStatus();
+  const router = useRouter();
   useEffect(() => {
     if (!isStatusLoading && !isOnline) {
       router.replace("/");
@@ -121,153 +121,100 @@ export default function QueueDisplay() {
     return `${hours}:${minutesStr} ${ampm}`;
   }, []);
 
-  // Fetch queue entries and users with optimized state updates
+  // Fetch queue data from public endpoint
   const fetchQueueData = useCallback(
     async (isInitial = false) => {
       try {
-        const token = getAuthToken();
         const headers = {
           Accept: "application/json",
           "ngrok-skip-browser-warning": "true",
-          ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        // Fetch queues, users, appointments, schedules, doctor-schedule, doctors, and emergency encounters in parallel
-        const [
-          queuesResponse,
-          usersResponse,
-          appointmentsResponse,
-          schedulesResponse,
-          doctorSchedulesResponse,
-          doctorsResponse,
-          emergencyResponse,
-        ] = await Promise.all([
-          fetch(`${API_BASE_URL}/queues`, { headers }),
-          fetch(`${API_BASE_URL}/users`, { headers }),
-          fetch(`${API_BASE_URL}/appointments`, { headers }),
-          fetch(`${API_BASE_URL}/schedules`, { headers }),
-          fetch(`${API_BASE_URL}/doctor-schedule`, { headers }),
-          fetch(`${API_BASE_URL}/doctors`, { headers }),
-          fetch(`${API_BASE_URL}/emergency-encounters`, { headers }),
-        ]);
+        const response = await fetch(
+          "http://qalert-backend.test/api/public/queue-display",
+          { headers }
+        );
 
-        if (queuesResponse.ok && usersResponse.ok) {
-          const queuesData = await queuesResponse.json();
-          const usersData = await usersResponse.json();
+        if (response.ok) {
+          const data = await response.json();
 
-          // Filter queue entries for today only
-          const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format in local timezone
-          const todayQueues = queuesData.filter(
-            (entry) => entry.date === today,
-          );
+          // queues for today (already filtered by backend)
+          const todayQueues = data.queues || [];
 
           // Handle emergency encounters
-          if (emergencyResponse.ok) {
-            const emergencyData = await emergencyResponse.json();
-            const allEncounters = Array.isArray(emergencyData)
-              ? emergencyData
-              : emergencyData.data || [];
-            // Filter for today's encounters
-            const todayString = getTodayString();
-            const todayEncounters = allEncounters.filter((enc) => {
-              const encDate = normalizeDateToLocal(enc.date);
-              const encStatus = (enc.status || "active").toLowerCase();
-              return encDate === todayString && encStatus === "active";
-            });
-            if (
-              !isDataEqual(todayEncounters, previousEmergencyDataRef.current)
-            ) {
-              previousEmergencyDataRef.current = todayEncounters;
-              setEmergencyEncounters(todayEncounters);
-            }
+          const allEncounters = data.emergency_encounters || [];
+          const todayString = getTodayString();
+          const todayEncounters = allEncounters.filter((enc) => {
+            const encDate = normalizeDateToLocal(enc.date);
+            const encStatus = (enc.status || "active").toLowerCase();
+            return encDate === todayString && encStatus === "active";
+          });
+          if (
+            !isDataEqual(todayEncounters, previousEmergencyDataRef.current)
+          ) {
+            previousEmergencyDataRef.current = todayEncounters;
+            setEmergencyEncounters(todayEncounters);
           }
 
-          // Create a user map for quick lookup
+          // Create a user map for quick lookup (id_number only)
           const userMap = {};
-          usersData.forEach((user) => {
+          (data.users || []).forEach((user) => {
             userMap[user.user_id] = user;
           });
 
-          // Build appointment time map and appointment-to-schedule map keyed by appointment_id (as string)
+          // Build appointment time map and appointment-to-schedule map keyed by appointment_id
           const timeMap = {};
           const aptScheduleMap = {};
           const aptDoctorMap = {};
-          if (appointmentsResponse.ok) {
-            const aptData = await appointmentsResponse.json();
-            const aptList = Array.isArray(aptData)
-              ? aptData
-              : aptData?.data || aptData?.appointments || [];
-            aptList.forEach((apt) => {
-              if (apt.appointment_id != null) {
-                if (apt.appointment_time)
-                  timeMap[String(apt.appointment_id)] = apt.appointment_time;
-                if (apt.schedule_id != null)
-                  aptScheduleMap[String(apt.appointment_id)] = String(
-                    apt.schedule_id,
-                  );
-                if (apt.doctor_id != null)
-                  aptDoctorMap[String(apt.appointment_id)] = String(
-                    apt.doctor_id,
-                  );
-              }
-            });
-          }
+          (data.appointments || []).forEach((apt) => {
+            if (apt.appointment_id != null) {
+              if (apt.appointment_time)
+                timeMap[String(apt.appointment_id)] = apt.appointment_time;
+              if (apt.schedule_id != null)
+                aptScheduleMap[String(apt.appointment_id)] = String(
+                  apt.schedule_id,
+                );
+              if (apt.doctor_id != null)
+                aptDoctorMap[String(apt.appointment_id)] = String(
+                  apt.doctor_id,
+                );
+            }
+          });
 
           // Build schedule shift map keyed by schedule_id
           const shiftMap = {};
-          let schedList = [];
-          if (schedulesResponse.ok) {
-            const schedData = await schedulesResponse.json();
-            schedList = Array.isArray(schedData)
-              ? schedData
-              : schedData?.data || schedData?.schedules || [];
-            schedList.forEach((sched) => {
-              if (sched.schedule_id != null) {
-                shiftMap[String(sched.schedule_id)] = sched.shift || null;
-              }
-            });
-          }
+          const schedList = data.schedules || [];
+          schedList.forEach((sched) => {
+            if (sched.schedule_id != null) {
+              shiftMap[String(sched.schedule_id)] = sched.shift || null;
+            }
+          });
 
-          // Build schedule-to-doctor map using doctor_schedule table (stores ARRAY of doctor_ids per schedule)
+          // Build schedule-to-doctor map using doctor_schedule table
           const scheduleDoctorMap = {};
-          if (doctorSchedulesResponse.ok) {
-            const dsData = await doctorSchedulesResponse.json();
-            const dsList = Array.isArray(dsData)
-              ? dsData
-              : dsData?.data || dsData?.doctor_schedules || [];
-            dsList.forEach((ds) => {
-              if (ds.schedule_id != null && ds.doctor_id != null) {
-                const schedKey = String(ds.schedule_id);
-                if (!scheduleDoctorMap[schedKey]) {
-                  scheduleDoctorMap[schedKey] = [];
-                }
-                scheduleDoctorMap[schedKey].push(String(ds.doctor_id));
+          (data.doctor_schedules || []).forEach((ds) => {
+            if (ds.schedule_id != null && ds.doctor_id != null) {
+              const schedKey = String(ds.schedule_id);
+              if (!scheduleDoctorMap[schedKey]) {
+                scheduleDoctorMap[schedKey] = [];
               }
-            });
-          }
+              scheduleDoctorMap[schedKey].push(String(ds.doctor_id));
+            }
+          });
 
           // Build doctor name map keyed by doctor_id
           const doctorNameMap = {};
-          if (doctorsResponse.ok) {
-            const docData = await doctorsResponse.json();
-            const docList = Array.isArray(docData)
-              ? docData
-              : docData?.data || docData?.doctors || [];
-            docList.forEach((doc) => {
-              if (doc.doctor_id != null) {
-                doctorNameMap[String(doc.doctor_id)] = doc.doctor_name || null;
-              }
-            });
-          }
+          (data.doctors || []).forEach((doc) => {
+            if (doc.doctor_id != null) {
+              doctorNameMap[String(doc.doctor_id)] = doc.doctor_name || null;
+            }
+          });
 
-          // Build AM/PM shift doctor map for today (reuses schedList)
-          // Each shift now holds an array of doctor names for multiple doctors
+          // Build AM/PM shift doctor map for today
           const shiftDoctorMap = { AM: [], PM: [] };
           if (schedList.length > 0) {
-            // Get today's day abbreviation
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             const todayDay = dayNames[new Date().getDay()];
-            // Find today's AM and PM schedules
             schedList.forEach((sched) => {
               if (
                 sched.day === todayDay &&
@@ -289,7 +236,7 @@ export default function QueueDisplay() {
             });
           }
 
-          // Only update state if data has changed (prevents unnecessary re-renders)
+          // Only update state if data has changed
           if (!isDataEqual(todayQueues, previousQueueDataRef.current)) {
             previousQueueDataRef.current = todayQueues;
             setQueueEntries(todayQueues);
@@ -337,10 +284,7 @@ export default function QueueDisplay() {
             setShiftDoctorMap(shiftDoctorMap);
           }
         } else {
-          console.error("Failed to fetch data:", {
-            queues: queuesResponse.status,
-            users: usersResponse.status,
-          });
+          console.error("Failed to fetch queue data:", response.status);
         }
       } catch (error) {
         console.error("Error fetching queue data:", error);
@@ -351,7 +295,7 @@ export default function QueueDisplay() {
         }
       }
     },
-    [getAuthToken, isDataEqual, getTodayString, normalizeDateToLocal],
+    [isDataEqual, getTodayString, normalizeDateToLocal],
   );
 
   // Initial fetch — SSE handles subsequent updates
