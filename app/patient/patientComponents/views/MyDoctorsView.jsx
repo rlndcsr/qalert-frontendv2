@@ -316,7 +316,7 @@ export default function MyDoctorsView() {
             <Stethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-[#4ad294]" />
           </div>
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-            No Health Personnes Available
+            No Health Personnel Available
           </h3>
           <p className="text-gray-600 text-sm max-w-sm mx-auto">
             There are currently no active health personnel in the system.
