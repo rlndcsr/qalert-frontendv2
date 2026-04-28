@@ -768,26 +768,49 @@ export default function QueueDisplay() {
 
           <div className="flex-1 p-2.5 md:p-3 overflow-y-auto min-h-0">
             {isLoadingData ? (
-              <div className="space-y-2.5 md:space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl p-2.5 md:p-3 border border-slate-200 animate-pulse"
-                    style={{
-                      background:
-                        "linear-gradient(to right, #F1F5F9, transparent)",
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5 md:gap-3">
-                      <div className="rounded-xl w-10 h-10 md:w-12 md:h-12 bg-slate-300"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 bg-slate-300 rounded w-3/4"></div>
-                        <div className="h-2 bg-slate-300 rounded w-1/2"></div>
-                      </div>
-                      <div className="w-10 h-2 bg-slate-300 rounded"></div>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* AM Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="h-3 w-6 bg-slate-300 rounded animate-pulse"></div>
+                    <div className="flex-1 h-px bg-slate-300"></div>
+                    <div className="h-3 w-4 bg-slate-200 rounded animate-pulse"></div>
                   </div>
-                ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="rounded-xl p-3 border border-slate-200" style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-slate-200 rounded-lg animate-pulse"></div>
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
+                            <div className="h-2 bg-slate-100 rounded w-1/2 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* PM Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="h-3 w-6 bg-slate-300 rounded animate-pulse"></div>
+                    <div className="flex-1 h-px bg-slate-300"></div>
+                    <div className="h-3 w-4 bg-slate-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="rounded-xl p-3 border border-slate-200" style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-slate-200 rounded-lg animate-pulse"></div>
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
+                            <div className="h-2 bg-slate-100 rounded w-1/2 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               (() => {

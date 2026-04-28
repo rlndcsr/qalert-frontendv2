@@ -545,6 +545,19 @@ export default function AdminPortal() {
             Data Visualization
           </button>
         </div>
+        <a
+          href="/queues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-[#00968a] hover:text-[#007a70] transition-all cursor-pointer shrink-0"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+          </svg>
+          Live Queue Display
+        </a>
         {/* Compact System Status Toggle - Hidden for now */}
         {false && <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
           <div
