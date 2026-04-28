@@ -324,10 +324,16 @@ export default function Home() {
       iconAlt: "Staff Dashboard Icon",
       accentColor: "#00968a",
       accentSoft: "#5ecbc3",
-      buttonText: "Admin Login",
-      disabled: false,
+      buttonText: isOnline ? "Admin Login" : "System Offline",
+      disabled: !isOnline,
       delay: 0.16,
-      onClick: () => router.push("/admin"),
+      onClick: () => {
+        if (isOnline) {
+          router.push("/admin");
+        } else {
+          toast.error("System is currently offline. Please try again later.");
+        }
+      },
     },
     {
       key: "queue",
