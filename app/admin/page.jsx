@@ -163,7 +163,7 @@ export default function AdminPortal() {
         "ngrok-skip-browser-warning": true,
       },
     })
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         const list = Array.isArray(data)
           ? data
@@ -532,7 +532,7 @@ export default function AdminPortal() {
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
-            Health Personnels
+            Health Personnel
           </button>
           <button
             onClick={() => setActiveTab("analytics")}
@@ -551,39 +551,49 @@ export default function AdminPortal() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-[#00968a] hover:text-[#007a70] transition-all cursor-pointer shrink-0"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-            <rect width="20" height="14" x="2" y="3" rx="2"/>
-            <line x1="8" x2="16" y1="21" y2="21"/>
-            <line x1="12" x2="12" y1="17" y2="21"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4"
+          >
+            <rect width="20" height="14" x="2" y="3" rx="2" />
+            <line x1="8" x2="16" y1="21" y2="21" />
+            <line x1="12" x2="12" y1="17" y2="21" />
           </svg>
           Live Queue Display
         </a>
         {/* Compact System Status Toggle - Hidden for now */}
-        {false && <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
-          <div
-            className={`w-3 h-3 rounded-full ${
-              systemStatus ? "bg-green-500" : "bg-gray-400"
-            }`}
-          ></div>
-          <span className="text-xs font-medium text-[#25323A]">
-            {systemStatus ? "Online" : "Offline"}
-          </span>
-          <button
-            onClick={handleToggleSystemStatus}
-            disabled={isTogglingStatus || isFetchingSystemStatus}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#00968a] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-              systemStatus ? "bg-[#00968a]" : "bg-gray-300"
-            }`}
-            aria-label="Toggle system status"
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                systemStatus ? "translate-x-5" : "translate-x-0"
+        {false && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2 flex items-center gap-3">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                systemStatus ? "bg-green-500" : "bg-gray-400"
               }`}
-            />
-          </button>
-        </div>
-        }
+            ></div>
+            <span className="text-xs font-medium text-[#25323A]">
+              {systemStatus ? "Online" : "Offline"}
+            </span>
+            <button
+              onClick={handleToggleSystemStatus}
+              disabled={isTogglingStatus || isFetchingSystemStatus}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#00968a] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                systemStatus ? "bg-[#00968a]" : "bg-gray-300"
+              }`}
+              aria-label="Toggle system status"
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  systemStatus ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Global Offline Banner */}

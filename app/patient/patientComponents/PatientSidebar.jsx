@@ -19,7 +19,7 @@ const sidebarItems = [
   { id: "home", label: "Home", icon: Home },
   { id: "appointment", label: "My Appointment", icon: CalendarCheck },
   { id: "queue", label: "Appointment Queue", icon: ClipboardList },
-  { id: "doctors", label: "Health Personnels", icon: Stethoscope },
+  { id: "doctors", label: "Health Personnel", icon: Stethoscope },
   { id: "history", label: "My History", icon: History },
   { id: "profile", label: "Edit Profile", icon: User },
 ];

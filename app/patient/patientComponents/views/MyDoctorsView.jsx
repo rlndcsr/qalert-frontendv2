@@ -261,10 +261,10 @@ export default function MyDoctorsView() {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Health Personnels
+              Health Personnel
             </h1>
             <p className="hidden sm:block text-sm text-gray-500">
-              View available health personnels and their schedules
+              View available health personnel and their schedules
             </p>
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function MyDoctorsView() {
         {/* Search bar */}
         <input
           type="text"
-          placeholder="Search health personnels..."
+          placeholder="Search health personnel..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full sm:w-auto rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#4ad294] focus:ring-2 focus:ring-[#4ad294]/20"
@@ -300,7 +300,7 @@ export default function MyDoctorsView() {
             <RefreshCw className="w-8 h-8 text-red-500" />
           </div>
           <h3 className="text-lg font-bold text-red-700 mb-2">
-            Error Loading Health Personnels
+            Error Loading Health Personnel
           </h3>
           <p className="text-red-600 text-sm mb-6 max-w-md mx-auto">{error}</p>
           <button
@@ -316,10 +316,10 @@ export default function MyDoctorsView() {
             <Stethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-[#4ad294]" />
           </div>
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-            No Health Personnels Available
+            No Health Personnes Available
           </h3>
           <p className="text-gray-600 text-sm max-w-sm mx-auto">
-            There are currently no active health personnels in the system.
+            There are currently no active health personnel in the system.
           </p>
         </div>
       ) : filteredDoctors.length === 0 ? (
@@ -328,11 +328,11 @@ export default function MyDoctorsView() {
             <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
           </div>
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
-            No Health Personnels Available on {activeFilter}
+            No Health Personnel Available on {activeFilter}
           </h3>
           <p className="text-gray-600 text-sm max-w-sm mx-auto">
-            There are no health personnels scheduled on this day. Try selecting
-            a different day.
+            There are no health personnel scheduled on this day. Try selecting a
+            different day.
           </p>
         </div>
       ) : (

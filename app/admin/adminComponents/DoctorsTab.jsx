@@ -9,8 +9,7 @@ function buildScheduleRowsForDoctor(doctorSchedules, doctorId) {
     .filter((ds) => Number(ds.doctor_id) === Number(doctorId))
     .map((ds) => ({
       doctor_schedule_id: ds.doctor_schedule_id,
-      schedule_id:
-        ds.schedule_id != null ? Number(ds.schedule_id) : null,
+      schedule_id: ds.schedule_id != null ? Number(ds.schedule_id) : null,
     }));
 }
 
@@ -52,28 +51,22 @@ export default function DoctorsTab() {
       if (!doctorRes.ok) throw new Error("Failed to fetch doctors");
       const doctorsData = await doctorRes.json();
 
-      const doctorScheduleRes = await fetch(
-        `${API_BASE_URL}/doctor-schedule`,
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
-          },
+      const doctorScheduleRes = await fetch(`${API_BASE_URL}/doctor-schedule`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
         },
-      );
+      });
       if (!doctorScheduleRes.ok)
         throw new Error("Failed to fetch doctor schedules");
       const doctorSchedulesData = await doctorScheduleRes.json();
 
-      const schedulesRes = await fetch(
-        `${API_BASE_URL}/schedules`,
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
-          },
+      const schedulesRes = await fetch(`${API_BASE_URL}/schedules`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
         },
-      );
+      });
       if (!schedulesRes.ok) throw new Error("Failed to fetch schedules");
       const schedulesData = await schedulesRes.json();
 
@@ -162,8 +155,7 @@ export default function DoctorsTab() {
       return;
     }
 
-    const name =
-      editingDoctor.doctor_name?.trim() || "this health personnel";
+    const name = editingDoctor.doctor_name?.trim() || "this health personnel";
 
     setEditLoading(true);
     try {
@@ -185,7 +177,9 @@ export default function DoctorsTab() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.message || "Failed to delete health personnel");
+        throw new Error(
+          errData?.message || "Failed to delete health personnel",
+        );
       }
 
       await fetchAll();
@@ -261,14 +255,11 @@ export default function DoctorsTab() {
 
       const doctorId = editingDoctor.doctor_id;
 
-      const response = await fetch(
-        `${API_BASE_URL}/doctors/${doctorId}`,
-        {
-          method: "PUT",
-          headers: authHeaders,
-          body: JSON.stringify({ doctor_name: trimmedName }),
-        },
-      );
+      const response = await fetch(`${API_BASE_URL}/doctors/${doctorId}`, {
+        method: "PUT",
+        headers: authHeaders,
+        body: JSON.stringify({ doctor_name: trimmedName }),
+      });
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -368,11 +359,11 @@ export default function DoctorsTab() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-      <h2 className="text-xl font-semibold mb-4">Health Personnels</h2>
+      <h2 className="text-xl font-semibold mb-4">Health Personnel</h2>
       <div className="mb-4 flex gap-2">
         <input
           type="text"
-          placeholder="Search health personnels..."
+          placeholder="Search health personnel..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#00968a] focus:ring-2 focus:ring-[#00968a]/20"
@@ -395,7 +386,7 @@ export default function DoctorsTab() {
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : filteredDoctors.length === 0 ? (
-        <div className="text-gray-500">No health personnels found.</div>
+        <div className="text-gray-500">No health personnel found.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* Add Doctor Card - displayed first */}
@@ -576,7 +567,7 @@ export default function DoctorsTab() {
                               key={
                                 row.doctor_schedule_id != null
                                   ? `ds-${row.doctor_schedule_id}`
-                                  : row._clientId ?? `idx-${idx}`
+                                  : (row._clientId ?? `idx-${idx}`)
                               }
                               className="flex items-center gap-2"
                             >
@@ -666,7 +657,8 @@ export default function DoctorsTab() {
                 <p className="mt-2 text-sm text-slate-600">
                   This will permanently remove{" "}
                   <span className="font-medium text-slate-800">
-                    {editingDoctor.doctor_name?.trim() || "this health personnel"}
+                    {editingDoctor.doctor_name?.trim() ||
+                      "this health personnel"}
                   </span>
                   . This action cannot be undone.
                 </p>
