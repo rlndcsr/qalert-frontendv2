@@ -131,7 +131,7 @@ export default function QueueDisplay() {
         };
 
         const response = await fetch(
-          "http://qalert-backend.test/api/public/queue-display",
+          `${API_BASE_URL}/public/queue-display`,
           { headers }
         );
 
