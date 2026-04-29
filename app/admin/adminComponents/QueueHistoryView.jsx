@@ -44,6 +44,38 @@ const formatDate = (dateString) => {
   return `${month}/${day}/${year}`;
 };
 
+// Normalize a date string to YYYY-MM-DD for reliable comparison
+const normalizeToYMD = (dateString) => {
+  if (!dateString) return null;
+  const s = String(dateString).trim();
+  if (!s) return null;
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // MM/DD/YYYY or M/D/YYYY
+  if (s.includes("/")) {
+    const parts = s.split("/");
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+  }
+  // DD-MM-YYYY or D-M-YYYY (European)
+  if (s.includes("-") && !/^\d{4}/.test(s)) {
+    const parts = s.split("-");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+  }
+  // Fallback: try JS Date parsing
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return null;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
 const formatTime = (timeString) => {
   if (!timeString) return "";
   let hours, minutes;
@@ -132,6 +164,7 @@ function ViewModal({
   onClose,
   aptDoctorMap,
   doctorNameMap,
+  aptDateTimeMap,
 }) {
   if (!queue) return null;
 
@@ -163,11 +196,15 @@ function ViewModal({
   const status = statusConfig[statusKey] || statusConfig.completed;
   const StatusIcon = status.icon;
 
-  // Resolve doctor
+  // Resolve doctor and appointment date/time
   const aptId = queue.appointment_id
     ? aptDoctorMap[String(queue.appointment_id)]
     : null;
   const resolvedDoctorName = aptId ? doctorNameMap[aptId] : null;
+  const aptDateTime =
+    queue.appointment_id && aptDateTimeMap
+      ? aptDateTimeMap[String(queue.appointment_id)]
+      : null;
 
   if (typeof document === "undefined") return null;
 
@@ -261,7 +298,9 @@ function ViewModal({
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-gray-800">
-                  {formatTime(queue.created_at)}
+                  {aptDateTime
+                    ? formatTime(aptDateTime.time)
+                    : formatTime(queue.created_at)}
                 </p>
               </div>
               {resolvedDoctorName && (
@@ -376,6 +415,7 @@ export default function QueueHistoryView() {
   const [reasonCategories, setReasonCategories] = useState([]);
   const [doctorNameMap, setDoctorNameMap] = useState({});
   const [aptDoctorMap, setAptDoctorMap] = useState({});
+  const [aptDateTimeMap, setAptDateTimeMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -390,7 +430,10 @@ export default function QueueHistoryView() {
 
   const getTodayString = () => {
     const today = new Date();
-    return today.toISOString().split("T")[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   useEffect(() => {
@@ -425,7 +468,7 @@ export default function QueueHistoryView() {
         fetch(`${API_BASE_URL}/queues`, { headers }),
         fetch(`${API_BASE_URL}/users`, { headers }),
         fetch(`${API_BASE_URL}/reason-categories`, { headers }),
-        fetch(`${API_BASE_URL}/appointments`, { headers }),
+        fetch(`${API_BASE_URL}/appointments?per_page=500`, { headers }),
         fetch(`${API_BASE_URL}/doctors`, { headers }),
       ]);
 
@@ -460,18 +503,49 @@ export default function QueueHistoryView() {
         setDoctorNameMap(docNameMap);
       }
 
+      // Fetch all appointments pages
       const aptDocMap = {};
+      const aptDateTimeMap = {};
       if (appointmentsResponse.ok) {
-        const aptData = await appointmentsResponse.json();
+        let aptData = await appointmentsResponse.json();
         const aptList = Array.isArray(aptData)
           ? aptData
           : aptData.data || aptData.appointments || [];
+        const totalPages = aptData.last_page || 1;
+
+        // Fetch remaining pages if paginated
+        if (totalPages > 1) {
+          const pageRequests = [];
+          for (let page = 2; page <= totalPages; page++) {
+            pageRequests.push(
+              fetch(`${API_BASE_URL}/appointments?page=${page}`, { headers }),
+            );
+          }
+          const pageResponses = await Promise.all(pageRequests);
+          for (const res of pageResponses) {
+            if (res.ok) {
+              const pageData = await res.json();
+              const pageList = Array.isArray(pageData)
+                ? pageData
+                : pageData.data || pageData.appointments || [];
+              aptList.push(...pageList);
+            }
+          }
+        }
+
         aptList.forEach((apt) => {
           if (apt.appointment_id != null && apt.doctor_id != null) {
             aptDocMap[String(apt.appointment_id)] = String(apt.doctor_id);
           }
+          if (apt.appointment_id != null) {
+            aptDateTimeMap[String(apt.appointment_id)] = {
+              date: apt.appointment_date,
+              time: apt.appointment_time,
+            };
+          }
         });
         setAptDoctorMap(aptDocMap);
+        setAptDateTimeMap(aptDateTimeMap);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -516,9 +590,19 @@ export default function QueueHistoryView() {
 
     if (dateFilterType === "today") {
       const today = getTodayString();
-      result = result.filter((q) => q.date === today);
+      result = result.filter((q) => {
+        const aptDateTime = q.appointment_id
+          ? aptDateTimeMap[String(q.appointment_id)]
+          : null;
+        const normalizedAptDate = aptDateTime ? normalizeToYMD(aptDateTime.date) : null;
+        const normalizedQDate = normalizeToYMD(q.date);
+        return normalizedAptDate ? normalizedAptDate === today : normalizedQDate === today;
+      });
     } else if (dateFilterType === "range" && startDate && endDate) {
-      result = result.filter((q) => q.date >= startDate && q.date <= endDate);
+      result = result.filter((q) => {
+        const normalizedQDate = normalizeToYMD(q.date);
+        return normalizedQDate && normalizedQDate >= startDate && normalizedQDate <= endDate;
+      });
     }
 
     if (searchQuery.trim()) {
@@ -558,6 +642,7 @@ export default function QueueHistoryView() {
     aptDoctorMap,
     doctorNameMap,
     reasonCategoryMap,
+    aptDateTimeMap,
   ]);
 
   const totalPages = Math.ceil(filteredQueues.length / itemsPerPage);
@@ -899,6 +984,9 @@ export default function QueueHistoryView() {
                   const statusCfg = getStatusConfig(queue.queue_status);
                   const StatusIcon = statusCfg.icon;
                   const doctorName = resolveDoctorName(queue);
+                  const aptDateTime = queue.appointment_id
+                    ? aptDateTimeMap[String(queue.appointment_id)]
+                    : null;
 
                   return (
                     <tr
@@ -934,10 +1022,14 @@ export default function QueueHistoryView() {
                       {/* Date & Time */}
                       <td className="px-4 py-3.5">
                         <p className="text-xs font-medium text-gray-800">
-                          {formatDate(queue.date)}
+                          {aptDateTime
+                            ? formatDate(aptDateTime.date)
+                            : formatDate(queue.date)}
                         </p>
                         <p className="text-[11px] text-gray-400">
-                          {formatTime(queue.created_at)}
+                          {aptDateTime
+                            ? formatTime(aptDateTime.time)
+                            : formatTime(queue.created_at)}
                         </p>
                       </td>
 
@@ -1027,6 +1119,9 @@ export default function QueueHistoryView() {
               const statusCfg = getStatusConfig(queue.queue_status);
               const StatusIcon = statusCfg.icon;
               const doctorName = resolveDoctorName(queue);
+              const aptDateTime = queue.appointment_id
+                ? aptDateTimeMap[String(queue.appointment_id)]
+                : null;
 
               return (
                 <div
@@ -1046,7 +1141,9 @@ export default function QueueHistoryView() {
                         </p>
                         <p className="text-[11px] text-gray-400">
                           #{String(queue.queue_number).padStart(3, "0")} ·{" "}
-                          {formatDate(queue.date)}
+                          {aptDateTime
+                            ? formatDate(aptDateTime.date)
+                            : formatDate(queue.date)}
                         </p>
                       </div>
                     </div>
@@ -1062,7 +1159,11 @@ export default function QueueHistoryView() {
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{formatTime(queue.created_at)}</span>
+                        <span>
+                          {aptDateTime
+                            ? formatTime(aptDateTime.time)
+                            : formatTime(queue.created_at)}
+                        </span>
                       </div>
                       {doctorName && (
                         <div className="flex items-center gap-1.5">
@@ -1126,6 +1227,7 @@ export default function QueueHistoryView() {
           reasonCategoryMap={reasonCategoryMap}
           aptDoctorMap={aptDoctorMap}
           doctorNameMap={doctorNameMap}
+          aptDateTimeMap={aptDateTimeMap}
           onClose={() => setViewQueue(null)}
         />
       )}

@@ -11,6 +11,7 @@ import LoginForm from "./adminComponents/LoginForm";
 import StatisticsCards from "./adminComponents/StatisticsCards";
 import CalledPatientDisplay from "./adminComponents/CalledPatientDisplay";
 import QueueManagementTable from "./adminComponents/QueueManagementTable";
+import DoctorQueuePanels from "./adminComponents/DoctorQueuePanels";
 import AnalyticsTab from "./adminComponents/AnalyticsTab";
 import DoctorsTab from "./adminComponents/DoctorsTab";
 import PatientRecordView from "./adminComponents/PatientRecordView";
@@ -637,23 +638,7 @@ export default function AdminPortal() {
           >
             <StatisticsCards stats={stats} isFetchingData={isFetchingData} />
 
-            <CalledPatientDisplay
-              calledPatients={calledPatients}
-              userMap={userMap}
-              reasonCategoryMap={reasonCategoryMap}
-              setQueues={setQueues}
-              setCalledPatients={setCalledPatients}
-            />
-
-            <QueueManagementTable
-              todayQueues={todayQueues}
-              todayDate={todayDate}
-              userMap={userMap}
-              isFetchingData={isFetchingData}
-              setQueues={setQueues}
-              setCalledPatients={setCalledPatients}
-              users={users}
-            />
+            <DoctorQueuePanels setQueues={setQueues} />
           </motion.div>
         )}
         {activeTab === "analytics" && (
