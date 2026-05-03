@@ -549,7 +549,7 @@ export default function DoctorQueuePanels({ setQueues }) {
       {/* Doctor Panels Grid */}
       {isLoadingData ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className="relative overflow-hidden bg-white/95 rounded-2xl shadow-sm border border-[#00968a]/20"
