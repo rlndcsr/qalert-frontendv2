@@ -9,6 +9,7 @@ import {
   Stethoscope,
   Clock,
   User,
+  Users,
   ClipboardList,
   CheckCircle,
   XCircle,
@@ -191,9 +192,9 @@ function Calendar({
           const isWeekend = !isWeekday(dateStr);
           const hasDoctors = hasSchedule(date);
           const isAppointment = hasAppointment(dateStr);
-          const isSameDayVisitDone = blockedBookingDateStrings.includes(dateStr);
-          const cannotPickDate =
-            isPast || isAppointment || isSameDayVisitDone;
+          const isSameDayVisitDone =
+            blockedBookingDateStrings.includes(dateStr);
+          const cannotPickDate = isPast || isAppointment || isSameDayVisitDone;
           const isNonInteractiveDay = isAppointment || isSameDayVisitDone;
 
           return (
@@ -366,6 +367,7 @@ function BookingPanel({
   const [appointmentTime, setAppointmentTime] = useState("");
   const [errors, setErrors] = useState({});
   const [bookedSlots, setBookedSlots] = useState([]);
+  const [bookedCountForSelection, setBookedCountForSelection] = useState(0);
   const [isLoadingBookedSlots, setIsLoadingBookedSlots] = useState(false);
 
   const getShiftTimeRange = (shift) => {
@@ -383,7 +385,9 @@ function BookingPanel({
     if (!selectedSchedule) return [];
     const [schedId, docId] = selectedSchedule.split("-");
     const schedule = availableSchedules.find(
-      (s) => s.schedule_id?.toString() === schedId && s.doctor_id?.toString() === docId,
+      (s) =>
+        s.schedule_id?.toString() === schedId &&
+        s.doctor_id?.toString() === docId,
     );
     if (!schedule) return [];
 
@@ -414,12 +418,16 @@ function BookingPanel({
   useEffect(() => {
     if (!selectedDate || !selectedSchedule || !fetchBookedSlotsForDate) {
       setBookedSlots([]);
+      setBookedCountForSelection(0);
       return;
     }
     setIsLoadingBookedSlots(true);
     const [schedId, docId] = selectedSchedule.split("-");
     fetchBookedSlotsForDate(selectedDate, schedId, docId)
-      .then((slots) => setBookedSlots(slots))
+      .then(({ slots, count }) => {
+        setBookedSlots(slots);
+        setBookedCountForSelection(typeof count === "number" ? count : 0);
+      })
       .finally(() => setIsLoadingBookedSlots(false));
   }, [selectedDate, selectedSchedule, fetchBookedSlotsForDate]);
 
@@ -448,6 +456,7 @@ function BookingPanel({
     setAppointmentTime("");
     setErrors({});
     setBookedSlots([]);
+    setBookedCountForSelection(0);
   }, [selectedDate]);
 
   const formatDate = (dateStr) => {
@@ -566,7 +575,8 @@ function BookingPanel({
                     key={`${schedule.schedule_id}-${schedule.doctor_id}`}
                     schedule={schedule}
                     isSelected={
-                      selectedSchedule === `${schedule.schedule_id}-${schedule.doctor_id}`
+                      selectedSchedule ===
+                      `${schedule.schedule_id}-${schedule.doctor_id}`
                     }
                     onClick={() => {
                       const newKey = `${schedule.schedule_id}-${schedule.doctor_id}`;
@@ -599,6 +609,35 @@ function BookingPanel({
             )}
           </div>
         )}
+
+        {selectedDate &&
+          selectedSchedule &&
+          availableSchedules.length > 0 && (
+            <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                  <Users className="h-4 w-4 text-[#4ad294]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Bookings on this date
+                  </p>
+                  {isLoadingBookedSlots ? (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                      <ClipLoader size={14} color="#4ad294" />
+                      <span>Checking how many patients have booked…</span>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm font-medium text-gray-800 leading-snug">
+                      {bookedCountForSelection === 0
+                        ? "No other patients have booked with this doctor on this date yet."
+                        : `${bookedCountForSelection} ${bookedCountForSelection === 1 ? "patient has" : "patients have"} already booked with this doctor on this date.`}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Booking Form */}
         {selectedDate && availableSchedules.length > 0 && (
@@ -761,9 +800,7 @@ export default function AppointmentView() {
   const isLoading = isLoadingAppointments || isLoadingSchedules;
 
   const todayYmd = getTodayDateString();
-  const blockedBookingDateStrings = hasSameDayBookingBlocked
-    ? [todayYmd]
-    : [];
+  const blockedBookingDateStrings = hasSameDayBookingBlocked ? [todayYmd] : [];
 
   const sameDayBookingBlockReason = hasCompletedVisitToday
     ? "completed"

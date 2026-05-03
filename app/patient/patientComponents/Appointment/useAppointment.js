@@ -426,10 +426,12 @@ export function useAppointment() {
   }, []);
 
   // Fetch booked slots for a date + schedule + doctor (each doctor has their own calendar)
+  /** @returns {Promise<{ slots: string[]; count: number }>} */
   const fetchBookedSlotsForDate = useCallback(
     async (date, scheduleId, doctorId) => {
+      const empty = { slots: [], count: 0 };
       const token = getAuthToken();
-      if (!token || !date || !scheduleId) return [];
+      if (!token || !date || !scheduleId) return empty;
 
       try {
         const response = await fetch(`${API_BASE_URL}/appointments`, {
@@ -442,35 +444,44 @@ export function useAppointment() {
           },
         });
 
-        if (!response.ok) return [];
+        if (!response.ok) return empty;
 
         const data = await response.json();
         const list = Array.isArray(data)
           ? data
           : data?.data || data?.appointments || data?.items || [];
 
-        return list
-          .filter((apt) => {
-            const aptDate = toYMD(apt?.appointment_date);
-            const status = (apt?.status || "").toLowerCase();
-            const sameSchedule =
-              apt?.schedule_id?.toString() === scheduleId?.toString();
-            const doctorFilterActive =
-              doctorId != null && String(doctorId).trim() !== "";
-            const sameDoctor =
-              !doctorFilterActive ||
-              apt?.doctor_id?.toString() === String(doctorId);
-            return (
-              aptDate === date &&
-              sameSchedule &&
-              sameDoctor &&
-              status !== "cancelled"
-            );
-          })
-          .map((apt) => (apt?.appointment_time || "").substring(0, 5));
+        const matching = list.filter((apt) => {
+          const aptDate = toYMD(apt?.appointment_date);
+          const status = (
+            apt?.status ||
+            apt?.appointment_status ||
+            ""
+          ).toLowerCase();
+          const sameSchedule =
+            apt?.schedule_id?.toString() === scheduleId?.toString();
+          const doctorFilterActive =
+            doctorId != null && String(doctorId).trim() !== "";
+          const sameDoctor =
+            !doctorFilterActive ||
+            apt?.doctor_id?.toString() === String(doctorId);
+          return (
+            aptDate === date &&
+            sameSchedule &&
+            sameDoctor &&
+            status !== "cancelled"
+          );
+        });
+
+        return {
+          slots: matching.map((apt) =>
+            (apt?.appointment_time || "").substring(0, 5),
+          ),
+          count: matching.length,
+        };
       } catch (err) {
         console.error("[fetchBookedSlotsForDate] Error:", err);
-        return [];
+        return empty;
       }
     },
     [],
