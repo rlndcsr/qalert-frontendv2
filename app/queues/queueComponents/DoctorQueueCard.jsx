@@ -20,7 +20,7 @@ function getDoctorInitials(name) {
 /** Compact wall (4+ doctors): max waiting rows in the left column before spilling to the right. */
 const COMPACT_WAITING_LEFT_MAX = 3;
 /** Single row of cards (≤3 doctors): max waiting rows in the left column on md+ before spilling right. */
-const LOOSE_WAITING_LEFT_MAX = 4;
+const LOOSE_WAITING_LEFT_MAX = 5;
 
 function WaitingQueueEntry({
   patient,
@@ -296,13 +296,13 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Waiting skeleton — compact: 3|rest; loose: single col mobile, md: 4|rest */}
+        {/* Waiting skeleton — compact: 3|rest; loose: single col mobile, md: 5|rest */}
         <div
           className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
         >
           {compact ? (
-            <div className="grid grid-cols-2 gap-x-1.5">
-              <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-2 gap-x-1">
+              <div className="flex flex-col gap-0.5">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -316,7 +316,7 @@ export default function DoctorQueueCard({
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-0.5">
                 {[4, 5, 6].map((i) => (
                   <div
                     key={i}
@@ -333,7 +333,7 @@ export default function DoctorQueueCard({
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-2 md:hidden">
+              <div className="flex flex-col gap-1.5 md:hidden">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
                     key={i}
@@ -347,9 +347,9 @@ export default function DoctorQueueCard({
                   </div>
                 ))}
               </div>
-              <div className="hidden grid-cols-2 gap-x-2 md:grid">
-                <div className="flex flex-col gap-2">
-                  {[1, 2, 3, 4].map((i) => (
+              <div className="hidden grid-cols-2 gap-x-1.5 md:grid">
+                <div className="flex flex-col gap-1.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
                     <div
                       key={i}
                       className="flex items-center gap-3 rounded-lg bg-slate-50 p-2"
@@ -362,8 +362,8 @@ export default function DoctorQueueCard({
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-col gap-2">
-                  {[5, 6].map((i) => (
+                <div className="flex flex-col gap-1.5">
+                  {[6].map((i) => (
                     <div
                       key={i}
                       className="flex items-center gap-3 rounded-lg bg-slate-50 p-2"
@@ -507,13 +507,13 @@ export default function DoctorQueueCard({
               ref={waitingInnerRef}
               className={
                 compact
-                  ? "will-change-transform grid grid-cols-2 items-start gap-x-1.5 gap-y-0"
+                  ? "will-change-transform grid grid-cols-2 items-start gap-x-1 gap-y-0"
                   : "will-change-transform"
               }
             >
               {compact ? (
                 <>
-                  <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     {waitingPatients
                       .slice(0, COMPACT_WAITING_LEFT_MAX)
                       .map((patient) => (
@@ -526,7 +526,7 @@ export default function DoctorQueueCard({
                         />
                       ))}
                   </div>
-                  <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     {waitingPatients
                       .slice(COMPACT_WAITING_LEFT_MAX)
                       .map((patient) => (
@@ -542,7 +542,7 @@ export default function DoctorQueueCard({
                 </>
               ) : (
                 <>
-                  <div className="flex flex-col gap-2 md:hidden">
+                  <div className="flex flex-col gap-1.5 md:hidden">
                     {waitingPatients.map((patient) => (
                       <WaitingQueueEntry
                         key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
@@ -553,8 +553,8 @@ export default function DoctorQueueCard({
                       />
                     ))}
                   </div>
-                  <div className="hidden min-w-0 grid-cols-2 gap-x-2 md:grid md:items-start">
-                    <div className="flex min-w-0 flex-col gap-2">
+                  <div className="hidden min-w-0 grid-cols-2 gap-x-1.5 md:grid md:items-start">
+                    <div className="flex min-w-0 flex-col gap-1.5">
                       {waitingPatients
                         .slice(0, LOOSE_WAITING_LEFT_MAX)
                         .map((patient) => (
@@ -567,7 +567,7 @@ export default function DoctorQueueCard({
                           />
                         ))}
                     </div>
-                    <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex min-w-0 flex-col gap-1.5">
                       {waitingPatients
                         .slice(LOOSE_WAITING_LEFT_MAX)
                         .map((patient) => (
