@@ -17,28 +17,27 @@ function getDoctorInitials(name) {
   return word.charAt(0).toUpperCase();
 }
 
-/** In compact (4+ doctors) mode, at most this many waiting rows stack in the left column; rest go right. */
+/** Compact wall (4+ doctors): max waiting rows in the left column before spilling to the right. */
 const COMPACT_WAITING_LEFT_MAX = 3;
+/** Single row of cards (≤3 doctors): max waiting rows in the left column on md+ before spilling right. */
+const LOOSE_WAITING_LEFT_MAX = 4;
 
 function WaitingQueueEntry({
   patient,
   compact,
   formatQueueNumber,
   formatTime,
-  /** True when item sits in the 2-col compact grid (parent uses gap; no margin-bottom). */
-  inCompactGrid = false,
 }) {
   const isNoShow = patient.queueStatus === "no_show";
   const isCalled = patient.queueStatus === "called";
-  const marginClass = inCompactGrid ? "" : compact ? "mb-1" : "mb-2";
 
   return (
     <div
-      className={`break-inside-avoid rounded-lg hover:shadow-sm transition-all ${marginClass} ${compact ? "p-1.5" : "p-2.5"} ${
+      className={`break-inside-avoid rounded-lg hover:shadow-sm transition-all ${compact ? "p-1.5" : "p-2.5"} ${
         isNoShow
-          ? "ring-2 ring-orange-400 border border-orange-400 bg-orange-50/60"
+          ? "border border-orange-200 bg-orange-50/60"
           : isCalled
-            ? "ring-2 ring-blue-400 border border-blue-400 bg-blue-50/70"
+            ? "border border-blue-200 bg-blue-50/70"
             : "border border-slate-200 bg-gradient-to-r from-slate-50 to-transparent"
       }`}
     >
@@ -59,11 +58,7 @@ function WaitingQueueEntry({
                 : isCalled
                   ? "#2563eb"
                   : "#374D6C",
-              color: isNoShow
-                ? "#9a3412"
-                : isCalled
-                  ? "#1e3a8a"
-                  : "#374D6C",
+              color: isNoShow ? "#9a3412" : isCalled ? "#1e3a8a" : "#374D6C",
             }}
           >
             {formatQueueNumber(patient.number)}
@@ -246,13 +241,7 @@ export default function DoctorQueueCard({
       ro.disconnect();
       inner.style.transform = "";
     };
-  }, [
-    isLoading,
-    prefersReducedMotion,
-    compact,
-    waitingPatients,
-    waitingCount,
-  ]);
+  }, [isLoading, prefersReducedMotion, compact, waitingPatients, waitingCount]);
 
   /** On narrow screens, cap list height so overflow + auto-scroll can kick in when the queue is long. */
   const mobileListMaxClass =
@@ -307,7 +296,7 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Waiting skeleton — compact: 3+ split cols; else columns-1 / md:columns-2 */}
+        {/* Waiting skeleton — compact: 3|rest; loose: single col mobile, md: 4|rest */}
         <div
           className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
         >
@@ -343,20 +332,52 @@ export default function DoctorQueueCard({
               </div>
             </div>
           ) : (
-            <div className="columns-1 gap-x-2 gap-y-2 [column-fill:auto] md:columns-2">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="mb-2 flex break-inside-avoid items-center gap-3 rounded-lg bg-slate-50 p-2"
-                >
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
-                  <div className="flex-1 space-y-1">
-                    <div className="h-3 w-16 rounded bg-slate-200 animate-pulse" />
-                    <div className="h-2 w-12 rounded bg-slate-100 animate-pulse" />
+            <>
+              <div className="flex flex-col gap-2 md:hidden">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-lg bg-slate-50 p-2"
+                  >
+                    <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-3 w-16 rounded bg-slate-200 animate-pulse" />
+                      <div className="h-2 w-12 rounded bg-slate-100 animate-pulse" />
+                    </div>
                   </div>
+                ))}
+              </div>
+              <div className="hidden grid-cols-2 gap-x-2 md:grid">
+                <div className="flex flex-col gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-lg bg-slate-50 p-2"
+                    >
+                      <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-3 w-16 rounded bg-slate-200 animate-pulse" />
+                        <div className="h-2 w-12 rounded bg-slate-100 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                <div className="flex flex-col gap-2">
+                  {[5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-lg bg-slate-50 p-2"
+                    >
+                      <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-3 w-16 rounded bg-slate-200 animate-pulse" />
+                        <div className="h-2 w-12 rounded bg-slate-100 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -487,7 +508,7 @@ export default function DoctorQueueCard({
               className={
                 compact
                   ? "will-change-transform grid grid-cols-2 items-start gap-x-1.5 gap-y-0"
-                  : "columns-1 will-change-transform [column-fill:auto] md:columns-2 gap-x-2 gap-y-2"
+                  : "will-change-transform"
               }
             >
               {compact ? (
@@ -502,7 +523,6 @@ export default function DoctorQueueCard({
                           compact={compact}
                           formatQueueNumber={formatQueueNumber}
                           formatTime={formatTime}
-                          inCompactGrid
                         />
                       ))}
                   </div>
@@ -516,21 +536,52 @@ export default function DoctorQueueCard({
                           compact={compact}
                           formatQueueNumber={formatQueueNumber}
                           formatTime={formatTime}
-                          inCompactGrid
                         />
                       ))}
                   </div>
                 </>
               ) : (
-                waitingPatients.map((patient) => (
-                  <WaitingQueueEntry
-                    key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
-                    patient={patient}
-                    compact={compact}
-                    formatQueueNumber={formatQueueNumber}
-                    formatTime={formatTime}
-                  />
-                ))
+                <>
+                  <div className="flex flex-col gap-2 md:hidden">
+                    {waitingPatients.map((patient) => (
+                      <WaitingQueueEntry
+                        key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                        patient={patient}
+                        compact={compact}
+                        formatQueueNumber={formatQueueNumber}
+                        formatTime={formatTime}
+                      />
+                    ))}
+                  </div>
+                  <div className="hidden min-w-0 grid-cols-2 gap-x-2 md:grid md:items-start">
+                    <div className="flex min-w-0 flex-col gap-2">
+                      {waitingPatients
+                        .slice(0, LOOSE_WAITING_LEFT_MAX)
+                        .map((patient) => (
+                          <WaitingQueueEntry
+                            key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                            patient={patient}
+                            compact={compact}
+                            formatQueueNumber={formatQueueNumber}
+                            formatTime={formatTime}
+                          />
+                        ))}
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-2">
+                      {waitingPatients
+                        .slice(LOOSE_WAITING_LEFT_MAX)
+                        .map((patient) => (
+                          <WaitingQueueEntry
+                            key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                            patient={patient}
+                            compact={compact}
+                            formatQueueNumber={formatQueueNumber}
+                            formatTime={formatTime}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
