@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useAppointment } from "./useAppointment";
 import AppointmentCard from "./AppointmentCard";
-import { toYMD } from "../patientUtils";
+import { toYMD, getTodayDateString } from "../patientUtils";
 import {
   Select,
   SelectContent,
@@ -35,6 +35,7 @@ function Calendar({
   schedules,
   isWeekday,
   appointmentDates = [],
+  blockedBookingDateStrings = [],
   initialMonth = null,
 }) {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -190,18 +191,23 @@ function Calendar({
           const isWeekend = !isWeekday(dateStr);
           const hasDoctors = hasSchedule(date);
           const isAppointment = hasAppointment(dateStr);
+          const isSameDayVisitDone = blockedBookingDateStrings.includes(dateStr);
+          const cannotPickDate =
+            isPast || isAppointment || isSameDayVisitDone;
+          const isNonInteractiveDay = isAppointment || isSameDayVisitDone;
 
           return (
             <button
               key={dateStr}
+              type="button"
               onClick={() =>
-                !isPast && !isAppointment && onDateSelect?.(dateStr)
+                !cannotPickDate && !isWeekend && onDateSelect?.(dateStr)
               }
-              disabled={isPast}
+              disabled={cannotPickDate || isWeekend}
               className={`
                 aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-medium transition-all duration-200 relative
                 ${
-                  isAppointment
+                  isNonInteractiveDay
                     ? "bg-gradient-to-br from-[#00968a] to-[#007a70] text-white shadow-lg shadow-[#00968a]/30 cursor-default"
                     : isSelected
                       ? "bg-gradient-to-br from-[#4ad294] to-[#3bb882] text-white shadow-lg shadow-[#4ad294]/30"
@@ -211,18 +217,22 @@ function Calendar({
                           ? "text-gray-300 cursor-not-allowed"
                           : "text-gray-700 hover:bg-[#4ad294]/10 hover:scale-105 cursor-pointer"
                 }
-                ${isToday && !isSelected && !isAppointment ? "ring-2 ring-[#4ad294]/40 ring-offset-1" : ""}
+                ${isToday && !isSelected && !isNonInteractiveDay ? "ring-2 ring-[#4ad294]/40 ring-offset-1" : ""}
               `}
             >
-              <span className={isSelected || isAppointment ? "text-white" : ""}>
+              <span
+                className={
+                  isSelected || isNonInteractiveDay ? "text-white" : ""
+                }
+              >
                 {date.getDate()}
               </span>
-              {!isAppointment && !isPast && hasDoctors && !isWeekend && (
+              {!isNonInteractiveDay && !isPast && hasDoctors && !isWeekend && (
                 <div
                   className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/70" : "bg-[#4ad294]"}`}
                 />
               )}
-              {isAppointment && (
+              {isNonInteractiveDay && (
                 <div className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-white/70" />
               )}
             </button>
@@ -348,6 +358,7 @@ function BookingPanel({
   onSubmit,
   getSchedulesForDate,
   fetchBookedSlotsForDate,
+  sameDayVisitDoneNotice = false,
 }) {
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
@@ -475,6 +486,22 @@ function BookingPanel({
 
       {/* Content */}
       <div className="p-6">
+        {sameDayVisitDoneNotice && (
+          <div className="mb-5 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-[#00968a] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Today&apos;s visit is complete
+                </p>
+                <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                  You already finished your appointment and queue for today.
+                  Choose a future date to book again — today is not available.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Selected Date Banner */}
         {selectedDate ? (
           <motion.div
@@ -700,6 +727,8 @@ export default function AppointmentView() {
     schedules,
     reasonCategories,
     activeAppointment,
+    displayAppointment,
+    hasCompletedVisitToday,
     isLoadingAppointments,
     isLoadingSchedules,
     isLoadingReasonCategories,
@@ -715,11 +744,23 @@ export default function AppointmentView() {
 
   const isLoading = isLoadingAppointments || isLoadingSchedules;
 
-  const appointmentSchedule = activeAppointment
+  const todayYmd = getTodayDateString();
+  const blockedBookingDateStrings = hasCompletedVisitToday
+    ? [todayYmd]
+    : [];
+
+  useEffect(() => {
+    if (!hasCompletedVisitToday || !selectedDate) return;
+    if (selectedDate === getTodayDateString()) {
+      setSelectedDate("");
+    }
+  }, [hasCompletedVisitToday, selectedDate]);
+
+  const appointmentSchedule = displayAppointment
     ? schedules.find(
         (s) =>
-          s.schedule_id === activeAppointment.schedule_id &&
-          s.doctor_id === activeAppointment.doctor_id,
+          s.schedule_id === displayAppointment.schedule_id &&
+          s.doctor_id === displayAppointment.doctor_id,
       )
     : null;
 
@@ -800,11 +841,13 @@ export default function AppointmentView() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              {activeAppointment ? "My Appointment" : "Book Appointment"}
+              {displayAppointment ? "My Appointment" : "Book Appointment"}
             </h2>
             <p className="text-sm text-gray-500">
-              {activeAppointment
-                ? "View your scheduled appointment"
+              {displayAppointment
+                ? activeAppointment
+                  ? "View your scheduled appointment"
+                  : "Your visit for today is complete"
                 : "Select a date and schedule your visit"}
             </p>
           </div>
@@ -819,29 +862,40 @@ export default function AppointmentView() {
           schedules={schedules}
           isWeekday={isWeekday}
           appointmentDates={
-            activeAppointment ? [activeAppointment.appointment_date] : []
+            displayAppointment ? [displayAppointment.appointment_date] : []
+          }
+          blockedBookingDateStrings={
+            activeAppointment ? [] : blockedBookingDateStrings
           }
           initialMonth={
-            activeAppointment ? toYMD(activeAppointment.appointment_date) : null
+            displayAppointment
+              ? toYMD(displayAppointment.appointment_date)
+              : null
           }
         />
 
-        {activeAppointment ? (
+        {displayAppointment && (
           <AppointmentCard
-            appointment={activeAppointment}
+            appointment={displayAppointment}
             schedule={appointmentSchedule}
             reasonCategoryName={(() => {
               const cat = reasonCategories.find(
                 (c) =>
                   (c.reason_category_id || c.id)?.toString() ===
-                  activeAppointment.reason_category_id?.toString(),
+                  displayAppointment.reason_category_id?.toString(),
               );
               return cat?.category_name || cat?.name || null;
             })()}
             isCancelling={isCancelling}
             onCancel={cancelAppointment}
+            allowCancel={Boolean(activeAppointment)}
+            visitCompleted={
+              Boolean(hasCompletedVisitToday) && !activeAppointment
+            }
           />
-        ) : (
+        )}
+
+        {!activeAppointment && (
           <BookingPanel
             selectedDate={selectedDate}
             schedules={schedules}
@@ -852,6 +906,7 @@ export default function AppointmentView() {
             onSubmit={bookAppointment}
             getSchedulesForDate={getSchedulesForDate}
             fetchBookedSlotsForDate={fetchBookedSlotsForDate}
+            sameDayVisitDoneNotice={hasCompletedVisitToday}
           />
         )}
       </div>

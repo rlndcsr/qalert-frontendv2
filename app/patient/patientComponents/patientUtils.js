@@ -102,6 +102,18 @@ export const daysBetween = (aYmd, bYmd) => {
   return Math.round((aDate - bDate) / msPerDay);
 };
 
+/** Add calendar days to a local YYYY-MM-DD string (DST-safe around noon). */
+export const addLocalDaysToYMD = (ymd, days) => {
+  const base = ymdToLocalDate(ymd);
+  if (!base || typeof days !== "number") return null;
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export const getAuthToken = () => {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");

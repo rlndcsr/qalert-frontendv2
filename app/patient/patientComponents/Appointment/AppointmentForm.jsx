@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTodayDateString, addLocalDaysToYMD } from "../patientUtils";
 
 // Day abbreviation to full name mapping
 const DAY_ABBREV_TO_FULL = {
@@ -46,6 +47,8 @@ export default function AppointmentForm({
   getSchedulesForDate,
   isWeekday,
   bookedSlots = [],
+  /** Block picking today after today's visit + queue are completed */
+  hasCompletedVisitToday = false,
 }) {
   const [appointmentDate, setAppointmentDate] = useState("");
   const [selectedSchedule, setSelectedSchedule] = useState("");
@@ -63,8 +66,11 @@ export default function AppointmentForm({
     return () => clearInterval(interval);
   }, []);
 
-  // Get today's date in YYYY-MM-DD format for min date
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayDateString();
+  const minBookableDate =
+    hasCompletedVisitToday && addLocalDaysToYMD(today, 1)
+      ? addLocalDaysToYMD(today, 1)
+      : today;
 
   // Get filtered schedules based on selected date
   const filteredSchedules = useMemo(() => {
@@ -91,7 +97,11 @@ export default function AppointmentForm({
     setErrors((prev) => ({ ...prev, date: null }));
 
     // Check if Sunday (only day blocked now)
-    if (newDate && !isWeekday(newDate)) {
+    if (newDate && newDate < minBookableDate) {
+      setDateError(
+        "You have already completed your visit for today. Choose a future date.",
+      );
+    } else if (newDate && !isWeekday(newDate)) {
       setDateError("Appointments are not available on Sundays.");
     } else {
       setDateError("");
@@ -107,6 +117,9 @@ export default function AppointmentForm({
 
     if (!appointmentDate) {
       newErrors.date = "Please select a date";
+    } else if (appointmentDate < minBookableDate) {
+      newErrors.date =
+        "You have already completed your visit for today. Choose a future date.";
     } else if (!isWeekday(appointmentDate)) {
       newErrors.date = "Appointments are not available on Sundays.";
     }
@@ -146,7 +159,7 @@ export default function AppointmentForm({
 
     const times = [];
     const now = currentTimeRef.current;
-    const isToday = appointmentDate === now.toISOString().split("T")[0];
+    const isToday = appointmentDate === getTodayDateString();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
@@ -240,7 +253,7 @@ export default function AppointmentForm({
             type="date"
             value={appointmentDate}
             onChange={handleDateChange}
-            min={today}
+            min={minBookableDate}
             className={`w-full h-10 px-3 rounded-md border text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4ad294] focus:border-[#4ad294] ${
               errors.date || dateError ? "border-red-500" : "border-gray-300"
             }`}

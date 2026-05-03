@@ -17,11 +17,41 @@ const DAY_INDEX_TO_ABBREV = {
   6: "Sat",
 };
 
+/** Today's appointment is a finished visit: explicit completed status or queue row completed. */
+function isTodaysVisitCompleted(apt, userQueueEntries, todayYMD) {
+  const aptDate = toYMD(apt?.appointment_date);
+  if (!aptDate || aptDate !== todayYMD) return false;
+  const status = (apt?.status || apt?.appointment_status || "").toLowerCase();
+  if (status === "cancelled") return false;
+  if (status === "completed") return true;
+  const linkedCompletedQueue = userQueueEntries.find((q) => {
+    const qDate = toYMD(q?.date ?? q?.created_at);
+    const qStatus = (q?.queue_status || "").toLowerCase();
+    const matchesSchedule =
+      apt?.schedule_id &&
+      q?.schedule_id &&
+      apt.schedule_id.toString() === q.schedule_id.toString();
+    return qDate === aptDate && matchesSchedule && qStatus === "completed";
+  });
+  return !!linkedCompletedQueue;
+}
+
+function pickTodaysCompletedAppointment(userAppointments, userQueueEntries, todayYMD) {
+  const candidates = userAppointments.filter((apt) =>
+    isTodaysVisitCompleted(apt, userQueueEntries, todayYMD),
+  );
+  if (candidates.length === 0) return null;
+  return candidates.sort((a, b) =>
+    String(b.appointment_time || "").localeCompare(String(a.appointment_time || "")),
+  )[0];
+}
+
 export function useAppointment() {
   const [appointments, setAppointments] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [reasonCategories, setReasonCategories] = useState([]);
   const [activeAppointment, setActiveAppointment] = useState(null);
+  const [completedVisitForToday, setCompletedVisitForToday] = useState(null);
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isLoadingReasonCategories, setIsLoadingReasonCategories] =
@@ -57,6 +87,7 @@ export function useAppointment() {
     const userId = getUserId();
     if (!userId) {
       setError("Unable to determine your user ID.");
+      setCompletedVisitForToday(null);
       setIsLoadingAppointments(false);
       return;
     }
@@ -80,6 +111,7 @@ export function useAppointment() {
         console.warn("[fetchAppointments] Failed to fetch:", response.status);
         setAppointments([]);
         setActiveAppointment(null);
+        setCompletedVisitForToday(null);
         setIsLoadingAppointments(false);
         return;
       }
@@ -165,6 +197,13 @@ export function useAppointment() {
       });
 
       setActiveAppointment(activeApt || null);
+
+      const completedToday = pickTodaysCompletedAppointment(
+        userAppointments,
+        userQueueEntries,
+        today,
+      );
+      setCompletedVisitForToday(completedToday);
     } catch (err) {
       console.error("[fetchAppointments] Error:", err);
       setError(err.message || "Failed to fetch appointments");
@@ -420,6 +459,19 @@ export function useAppointment() {
         return false;
       }
 
+      const todayStr = getTodayDateString();
+      if (
+        appointmentDate === todayStr &&
+        completedVisitForToday
+      ) {
+        sileo.error({
+          title: "Already completed today",
+          description:
+            "You have already finished your appointment and queue for today. Book a future date instead.",
+        });
+        return false;
+      }
+
       const userId = getUserId();
       if (!userId) {
         sileo.error({
@@ -483,7 +535,7 @@ export function useAppointment() {
         setIsBooking(false);
       }
     },
-    [getUserId, fetchAppointments],
+    [getUserId, fetchAppointments, completedVisitForToday],
   );
 
   // Cancel an appointment
@@ -587,11 +639,17 @@ export function useAppointment() {
     };
   }, [fetchAppointments]);
 
+  const displayAppointment = activeAppointment || completedVisitForToday;
+  const hasCompletedVisitToday = Boolean(completedVisitForToday);
+
   return {
     appointments,
     schedules,
     reasonCategories,
     activeAppointment,
+    completedVisitForToday,
+    displayAppointment,
+    hasCompletedVisitToday,
     isLoadingAppointments,
     isLoadingSchedules,
     isLoadingReasonCategories,

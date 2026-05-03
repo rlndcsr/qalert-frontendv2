@@ -110,12 +110,24 @@ export default function AppointmentCard({
   reasonCategoryName,
   isCancelling,
   onCancel,
+  /** When false, hide cancel (e.g. visit finished today but API status still "confirmed"). */
+  allowCancel = true,
+  /** True when queue/visit is done but appointment row may still say "confirmed". */
+  visitCompleted = false,
 }) {
   if (!appointment) return null;
 
   const appointmentStatus =
     appointment.status || appointment.appointment_status || "";
-  const statusConfig = getStatusConfig(appointmentStatus);
+  const statusNorm = (appointmentStatus || "").toLowerCase();
+  const statusAllowsCancel =
+    statusNorm !== "completed" &&
+    statusNorm !== "cancelled" &&
+    statusNorm !== "complete";
+  const canCancel = allowCancel && statusAllowsCancel;
+  const statusConfig = getStatusConfig(
+    visitCompleted ? "completed" : appointmentStatus,
+  );
   const StatusIcon = statusConfig.icon;
   const fullDay = schedule
     ? DAY_ABBREV_TO_FULL[schedule.day] || schedule.day
@@ -259,30 +271,34 @@ export default function AppointmentCard({
         )}
 
         {/* Cancel Button */}
-        <motion.button
-          type="button"
-          onClick={() => onCancel(appointment.appointment_id || appointment.id)}
-          disabled={isCancelling}
-          whileHover={isCancelling ? {} : { scale: 1.01 }}
-          whileTap={isCancelling ? {} : { scale: 0.99 }}
-          className={`w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            isCancelling
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 hover:border-rose-300"
-          }`}
-        >
-          {isCancelling ? (
-            <>
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-rose-500 rounded-full animate-spin" />
-              <span>Cancelling...</span>
-            </>
-          ) : (
-            <>
-              <XCircle className="w-4 h-4" />
-              <span className="hover:cursor-pointer">Cancel Appointment</span>
-            </>
-          )}
-        </motion.button>
+        {canCancel && (
+          <motion.button
+            type="button"
+            onClick={() =>
+              onCancel(appointment.appointment_id || appointment.id)
+            }
+            disabled={isCancelling}
+            whileHover={isCancelling ? {} : { scale: 1.01 }}
+            whileTap={isCancelling ? {} : { scale: 0.99 }}
+            className={`w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              isCancelling
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 hover:border-rose-300"
+            }`}
+          >
+            {isCancelling ? (
+              <>
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-rose-500 rounded-full animate-spin" />
+                <span>Cancelling...</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4" />
+                <span className="hover:cursor-pointer">Cancel Appointment</span>
+              </>
+            )}
+          </motion.button>
+        )}
       </div>
     </motion.div>
   );
