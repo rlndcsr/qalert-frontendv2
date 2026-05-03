@@ -739,7 +739,7 @@ export default function QueueDisplay() {
   }, []);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-3 md:p-4 overflow-hidden flex flex-col">
+    <div className="min-h-screen md:h-screen md:max-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-3 md:p-4 flex flex-col max-md:overflow-x-hidden md:overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 md:mb-4 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -805,10 +805,10 @@ export default function QueueDisplay() {
         </div>
       </div>
 
-      {/* Main content: doctor grid — column count depends on number of doctor cards */}
-      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+      {/* Main content: mobile = page scroll + natural card height; md+ = fixed viewport + grid scroll */}
+      <div className="max-md:flex-none flex flex-col md:flex-1 md:min-h-0 md:overflow-hidden">
         <div
-          className={`flex-1 min-h-0 h-full overflow-y-auto grid grid-cols-1 ${doctorGridColsClass} auto-rows-[minmax(15rem,1fr)] p-1 ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
+          className={`grid w-full grid-cols-1 ${doctorGridColsClass} p-1 md:flex-1 md:min-h-0 md:h-full md:overflow-y-auto md:auto-rows-[minmax(15rem,1fr)] ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
         >
           {isLoadingData ? (
             // Loading state: show skeleton cards
@@ -830,7 +830,7 @@ export default function QueueDisplay() {
             </>
           ) : doctorQueues.length === 0 ? (
             // No doctors scheduled
-            <div className="col-span-full flex items-center justify-center h-full min-h-[200px]">
+            <div className="col-span-full flex min-h-[200px] items-center justify-center md:h-full">
               <div className="text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg

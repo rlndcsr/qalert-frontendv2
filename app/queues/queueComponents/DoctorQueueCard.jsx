@@ -38,7 +38,7 @@ export default function DoctorQueueCard({
 
   if (isLoading) {
     return (
-      <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+      <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col max-md:h-auto md:h-full min-h-0">
         {/* Header skeleton */}
         <div
           className={`border-b border-slate-200 bg-gradient-to-r from-slate-100 to-transparent ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
@@ -85,12 +85,12 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Waiting skeleton — two columns, same as loaded state */}
+        {/* Waiting skeleton — single column on small screens, two from md up */}
         <div
-          className={`flex-1 min-h-0 overflow-y-auto ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
+          className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
         >
           <div
-            className={`columns-2 [column-fill:auto] ${compact ? "gap-x-1 gap-y-1" : "gap-x-2 gap-y-2"}`}
+            className={`columns-1 [column-fill:auto] md:columns-2 ${compact ? "gap-x-1 gap-y-1 md:gap-x-2" : "gap-x-2 gap-y-2"}`}
           >
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
@@ -117,7 +117,7 @@ export default function DoctorQueueCard({
   }
 
   return (
-    <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+    <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col max-md:h-auto md:h-full min-h-0">
       {/* Header */}
       <div
         className={`border-b border-slate-200 flex items-center justify-between gap-2 ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
@@ -215,9 +215,9 @@ export default function DoctorQueueCard({
         )}
       </div>
 
-      {/* Waiting Queue Section */}
+      {/* Waiting Queue Section — grows with content on small screens; scroll inside card from md (clinic grid) */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
+        className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
       >
         <p
           className={`font-semibold text-gray-500 uppercase tracking-wide ${compact ? "text-[10px] mb-1" : "text-xs mb-2"}`}
@@ -226,7 +226,7 @@ export default function DoctorQueueCard({
         </p>
         {waitingPatients && waitingPatients.length > 0 ? (
           <div
-            className={`columns-2 [column-fill:auto] ${compact ? "gap-x-1 gap-y-1" : "gap-x-2 gap-y-2"}`}
+            className={`columns-1 [column-fill:auto] md:columns-2 ${compact ? "gap-x-1 gap-y-1 md:gap-x-2" : "gap-x-2 gap-y-2"}`}
           >
             {waitingPatients.map((patient) => {
               const isNoShow = patient.queueStatus === "no_show";
@@ -270,7 +270,7 @@ export default function DoctorQueueCard({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`truncate font-medium text-gray-600 ${compact ? "text-[10px]" : "text-xs"}`}
+                          className={`max-md:whitespace-normal max-md:break-words md:truncate font-medium text-gray-600 ${compact ? "text-[10px]" : "text-xs"}`}
                         >
                           {patient.id_number}
                         </p>
