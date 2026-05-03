@@ -811,9 +811,9 @@ export default function QueueDisplay() {
           className={`grid w-full grid-cols-1 ${doctorGridColsClass} p-1 md:flex-1 md:min-h-0 md:h-full md:overflow-y-auto md:auto-rows-[minmax(15rem,1fr)] ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
         >
           {isLoadingData ? (
-            // Loading state: show skeleton cards
+            // Loading: one row × 3 columns on md+ (matches typical live wall)
             <>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <DoctorQueueCard
                   key={`skeleton-${i}`}
                   doctorName={`Doctor ${i}`}
@@ -824,7 +824,7 @@ export default function QueueDisplay() {
                   formatQueueNumber={formatQueueNumber}
                   formatTime={formatTime}
                   isLoading={true}
-                  compact={doctorQueues.length > 3}
+                  compact={false}
                 />
               ))}
             </>
