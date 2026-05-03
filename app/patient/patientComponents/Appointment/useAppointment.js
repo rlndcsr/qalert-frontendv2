@@ -407,8 +407,8 @@ export function useAppointment() {
     return true; // All days are now allowed
   }, []);
 
-  // Fetch all booked (non-cancelled) time slots for a given date + schedule
-  const fetchBookedSlotsForDate = useCallback(async (date, scheduleId) => {
+  // Fetch booked slots for a date + schedule + doctor (each doctor has their own calendar)
+  const fetchBookedSlotsForDate = useCallback(async (date, scheduleId, doctorId) => {
     const token = getAuthToken();
     if (!token || !date || !scheduleId) return [];
 
@@ -434,9 +434,17 @@ export function useAppointment() {
         .filter((apt) => {
           const aptDate = toYMD(apt?.appointment_date);
           const status = (apt?.status || "").toLowerCase();
+          const sameSchedule =
+            apt?.schedule_id?.toString() === scheduleId?.toString();
+          const doctorFilterActive =
+            doctorId != null && String(doctorId).trim() !== "";
+          const sameDoctor =
+            !doctorFilterActive ||
+            apt?.doctor_id?.toString() === String(doctorId);
           return (
             aptDate === date &&
-            apt?.schedule_id?.toString() === scheduleId?.toString() &&
+            sameSchedule &&
+            sameDoctor &&
             status !== "cancelled"
           );
         })

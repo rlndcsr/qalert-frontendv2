@@ -5,11 +5,8 @@ import Image from "next/image";
 
 export default function QueueStatusCard({
   queueEntry,
-  queuePosition,
   user,
-  getOrdinalPosition,
   onCancelClick,
-  onUpdateClick,
   isLoading,
   doctorName,
 }) {
@@ -93,7 +90,7 @@ export default function QueueStatusCard({
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <div className="rounded-xl border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3 shadow-sm">
           <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
             <svg
@@ -114,39 +111,6 @@ export default function QueueStatusCard({
               {queueEntry.queue_number
                 ? String(queueEntry.queue_number).padStart(3, "0")
                 : "—"}
-            </p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-[#4ad294]/30 bg-[#f5fdf8] p-4 flex items-start gap-3 shadow-sm">
-          <div className="mt-1 w-8 h-8 bg-[#4ad294] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M2.625 6.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0A.75.75 0 0 1 8.25 6h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75ZM2.625 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0ZM7.5 12a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12A.75.75 0 0 1 7.5 12Zm-4.875 5.25a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">
-              Queue Position
-            </p>
-            <p className="text-xs font-semibold text-[#25323A] mt-1">
-              {queueEntry.queue_status === "now_serving"
-                ? "Now Serving"
-                : queueEntry.queue_status === "called"
-                  ? "Called"
-                  : !queueEntry.queue_status ||
-                      queueEntry.queue_status === "waiting"
-                    ? queuePosition !== null
-                      ? getOrdinalPosition(queuePosition)
-                      : ""
-                    : "—"}
             </p>
           </div>
         </div>
@@ -226,14 +190,7 @@ export default function QueueStatusCard({
         </div>
         {(!queueEntry.queue_status ||
           queueEntry.queue_status === "waiting") && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onUpdateClick}
-              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-lg transition-colors hover:cursor-pointer bg-white"
-            >
-              Update Reason
-            </button>
+          <div className="flex items-center gap-2 md:justify-end">
             <button
               type="button"
               onClick={onCancelClick}

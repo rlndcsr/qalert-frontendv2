@@ -416,8 +416,8 @@ function BookingPanel({
       return;
     }
     setIsLoadingBookedSlots(true);
-    const [schedId] = selectedSchedule.split("-");
-    fetchBookedSlotsForDate(selectedDate, schedId)
+    const [schedId, docId] = selectedSchedule.split("-");
+    fetchBookedSlotsForDate(selectedDate, schedId, docId)
       .then((slots) => setBookedSlots(slots))
       .finally(() => setIsLoadingBookedSlots(false));
   }, [selectedDate, selectedSchedule, fetchBookedSlotsForDate]);

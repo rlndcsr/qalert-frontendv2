@@ -15,7 +15,6 @@ import CompletedQueueCard from "./patientComponents/CompletedQueueCard";
 import WhatToDoNextCard from "./patientComponents/WhatToDoNextCard";
 import JoinQueueDialog from "./patientComponents/JoinQueueDialog";
 import CancelQueueDialog from "./patientComponents/CancelQueueDialog";
-import UpdateReasonDialog from "./patientComponents/UpdateReasonDialog";
 import PatientSidebar from "./patientComponents/PatientSidebar";
 import PlaceholderView from "./patientComponents/views/PlaceholderView";
 import MyDoctorsView from "./patientComponents/views/MyDoctorsView";
@@ -25,7 +24,6 @@ import MyHistoryView from "./patientComponents/views/MyHistoryView";
 import AppointmentView from "./patientComponents/Appointment/AppointmentView";
 import {
   getTodayDateString,
-  getOrdinalPosition,
   toYMD,
   daysBetween,
   getAuthToken,
@@ -47,7 +45,6 @@ export default function PatientPage() {
   useSseEvents({
     "system-status-updated": (data) => setIsOnline(data?.is_online === 1),
     "queue-updated": () => {
-      fetchQueuePosition();
       fetchUserQueue();
     },
   });
@@ -98,13 +95,9 @@ export default function PatientPage() {
   const [queueEntry, setQueueEntry] = useState(null);
   const [completedEntry, setCompletedEntry] = useState(null);
   const [completedEntries, setCompletedEntries] = useState([]);
-  const [queuePosition, setQueuePosition] = useState(null);
   const [isQueueLoading, setIsQueueLoading] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [updatedReason, setUpdatedReason] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
   const [onDutyDoctor, setOnDutyDoctor] = useState(null);
   const [isLoadingDoctor, setIsLoadingDoctor] = useState(false);
   const [isFetchingDoctor, setIsFetchingDoctor] = useState(false);
@@ -299,7 +292,6 @@ export default function PatientPage() {
         description: "You've successfully joined the queue.",
       });
       fetchUserQueue();
-      fetchQueuePosition();
     } catch (err) {
       let errorMessage =
         err.message || "An error occurred while joining the queue.";
@@ -348,9 +340,7 @@ export default function PatientPage() {
         description: "Your queue entry has been cancelled.",
       });
       setQueueEntry(null);
-      setQueuePosition(null);
       fetchUserQueue();
-      fetchQueuePosition();
     } catch (error) {
       sileo.error({
         title: "Cancellation failed",
@@ -441,7 +431,6 @@ export default function PatientPage() {
 
       if (!response.ok) {
         setQueueEntry(null);
-        setQueuePosition(null);
         return;
       }
 
@@ -502,7 +491,6 @@ export default function PatientPage() {
         setCompletedEntries([]);
       } else {
         setQueueEntry(null);
-        setQueuePosition(null);
         if (sortedCompleted && sortedCompleted.length > 0) {
           setCompletedEntry(sortedCompleted[0]);
           setCompletedEntries(sortedCompleted);
@@ -515,63 +503,6 @@ export default function PatientPage() {
       console.error("[fetchUserQueue] Error:", e);
     } finally {
       setIsQueueLoading(false);
-    }
-  };
-
-  const fetchQueuePosition = async () => {
-    if (!isAuthenticated || !user) return;
-    const token = getAuthToken();
-    if (!token) return;
-
-    const userId = user?.id || user?.user_id || user?.uid;
-    if (!userId) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/queues`, {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": true,
-        },
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        setQueuePosition(null);
-        return;
-      }
-
-      const data = await response.json();
-      const list = Array.isArray(data)
-        ? data
-        : data?.data || data?.queues || data?.items || [];
-      const today = getTodayDateString();
-
-      const todays = list
-        .filter((q) => {
-          const entryDate = toYMD(q?.date ?? q?.created_at);
-          if (!entryDate) return false;
-          const diff = daysBetween(entryDate, today);
-          const isToday = diff === 0;
-          const isWaiting = !q?.queue_status || q.queue_status === "waiting";
-          return isToday && isWaiting;
-        })
-        .sort((a, b) => {
-          const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
-          const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
-          return aTime - bTime;
-        });
-
-      const currentIndex = todays.findIndex(
-        (q) => (q?.user_id ?? q?.user?.id) === userId,
-      );
-      if (currentIndex >= 0) {
-        setQueuePosition(currentIndex + 1);
-      } else {
-        setQueuePosition(null);
-      }
-    } catch (e) {
-      setQueuePosition(null);
     }
   };
 
@@ -795,7 +726,6 @@ export default function PatientPage() {
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       fetchUserQueue();
-      fetchQueuePosition();
       fetchOnDutyDoctor();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -946,16 +876,8 @@ export default function PatientPage() {
                     ) : queueEntry ? (
                       <QueueStatusCard
                         queueEntry={queueEntry}
-                        queuePosition={queuePosition}
                         user={user}
-                        getOrdinalPosition={getOrdinalPosition}
                         onCancelClick={() => setIsCancelOpen(true)}
-                        onUpdateClick={() => {
-                          setIsUpdateOpen(true);
-                          setTimeout(() => {
-                            setUpdatedReason(queueEntry.reason);
-                          }, 100);
-                        }}
                         isLoading={false}
                         doctorName={(() => {
                           if (!queueEntry?.schedule_id) return null;
@@ -1030,18 +952,8 @@ export default function PatientPage() {
         isOpen={isCancelOpen}
         onClose={() => setIsCancelOpen(false)}
         queueEntry={queueEntry}
-        queuePosition={queuePosition}
         isCancelling={isCancelling}
         onConfirm={handleCancelQueue}
-      />
-
-      <UpdateReasonDialog
-        isOpen={isUpdateOpen}
-        onClose={() => setIsUpdateOpen(false)}
-        updatedReason={updatedReason}
-        setUpdatedReason={setUpdatedReason}
-        isUpdating={isUpdating}
-        onSubmit={handleUpdateReason}
       />
     </div>
   );
