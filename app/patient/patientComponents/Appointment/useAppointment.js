@@ -36,13 +36,19 @@ function isTodaysVisitCompleted(apt, userQueueEntries, todayYMD) {
   return !!linkedCompletedQueue;
 }
 
-function pickTodaysCompletedAppointment(userAppointments, userQueueEntries, todayYMD) {
+function pickTodaysCompletedAppointment(
+  userAppointments,
+  userQueueEntries,
+  todayYMD,
+) {
   const candidates = userAppointments.filter((apt) =>
     isTodaysVisitCompleted(apt, userQueueEntries, todayYMD),
   );
   if (candidates.length === 0) return null;
   return candidates.sort((a, b) =>
-    String(b.appointment_time || "").localeCompare(String(a.appointment_time || "")),
+    String(b.appointment_time || "").localeCompare(
+      String(a.appointment_time || ""),
+    ),
   )[0];
 }
 
@@ -399,8 +405,7 @@ export function useAppointment() {
 
       // If booking for today, filter out AM schedules if current time is past noon (12:00 PM)
       const today = new Date();
-      const isToday =
-        dateString === today.toISOString().split("T")[0];
+      const isToday = dateString === today.toISOString().split("T")[0];
       if (isToday) {
         const currentHour = today.getHours();
         if (currentHour >= 12) {
@@ -421,56 +426,65 @@ export function useAppointment() {
   }, []);
 
   // Fetch booked slots for a date + schedule + doctor (each doctor has their own calendar)
-  const fetchBookedSlotsForDate = useCallback(async (date, scheduleId, doctorId) => {
-    const token = getAuthToken();
-    if (!token || !date || !scheduleId) return [];
+  const fetchBookedSlotsForDate = useCallback(
+    async (date, scheduleId, doctorId) => {
+      const token = getAuthToken();
+      if (!token || !date || !scheduleId) return [];
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/appointments`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-      });
+      try {
+        const response = await fetch(`${API_BASE_URL}/appointments`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
 
-      if (!response.ok) return [];
+        if (!response.ok) return [];
 
-      const data = await response.json();
-      const list = Array.isArray(data)
-        ? data
-        : data?.data || data?.appointments || data?.items || [];
+        const data = await response.json();
+        const list = Array.isArray(data)
+          ? data
+          : data?.data || data?.appointments || data?.items || [];
 
-      return list
-        .filter((apt) => {
-          const aptDate = toYMD(apt?.appointment_date);
-          const status = (apt?.status || "").toLowerCase();
-          const sameSchedule =
-            apt?.schedule_id?.toString() === scheduleId?.toString();
-          const doctorFilterActive =
-            doctorId != null && String(doctorId).trim() !== "";
-          const sameDoctor =
-            !doctorFilterActive ||
-            apt?.doctor_id?.toString() === String(doctorId);
-          return (
-            aptDate === date &&
-            sameSchedule &&
-            sameDoctor &&
-            status !== "cancelled"
-          );
-        })
-        .map((apt) => (apt?.appointment_time || "").substring(0, 5));
-    } catch (err) {
-      console.error("[fetchBookedSlotsForDate] Error:", err);
-      return [];
-    }
-  }, []);
+        return list
+          .filter((apt) => {
+            const aptDate = toYMD(apt?.appointment_date);
+            const status = (apt?.status || "").toLowerCase();
+            const sameSchedule =
+              apt?.schedule_id?.toString() === scheduleId?.toString();
+            const doctorFilterActive =
+              doctorId != null && String(doctorId).trim() !== "";
+            const sameDoctor =
+              !doctorFilterActive ||
+              apt?.doctor_id?.toString() === String(doctorId);
+            return (
+              aptDate === date &&
+              sameSchedule &&
+              sameDoctor &&
+              status !== "cancelled"
+            );
+          })
+          .map((apt) => (apt?.appointment_time || "").substring(0, 5));
+      } catch (err) {
+        console.error("[fetchBookedSlotsForDate] Error:", err);
+        return [];
+      }
+    },
+    [],
+  );
 
   // Book an appointment
   const bookAppointment = useCallback(
-    async (scheduleId, appointmentDate, appointmentTime, reasonCategoryId, doctorId) => {
+    async (
+      scheduleId,
+      appointmentDate,
+      appointmentTime,
+      reasonCategoryId,
+      doctorId,
+    ) => {
       const token = getAuthToken();
       if (!token) {
         sileo.error({
@@ -562,7 +576,12 @@ export function useAppointment() {
         setIsBooking(false);
       }
     },
-    [getUserId, fetchAppointments, completedVisitForToday, cancelledQueueForToday],
+    [
+      getUserId,
+      fetchAppointments,
+      completedVisitForToday,
+      cancelledQueueForToday,
+    ],
   );
 
   // Cancel an appointment
@@ -582,16 +601,12 @@ export function useAppointment() {
       const cancelPromise = fetch(
         `${API_BASE_URL}/appointments/${appointmentId}`,
         {
-          method: "PUT",
+          method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
-            "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "true",
           },
-          body: JSON.stringify({
-            status: "cancelled",
-          }),
         },
       ).then(async (response) => {
         if (!response.ok) {
