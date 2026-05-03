@@ -52,6 +52,7 @@ export function useAppointment() {
   const [reasonCategories, setReasonCategories] = useState([]);
   const [activeAppointment, setActiveAppointment] = useState(null);
   const [completedVisitForToday, setCompletedVisitForToday] = useState(null);
+  const [cancelledQueueForToday, setCancelledQueueForToday] = useState(false);
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isLoadingReasonCategories, setIsLoadingReasonCategories] =
@@ -88,6 +89,7 @@ export function useAppointment() {
     if (!userId) {
       setError("Unable to determine your user ID.");
       setCompletedVisitForToday(null);
+      setCancelledQueueForToday(false);
       setIsLoadingAppointments(false);
       return;
     }
@@ -112,6 +114,7 @@ export function useAppointment() {
         setAppointments([]);
         setActiveAppointment(null);
         setCompletedVisitForToday(null);
+        setCancelledQueueForToday(false);
         setIsLoadingAppointments(false);
         return;
       }
@@ -158,9 +161,18 @@ export function useAppointment() {
         );
       }
 
+      const today = getTodayDateString();
+      const hasCancelledQueueToday = userQueueEntries.some((q) => {
+        const qDate = toYMD(q?.date ?? q?.created_at);
+        return (
+          qDate === today &&
+          (q?.queue_status || "").toLowerCase() === "cancelled"
+        );
+      });
+      setCancelledQueueForToday(hasCancelledQueueToday);
+
       // Find active appointment (today or future, not cancelled/completed,
       // and whose linked queue entry is not completed)
-      const today = getTodayDateString();
       const activeApt = userAppointments.find((apt) => {
         const aptDate = toYMD(apt?.appointment_date);
         if (!aptDate) return false;
@@ -207,6 +219,7 @@ export function useAppointment() {
     } catch (err) {
       console.error("[fetchAppointments] Error:", err);
       setError(err.message || "Failed to fetch appointments");
+      setCancelledQueueForToday(false);
     } finally {
       setIsLoadingAppointments(false);
     }
@@ -468,14 +481,20 @@ export function useAppointment() {
       }
 
       const todayStr = getTodayDateString();
-      if (
-        appointmentDate === todayStr &&
-        completedVisitForToday
-      ) {
+      if (appointmentDate === todayStr && completedVisitForToday) {
         sileo.error({
           title: "Already completed today",
           description:
             "You have already finished your appointment and queue for today. Book a future date instead.",
+        });
+        return false;
+      }
+
+      if (appointmentDate === todayStr && cancelledQueueForToday) {
+        sileo.error({
+          title: "Cannot book for today",
+          description:
+            "You cancelled your queue for today. Please choose a future date.",
         });
         return false;
       }
@@ -543,7 +562,7 @@ export function useAppointment() {
         setIsBooking(false);
       }
     },
-    [getUserId, fetchAppointments, completedVisitForToday],
+    [getUserId, fetchAppointments, completedVisitForToday, cancelledQueueForToday],
   );
 
   // Cancel an appointment
@@ -649,6 +668,9 @@ export function useAppointment() {
 
   const displayAppointment = activeAppointment || completedVisitForToday;
   const hasCompletedVisitToday = Boolean(completedVisitForToday);
+  const hasCancelledQueueToday = cancelledQueueForToday;
+  const hasSameDayBookingBlocked =
+    hasCompletedVisitToday || hasCancelledQueueToday;
 
   return {
     appointments,
@@ -658,6 +680,8 @@ export function useAppointment() {
     completedVisitForToday,
     displayAppointment,
     hasCompletedVisitToday,
+    hasCancelledQueueToday,
+    hasSameDayBookingBlocked,
     isLoadingAppointments,
     isLoadingSchedules,
     isLoadingReasonCategories,

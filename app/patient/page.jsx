@@ -11,6 +11,7 @@ import VerifyEmailForm from "./patientComponents/VerifyEmailForm";
 import WelcomeCard from "./patientComponents/WelcomeCard";
 import QueueStatusCard from "./patientComponents/QueueStatusCard";
 import JoinQueueCard from "./patientComponents/JoinQueueCard";
+import CancelledQueueTodayCard from "./patientComponents/CancelledQueueTodayCard";
 import CompletedQueueCard from "./patientComponents/CompletedQueueCard";
 import WhatToDoNextCard from "./patientComponents/WhatToDoNextCard";
 import JoinQueueDialog from "./patientComponents/JoinQueueDialog";
@@ -95,6 +96,7 @@ export default function PatientPage() {
   const [queueEntry, setQueueEntry] = useState(null);
   const [completedEntry, setCompletedEntry] = useState(null);
   const [completedEntries, setCompletedEntries] = useState([]);
+  const [cancelledEntriesToday, setCancelledEntriesToday] = useState([]);
   const [isQueueLoading, setIsQueueLoading] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -352,64 +354,6 @@ export default function PatientPage() {
     }
   };
 
-  const handleUpdateReason = async () => {
-    if (!queueEntry?.queue_entry_id || isUpdating) return;
-
-    if (!updatedReason.trim()) {
-      sileo.error({
-        title: "Invalid reason",
-        description: "Please enter a valid reason for your visit.",
-      });
-      return;
-    }
-
-    const token = getAuthToken();
-    if (!token) {
-      sileo.error({
-        title: "Not authenticated",
-        description: "You are not authenticated. Please log in again.",
-      });
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/queues/reason/${queueEntry.queue_entry_id}`,
-        {
-          method: "PUT",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": true,
-          },
-          body: JSON.stringify({ reason: updatedReason.trim() }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.message || "Failed to update reason");
-      }
-
-      setIsUpdateOpen(false);
-      sileo.success({
-        title: "Reason updated",
-        description: "Your queue reason has been updated.",
-      });
-      fetchUserQueue();
-    } catch (error) {
-      sileo.error({
-        title: "Update failed",
-        description:
-          error.message || "An error occurred while updating the reason",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const fetchUserQueue = async () => {
     if (!isAuthenticated || !user) return;
     const token = getAuthToken();
@@ -431,6 +375,7 @@ export default function PatientPage() {
 
       if (!response.ok) {
         setQueueEntry(null);
+        setCancelledEntriesToday([]);
         return;
       }
 
@@ -482,6 +427,25 @@ export default function PatientPage() {
         const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
         return bTime - aTime;
       });
+
+      const sortedCancelled = todayEntries
+        .filter(
+          (q) => (q?.queue_status || "").toLowerCase() === "cancelled",
+        )
+        .sort((a, b) => {
+          const aTime = a?.updated_at
+            ? new Date(a.updated_at).getTime()
+            : a?.created_at
+              ? new Date(a.created_at).getTime()
+              : 0;
+          const bTime = b?.updated_at
+            ? new Date(b.updated_at).getTime()
+            : b?.created_at
+              ? new Date(b.created_at).getTime()
+              : 0;
+          return bTime - aTime;
+        });
+      setCancelledEntriesToday(sortedCancelled);
 
       const selectedActive = sortedActive[0] || null;
 
@@ -890,6 +854,10 @@ export default function PatientPage() {
                           );
                           return doctor?.doctor_name || null;
                         })()}
+                      />
+                    ) : cancelledEntriesToday.length > 0 ? (
+                      <CancelledQueueTodayCard
+                        onViewQueueTab={() => handleViewChange("queue")}
                       />
                     ) : (
                       <JoinQueueCard

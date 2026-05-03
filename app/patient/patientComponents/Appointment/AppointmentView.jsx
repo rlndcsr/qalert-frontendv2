@@ -358,7 +358,8 @@ function BookingPanel({
   onSubmit,
   getSchedulesForDate,
   fetchBookedSlotsForDate,
-  sameDayVisitDoneNotice = false,
+  /** 'completed' | 'cancelled' | null */
+  sameDayBookingBlockReason = null,
 }) {
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
@@ -486,17 +487,30 @@ function BookingPanel({
 
       {/* Content */}
       <div className="p-6">
-        {sameDayVisitDoneNotice && (
-          <div className="mb-5 p-4 bg-slate-50 rounded-xl border border-slate-200">
+        {sameDayBookingBlockReason && (
+          <div
+            className={`mb-5 p-4 rounded-xl border ${
+              sameDayBookingBlockReason === "completed"
+                ? "bg-slate-50 border-slate-200"
+                : "bg-amber-50 border-amber-200"
+            }`}
+          >
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-[#00968a] flex-shrink-0 mt-0.5" />
+              {sameDayBookingBlockReason === "completed" ? (
+                <CheckCircle className="w-5 h-5 text-[#00968a] flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              )}
               <div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Today&apos;s visit is complete
+                  {sameDayBookingBlockReason === "completed"
+                    ? "Today's visit is complete"
+                    : "Queue cancelled for today"}
                 </p>
                 <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                  You already finished your appointment and queue for today.
-                  Choose a future date to book again — today is not available.
+                  {sameDayBookingBlockReason === "completed"
+                    ? "You already finished your appointment and queue for today. Choose a future date to book again — today is not available."
+                    : "You cancelled your queue for today. Another booking is not available until tomorrow — pick a future date below."}
                 </p>
               </div>
             </div>
@@ -729,6 +743,8 @@ export default function AppointmentView() {
     activeAppointment,
     displayAppointment,
     hasCompletedVisitToday,
+    hasCancelledQueueToday,
+    hasSameDayBookingBlocked,
     isLoadingAppointments,
     isLoadingSchedules,
     isLoadingReasonCategories,
@@ -745,16 +761,22 @@ export default function AppointmentView() {
   const isLoading = isLoadingAppointments || isLoadingSchedules;
 
   const todayYmd = getTodayDateString();
-  const blockedBookingDateStrings = hasCompletedVisitToday
+  const blockedBookingDateStrings = hasSameDayBookingBlocked
     ? [todayYmd]
     : [];
 
+  const sameDayBookingBlockReason = hasCompletedVisitToday
+    ? "completed"
+    : hasCancelledQueueToday
+      ? "cancelled"
+      : null;
+
   useEffect(() => {
-    if (!hasCompletedVisitToday || !selectedDate) return;
+    if (!hasSameDayBookingBlocked || !selectedDate) return;
     if (selectedDate === getTodayDateString()) {
       setSelectedDate("");
     }
-  }, [hasCompletedVisitToday, selectedDate]);
+  }, [hasSameDayBookingBlocked, selectedDate]);
 
   const appointmentSchedule = displayAppointment
     ? schedules.find(
@@ -848,7 +870,9 @@ export default function AppointmentView() {
                 ? activeAppointment
                   ? "View your scheduled appointment"
                   : "Your visit for today is complete"
-                : "Select a date and schedule your visit"}
+                : hasCancelledQueueToday && !hasCompletedVisitToday
+                  ? "You cancelled your queue for today"
+                  : "Select a date and schedule your visit"}
             </p>
           </div>
         </div>
@@ -906,7 +930,7 @@ export default function AppointmentView() {
             onSubmit={bookAppointment}
             getSchedulesForDate={getSchedulesForDate}
             fetchBookedSlotsForDate={fetchBookedSlotsForDate}
-            sameDayVisitDoneNotice={hasCompletedVisitToday}
+            sameDayBookingBlockReason={sameDayBookingBlockReason}
           />
         )}
       </div>
