@@ -274,27 +274,19 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Now Serving skeleton */}
+        {/* Now Serving skeleton — stacked label + number block */}
         <div
-          className={`border-b border-slate-200 ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
+          className={`border-b border-slate-200 ${compact ? "px-2.5 py-2" : "px-4 py-2.5"}`}
         >
           <div
-            className={`bg-slate-300 rounded animate-pulse ${compact ? "h-2.5 w-20 mb-2" : "h-3 w-24 mb-3"}`}
-          ></div>
-          <div
-            className={`flex items-center justify-center ${compact ? "gap-2 px-2 py-2.5" : "gap-3 px-3 py-4"}`}
+            className={`flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-100 ${compact ? "min-h-[3.5rem] px-2 py-2" : "min-h-[5rem] px-3 py-3"}`}
           >
             <div
-              className={`${compact ? "h-9 w-9" : "h-12 w-12"} shrink-0 rounded-lg bg-slate-200 animate-pulse`}
-            ></div>
-            <div className="w-28 shrink-0 space-y-1.5 sm:w-36">
-              <div
-                className={`${compact ? "h-3 w-12" : "h-4 w-16"} bg-slate-200 rounded animate-pulse`}
-              ></div>
-              <div
-                className={`${compact ? "h-2.5 w-16" : "h-3 w-20"} bg-slate-100 rounded animate-pulse`}
-              ></div>
-            </div>
+              className={`bg-slate-300 rounded animate-pulse ${compact ? "h-3 w-24" : "h-4 w-28"}`}
+            />
+            <div
+              className={`rounded-lg bg-slate-200 animate-pulse ${compact ? "h-9 w-16" : "h-12 w-24"}`}
+            />
           </div>
         </div>
 
@@ -431,53 +423,34 @@ export default function DoctorQueueCard({
         </div>
       </div>
 
-      {/* Now Serving Section */}
+      {/* Now Serving Section — label stacked above number inside the block to save vertical space */}
       <div
-        className={`border-b border-slate-200 ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
+        className={`border-b border-slate-200 ${compact ? "px-2.5 py-2" : "px-4 py-2.5"}`}
       >
-        <p
-          className={`font-semibold text-gray-500 uppercase tracking-wide ${compact ? "text-[10px] mb-1" : "text-xs mb-2"}`}
-        >
-          Now Serving
-        </p>
         {nowServingPatient ? (
           <div
-            className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-[#374D6C] to-[#4A6280] ${compact ? "min-h-[3.5rem] gap-2 px-2 py-2.5" : "min-h-[5rem] gap-3 px-3 py-4"}`}
+            className={`flex flex-col items-center justify-center gap-0.5 -mt-[4px] rounded-lg bg-gradient-to-br from-[#374D6C] to-[#4A6280] ${compact ? "min-h-[3.5rem] px-2 py-1.5" : "min-h-[5rem] px-3 py-2"}`}
           >
-            <div
-              className={`grid shrink-0 place-items-center rounded-lg border text-center font-black tabular-nums leading-none tracking-tight text-white whitespace-nowrap shadow-sm ${
-                compact
-                  ? "h-9 w-9 text-[17px]"
-                  : "h-12 w-12 text-xl md:text-2xl"
-              }`}
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                borderColor: "rgba(255, 255, 255, 0.3)",
-              }}
+            <p
+              className={`font-semibold uppercase tracking-wide text-white/90 ${compact ? "text-[11px] leading-tight" : "text-sm leading-tight"}`}
             >
-              <span className="block text-center leading-none">
-                {formatQueueNumber(nowServingPatient.number)}
-              </span>
-            </div>
-            <div className="min-w-0 flex-1 text-white">
-              <p
-                className={`opacity-90 leading-tight ${compact ? "text-[10px]" : "text-xs"}`}
-              >
-                {nowServingPatient.id_number}
-              </p>
-              {nowServingPatient.scheduledTime && (
-                <p
-                  className={`leading-tight opacity-90 ${compact ? "mt-0.5 text-[10px]" : "mt-0.5 text-xs"}`}
-                >
-                  {formatTime(nowServingPatient.scheduledTime)}
-                </p>
-              )}
-            </div>
+              Now Serving
+            </p>
+            <span
+              className={`font-black tabular-nums tracking-tight text-white text-center leading-none ${compact ? "text-[2.65rem]" : "text-[3.15rem]"}`}
+            >
+              {formatQueueNumber(nowServingPatient.number)}
+            </span>
           </div>
         ) : (
           <div
-            className={`flex items-center justify-center rounded-lg bg-gray-50 ${compact ? "min-h-[3.5rem] px-2 py-2.5" : "min-h-[5rem] px-3 py-4"}`}
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg bg-gray-50 ${compact ? "min-h-[3.5rem] px-2 py-2" : "min-h-[5rem] px-3 py-3"}`}
           >
+            <p
+              className={`font-semibold uppercase tracking-wide text-gray-500 ${compact ? "text-[11px] leading-tight" : "text-sm leading-tight"}`}
+            >
+              Now Serving
+            </p>
             <p
               className={`text-center leading-tight text-gray-400 ${compact ? "text-[10px]" : "text-xs"}`}
             >
