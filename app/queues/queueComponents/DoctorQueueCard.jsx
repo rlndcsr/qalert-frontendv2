@@ -38,7 +38,7 @@ export default function DoctorQueueCard({
 
   if (isLoading) {
     return (
-      <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="bg-white/95 rounded-xl border border-slate-300/70 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
         {/* Header skeleton */}
         <div
           className={`border-b border-slate-200 bg-gradient-to-r from-slate-100 to-transparent ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
@@ -85,14 +85,17 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Waiting skeleton */}
+        {/* Waiting skeleton — two columns, same as loaded state */}
         <div
-          className={`flex-1 space-y-2 ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
+          className={`flex-1 min-h-0 overflow-y-auto ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}
         >
-          {[1, 2, 3].map((i) => (
+          <div
+            className={`columns-2 [column-fill:auto] ${compact ? "gap-x-1 gap-y-1" : "gap-x-2 gap-y-2"}`}
+          >
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className={`flex items-center rounded-lg bg-slate-50 ${compact ? "gap-2 p-1.5" : "gap-3 p-2"}`}
+              className={`break-inside-avoid flex items-center rounded-lg bg-slate-50 ${compact ? "mb-1 gap-2 p-1.5" : "mb-2 gap-3 p-2"}`}
             >
               <div
                 className={`${compact ? "w-8 h-8" : "w-10 h-10"} bg-slate-200 rounded-lg animate-pulse`}
@@ -107,6 +110,7 @@ export default function DoctorQueueCard({
               </div>
             </div>
           ))}
+          </div>
         </div>
       </div>
     );
@@ -221,14 +225,16 @@ export default function DoctorQueueCard({
           Waiting ({waitingCount})
         </p>
         {waitingPatients && waitingPatients.length > 0 ? (
-          <div className={compact ? "space-y-1" : "space-y-2"}>
+          <div
+            className={`columns-2 [column-fill:auto] ${compact ? "gap-x-1 gap-y-1" : "gap-x-2 gap-y-2"}`}
+          >
             {waitingPatients.map((patient) => {
               const isNoShow = patient.queueStatus === "no_show";
               const isCalled = patient.queueStatus === "called";
               return (
                 <div
                   key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
-                  className={`rounded-lg hover:shadow-sm transition-all ${compact ? "p-1.5" : "p-2.5"} ${
+                  className={`break-inside-avoid rounded-lg hover:shadow-sm transition-all ${compact ? "mb-1 p-1.5" : "mb-2 p-2.5"} ${
                     isNoShow
                       ? "ring-2 ring-orange-400 border border-orange-400 bg-orange-50/60"
                       : isCalled

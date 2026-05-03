@@ -808,7 +808,7 @@ export default function QueueDisplay() {
       {/* Main content: doctor grid — column count depends on number of doctor cards */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-0">
         <div
-          className={`flex-1 overflow-y-auto grid grid-cols-1 ${doctorGridColsClass} p-1 ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
+          className={`flex-1 min-h-0 h-full overflow-y-auto grid grid-cols-1 ${doctorGridColsClass} auto-rows-[minmax(15rem,1fr)] p-1 ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
         >
           {isLoadingData ? (
             // Loading state: show skeleton cards
