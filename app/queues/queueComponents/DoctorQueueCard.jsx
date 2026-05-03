@@ -46,7 +46,7 @@ function WaitingQueueEntry({
           className={`flex min-w-0 flex-1 items-center ${compact ? "gap-2" : "gap-3"}`}
         >
           <div
-            className={`flex flex-shrink-0 items-center justify-center rounded-lg border font-black shadow-sm ${compact ? "w-8 h-8 text-sm" : "w-10 h-10 text-base"}`}
+            className={`flex flex-shrink-0 items-center justify-center rounded-lg border font-black tabular-nums leading-none tracking-tight shadow-sm ${compact ? "w-8 h-8 text-[15px]" : "w-10 h-10 text-lg"}`}
             style={{
               backgroundColor: isNoShow
                 ? "#ffedd5"
@@ -281,11 +281,13 @@ export default function DoctorQueueCard({
           <div
             className={`bg-slate-300 rounded animate-pulse ${compact ? "h-2.5 w-20 mb-2" : "h-3 w-24 mb-3"}`}
           ></div>
-          <div className={`flex items-center ${compact ? "gap-2" : "gap-2.5"}`}>
+          <div
+            className={`flex items-center justify-center ${compact ? "gap-2 px-2 py-2.5" : "gap-3 px-3 py-4"}`}
+          >
             <div
-              className={`${compact ? "w-8 h-8" : "w-10 h-10"} bg-slate-200 rounded-lg animate-pulse`}
+              className={`${compact ? "h-9 w-9" : "h-12 w-12"} shrink-0 rounded-lg bg-slate-200 animate-pulse`}
             ></div>
-            <div className="flex-1 space-y-1.5">
+            <div className="w-28 shrink-0 space-y-1.5 sm:w-36">
               <div
                 className={`${compact ? "h-3 w-12" : "h-4 w-16"} bg-slate-200 rounded animate-pulse`}
               ></div>
@@ -440,16 +442,22 @@ export default function DoctorQueueCard({
         </p>
         {nowServingPatient ? (
           <div
-            className={`flex items-center rounded-lg bg-gradient-to-br from-[#374D6C] to-[#4A6280] ${compact ? "min-h-[3.25rem] gap-2 p-2.5" : "min-h-[4.75rem] gap-2.5 p-4"}`}
+            className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-[#374D6C] to-[#4A6280] ${compact ? "min-h-[3.5rem] gap-2 px-2 py-2.5" : "min-h-[5rem] gap-3 px-3 py-4"}`}
           >
             <div
-              className={`flex shrink-0 items-center justify-center rounded-lg border font-black text-white shadow-sm ${compact ? "h-8 w-8 text-sm" : "h-10 w-10 text-base"}`}
+              className={`grid shrink-0 place-items-center rounded-lg border text-center font-black tabular-nums leading-none tracking-tight text-white whitespace-nowrap shadow-sm ${
+                compact
+                  ? "h-9 w-9 text-[17px]"
+                  : "h-12 w-12 text-xl md:text-2xl"
+              }`}
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.2)",
                 borderColor: "rgba(255, 255, 255, 0.3)",
               }}
             >
-              {formatQueueNumber(nowServingPatient.number)}
+              <span className="block text-center leading-none">
+                {formatQueueNumber(nowServingPatient.number)}
+              </span>
             </div>
             <div className="min-w-0 flex-1 text-white">
               <p
@@ -468,14 +476,10 @@ export default function DoctorQueueCard({
           </div>
         ) : (
           <div
-            className={`flex items-center rounded-lg bg-gray-50 ${compact ? "min-h-[3.25rem] gap-2 p-2.5" : "min-h-[4.75rem] gap-2.5 p-4"}`}
+            className={`flex items-center justify-center rounded-lg bg-gray-50 ${compact ? "min-h-[3.5rem] px-2 py-2.5" : "min-h-[5rem] px-3 py-4"}`}
           >
-            <div
-              className={`shrink-0 ${compact ? "h-8 w-8" : "h-10 w-10"}`}
-              aria-hidden
-            />
             <p
-              className={`min-w-0 flex-1 text-left leading-tight text-gray-400 ${compact ? "text-[10px]" : "text-xs"}`}
+              className={`text-center leading-tight text-gray-400 ${compact ? "text-[10px]" : "text-xs"}`}
             >
               No patient being served
             </p>
