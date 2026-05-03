@@ -4,11 +4,69 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSystemStatus } from "../hooks/useSystemStatus";
 import { useSseEvents } from "../hooks/useSseEvents";
-import { XCircle } from "lucide-react";
 import Image from "next/image";
+import DoctorQueueCard from "./queueComponents/DoctorQueueCard";
 
 // Constants
 const API_BASE_URL = "/api/proxy";
+
+/** Single canonical display key for a doctor name (avoids duplicate AM/PM cards from spacing / dup rows). */
+function normalizeDoctorName(name) {
+  if (!name || typeof name !== "string") return "";
+  return name.trim().replace(/\s+/g, " ");
+}
+
+/** API may return various casings or spacing for queue_status. */
+function normalizeQueueStatus(status) {
+  return String(status ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
+
+/**
+ * Doctor + schedule for a queue row: join via appointment when present, else use
+ * doctor_id / schedule_id on the row (public display must still route now_serving to a card).
+ */
+function resolveQueueEntryRouting(
+  entry,
+  appointmentTimeMap,
+  aptScheduleMap,
+  aptDoctorMap,
+  scheduleShiftMap,
+  doctorNameMap,
+) {
+  let scheduleId =
+    entry.appointment_id != null
+      ? aptScheduleMap[String(entry.appointment_id)]
+      : null;
+  if (scheduleId == null && entry.schedule_id != null) {
+    scheduleId = String(entry.schedule_id);
+  }
+
+  let doctorId =
+    entry.appointment_id != null
+      ? aptDoctorMap[String(entry.appointment_id)]
+      : null;
+  if (doctorId == null && entry.doctor_id != null) {
+    doctorId = String(entry.doctor_id);
+  }
+
+  const shift = scheduleId
+    ? scheduleShiftMap[String(scheduleId)] || null
+    : null;
+  const doctorRaw = doctorId ? doctorNameMap[doctorId] : null;
+  let doctor = doctorRaw ? normalizeDoctorName(doctorRaw) || null : null;
+  if (!doctor && entry.doctor_name) {
+    doctor = normalizeDoctorName(String(entry.doctor_name)) || null;
+  }
+  const scheduledTime =
+    entry.appointment_id != null
+      ? appointmentTimeMap[String(entry.appointment_id)] || null
+      : null;
+
+  return { scheduleId, doctorId, shift, doctor, scheduledTime };
+}
 
 export default function QueueDisplay() {
   const {
@@ -68,7 +126,9 @@ export default function QueueDisplay() {
   const getAuthToken = useCallback(() => {
     if (typeof window !== "undefined") {
       // Try adminToken first (used by admin/authenticated pages), fallback to token
-      return localStorage.getItem("adminToken") || localStorage.getItem("token");
+      return (
+        localStorage.getItem("adminToken") || localStorage.getItem("token")
+      );
     }
     return null;
   }, []);
@@ -130,10 +190,9 @@ export default function QueueDisplay() {
           "ngrok-skip-browser-warning": "true",
         };
 
-        const response = await fetch(
-          `${API_BASE_URL}/public/queue-display`,
-          { headers }
-        );
+        const response = await fetch(`${API_BASE_URL}/public/queue-display`, {
+          headers,
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -149,9 +208,7 @@ export default function QueueDisplay() {
             const encStatus = (enc.status || "active").toLowerCase();
             return encDate === todayString && encStatus === "active";
           });
-          if (
-            !isDataEqual(todayEncounters, previousEmergencyDataRef.current)
-          ) {
+          if (!isDataEqual(todayEncounters, previousEmergencyDataRef.current)) {
             previousEmergencyDataRef.current = todayEncounters;
             setEmergencyEncounters(todayEncounters);
           }
@@ -210,7 +267,8 @@ export default function QueueDisplay() {
             }
           });
 
-          // Build AM/PM shift doctor map for today
+          // Build AM/PM shift doctor map for today. The same doctor may appear in both
+          // AM and PM when they have two schedule rows — each shift lists them separately.
           const shiftDoctorMap = { AM: [], PM: [] };
           if (schedList.length > 0) {
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -223,7 +281,8 @@ export default function QueueDisplay() {
                 const doctorIds = scheduleDoctorMap[String(sched.schedule_id)];
                 if (doctorIds && Array.isArray(doctorIds)) {
                   doctorIds.forEach((doctorId) => {
-                    const docName = doctorNameMap[doctorId] || null;
+                    const raw = doctorNameMap[doctorId];
+                    const docName = raw ? normalizeDoctorName(raw) : "";
                     if (
                       docName &&
                       !shiftDoctorMap[sched.shift].includes(docName)
@@ -312,11 +371,11 @@ export default function QueueDisplay() {
   });
 
   // Process queue data
-  const { nowServing, ready, waiting, noShow, totalInQueue } = useMemo(() => {
-    if (isLoadingData || queueEntries.length === 0) {
+  const { nowServing, called, waiting, noShow, totalInQueue } = useMemo(() => {
+    if (queueEntries.length === 0) {
       return {
         nowServing: [],
-        ready: [],
+        called: [],
         waiting: [],
         noShow: [],
         totalInQueue: 0,
@@ -325,51 +384,86 @@ export default function QueueDisplay() {
 
     // Filter by status and sort by queue number
     const nowServingEntries = queueEntries
-      .filter((entry) => entry.queue_status === "now_serving")
+      .filter((entry) => normalizeQueueStatus(entry.queue_status) === "now_serving")
       .sort((a, b) => a.queue_number - b.queue_number);
 
     const calledEntries = queueEntries
-      .filter((entry) => entry.queue_status === "called")
+      .filter((entry) => normalizeQueueStatus(entry.queue_status) === "called")
       .sort((a, b) => a.queue_number - b.queue_number);
 
     const waitingEntries = queueEntries
-      .filter((entry) => entry.queue_status === "waiting")
+      .filter((entry) => normalizeQueueStatus(entry.queue_status) === "waiting")
       .sort((a, b) => a.queue_number - b.queue_number);
 
     const noShowEntries = queueEntries
-      .filter((entry) => entry.queue_status === "no_show")
+      .filter((entry) => normalizeQueueStatus(entry.queue_status) === "no_show")
       .sort((a, b) => a.queue_number - b.queue_number);
 
-    // Now serving: all "now_serving" entries
-    const nowServingData = nowServingEntries.map((entry) => ({
-      number: entry.queue_number,
-      name: users[entry.user_id]?.name || "Unknown",
-      id_number: users[entry.user_id]?.id_number || "",
-      queue_entry_id: entry.queue_entry_id,
-    }));
+    // Now serving: all "now_serving" entries (include shift for per-shift doctor cards)
+    const nowServingData = nowServingEntries.map((entry) => {
+      const { shift, doctor, scheduledTime } = resolveQueueEntryRouting(
+        entry,
+        appointmentTimeMap,
+        aptScheduleMap,
+        aptDoctorMap,
+        scheduleShiftMap,
+        doctorNameMap,
+      );
+      return {
+        number: entry.queue_number,
+        name: users[entry.user_id]?.name || "Unknown",
+        id_number: users[entry.user_id]?.id_number || "",
+        queue_entry_id: entry.queue_entry_id,
+        shift,
+        doctor,
+        scheduledTime,
+      };
+    });
 
-    // Ready (Please Proceed): all "called" entries
-    const readyData = calledEntries.map((entry) => ({
-      number: entry.queue_number,
-      name: users[entry.user_id]?.name || "Unknown",
-      id_number: users[entry.user_id]?.id_number || "",
-    }));
+    // Called: same shape as waiting; shown in doctor cards with blue styling
+    const calledData = calledEntries.map((entry, index) => {
+      const { scheduleId, doctor, shift, scheduledTime } =
+        resolveQueueEntryRouting(
+          entry,
+          appointmentTimeMap,
+          aptScheduleMap,
+          aptDoctorMap,
+          scheduleShiftMap,
+          doctorNameMap,
+        );
+      const aptTime = scheduledTime;
+      const allDoctorIds = scheduleId
+        ? scheduleDoctorMap[scheduleId] || null
+        : null;
+      const doctors =
+        allDoctorIds && Array.isArray(allDoctorIds)
+          ? allDoctorIds.map((id) => doctorNameMap[id] || null).filter(Boolean)
+          : [];
+      return {
+        number: entry.queue_number,
+        name: users[entry.user_id]?.name || "Unknown",
+        id_number: users[entry.user_id]?.id_number || "",
+        wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`,
+        scheduledTime: aptTime || null,
+        shift,
+        doctor,
+        doctors,
+        queueStatus: "called",
+      };
+    });
 
     // Waiting: all "waiting" entries
     const waitingData = waitingEntries.map((entry, index) => {
-      const aptTime = entry.appointment_id
-        ? appointmentTimeMap[String(entry.appointment_id)]
-        : null;
-      // Get schedule_id and doctor_id from appointment
-      const scheduleId = entry.appointment_id
-        ? aptScheduleMap[String(entry.appointment_id)]
-        : null;
-      const doctorId = entry.appointment_id
-        ? aptDoctorMap[String(entry.appointment_id)]
-        : null;
-      const shift = scheduleId ? scheduleShiftMap[scheduleId] || null : null;
-      // Get the specific doctor for this appointment
-      const doctor = doctorId ? doctorNameMap[doctorId] || null : null;
+      const { scheduleId, doctor, shift, scheduledTime } =
+        resolveQueueEntryRouting(
+          entry,
+          appointmentTimeMap,
+          aptScheduleMap,
+          aptDoctorMap,
+          scheduleShiftMap,
+          doctorNameMap,
+        );
+      const aptTime = scheduledTime;
       // scheduleDoctorMap[schedule_id] -> array of all doctor_ids for this schedule
       const allDoctorIds = scheduleId
         ? scheduleDoctorMap[scheduleId] || null
@@ -388,18 +482,39 @@ export default function QueueDisplay() {
         shift,
         doctor,
         doctors, // All doctors for this queue entry
+        queueStatus: "waiting",
       };
     });
 
-    // No Show: all "no_show" entries
-    const noShowData = noShowEntries.map((entry) => {
-      const aptTime = entry.appointment_id
-        ? appointmentTimeMap[String(entry.appointment_id)]
+    // No-show: same shape as waiting; shown in doctor cards with distinct styling
+    const noShowData = noShowEntries.map((entry, index) => {
+      const { scheduleId, doctor, shift, scheduledTime } =
+        resolveQueueEntryRouting(
+          entry,
+          appointmentTimeMap,
+          aptScheduleMap,
+          aptDoctorMap,
+          scheduleShiftMap,
+          doctorNameMap,
+        );
+      const aptTime = scheduledTime;
+      const allDoctorIds = scheduleId
+        ? scheduleDoctorMap[scheduleId] || null
         : null;
+      const doctors =
+        allDoctorIds && Array.isArray(allDoctorIds)
+          ? allDoctorIds.map((id) => doctorNameMap[id] || null).filter(Boolean)
+          : [];
       return {
         number: entry.queue_number,
+        name: users[entry.user_id]?.name || "Unknown",
         id_number: users[entry.user_id]?.id_number || "",
+        wait: entry.estimated_time_wait || `~${(index + 1) * 10}m`,
         scheduledTime: aptTime || null,
+        shift,
+        doctor,
+        doctors,
+        queueStatus: "no_show",
       };
     });
 
@@ -409,7 +524,7 @@ export default function QueueDisplay() {
 
     return {
       nowServing: nowServingData,
-      ready: readyData,
+      called: calledData,
       waiting: waitingData,
       noShow: noShowData,
       totalInQueue: total,
@@ -417,15 +532,189 @@ export default function QueueDisplay() {
   }, [
     queueEntries,
     users,
-    isLoadingData,
     appointmentTimeMap,
     aptScheduleMap,
     aptDoctorMap,
     scheduleShiftMap,
     scheduleDoctorMap,
     doctorNameMap,
-    shiftDoctorMap,
   ]);
+
+  // Group queues by doctor + shift (two cards when a doctor has AM and PM schedules)
+  const doctorQueues = useMemo(() => {
+    if (isLoadingData) return [];
+
+    const cardKey = (name, shift) =>
+      `${normalizeDoctorName(name)}\u0000${shift}`;
+
+    /** @type {Record<string, { name: string, shift: string, nowServing: object | null, waiting: object[] }>} */
+    const doctorMap = {};
+
+    const ensureCard = (docName, shift) => {
+      const canonical = normalizeDoctorName(docName);
+      if (!canonical) return null;
+      if (shift !== "AM" && shift !== "PM") return null;
+      const key = cardKey(canonical, shift);
+      if (!doctorMap[key]) {
+        doctorMap[key] = {
+          name: canonical,
+          shift,
+          nowServing: null,
+          waiting: [],
+        };
+      }
+      return doctorMap[key];
+    };
+
+    // Roster: one card per (doctor, shift) scheduled today
+    const rosterNames = new Set([
+      ...(shiftDoctorMap.AM || []),
+      ...(shiftDoctorMap.PM || []),
+    ]);
+    rosterNames.forEach((docName) => {
+      const n = normalizeDoctorName(docName);
+      if (!n) return;
+      if (shiftDoctorMap.AM?.includes(n)) ensureCard(n, "AM");
+      if (shiftDoctorMap.PM?.includes(n)) ensureCard(n, "PM");
+    });
+
+    // Doctors only seen in queue data (no roster row): infer shift from appointments
+    const extraNames = new Set();
+    waiting.forEach((w) => {
+      if (w.doctor) extraNames.add(w.doctor);
+    });
+    called.forEach((c) => {
+      if (c.doctor) extraNames.add(c.doctor);
+    });
+    noShow.forEach((n) => {
+      if (n.doctor) extraNames.add(n.doctor);
+    });
+    nowServing.forEach((p) => {
+      if (p.doctor) extraNames.add(p.doctor);
+    });
+    extraNames.forEach((docName) => {
+      if (rosterNames.has(docName)) return;
+      const shifts = new Set();
+      waiting.forEach((w) => {
+        if (w.doctor === docName && (w.shift === "AM" || w.shift === "PM")) {
+          shifts.add(w.shift);
+        }
+      });
+      called.forEach((c) => {
+        if (c.doctor === docName && (c.shift === "AM" || c.shift === "PM")) {
+          shifts.add(c.shift);
+        }
+      });
+      noShow.forEach((n) => {
+        if (n.doctor === docName && (n.shift === "AM" || n.shift === "PM")) {
+          shifts.add(n.shift);
+        }
+      });
+      nowServing.forEach((p) => {
+        if (p.doctor === docName && (p.shift === "AM" || p.shift === "PM")) {
+          shifts.add(p.shift);
+        }
+      });
+      shifts.forEach((sh) => ensureCard(docName, sh));
+      if (shifts.size === 0) {
+        ensureCard(docName, "AM");
+      }
+    });
+
+    // Assign now serving to the card that matches appointment shift
+    nowServing.forEach((patient) => {
+      const docName = patient.doctor;
+      if (!docName) return;
+      const sh =
+        patient.shift === "AM" || patient.shift === "PM" ? patient.shift : null;
+      if (sh) {
+        const card = ensureCard(docName, sh);
+        if (card) card.nowServing = patient;
+      } else {
+        const am = doctorMap[cardKey(docName, "AM")];
+        const pm = doctorMap[cardKey(docName, "PM")];
+        if (am && !pm) am.nowServing = patient;
+        else if (pm && !am) pm.nowServing = patient;
+        else if (am) am.nowServing = patient;
+      }
+    });
+
+    // Assign waiting to the card that matches appointment shift
+    waiting.forEach((patient) => {
+      const docName = patient.doctor || "Unknown";
+      const sh =
+        patient.shift === "AM" || patient.shift === "PM" ? patient.shift : null;
+      if (sh) {
+        const card = ensureCard(docName, sh);
+        if (card) card.waiting.push(patient);
+        return;
+      }
+      const am = doctorMap[cardKey(docName, "AM")];
+      const pm = doctorMap[cardKey(docName, "PM")];
+      if (am && !pm) am.waiting.push(patient);
+      else if (pm && !am) pm.waiting.push(patient);
+      else if (am) am.waiting.push(patient);
+    });
+
+    // Called entries — same routing as waiting (blue styling in card)
+    called.forEach((patient) => {
+      const docName = patient.doctor || "Unknown";
+      const sh =
+        patient.shift === "AM" || patient.shift === "PM" ? patient.shift : null;
+      if (sh) {
+        const card = ensureCard(docName, sh);
+        if (card) card.waiting.push(patient);
+        return;
+      }
+      const am = doctorMap[cardKey(docName, "AM")];
+      const pm = doctorMap[cardKey(docName, "PM")];
+      if (am && !pm) am.waiting.push(patient);
+      else if (pm && !am) pm.waiting.push(patient);
+      else if (am) am.waiting.push(patient);
+    });
+
+    // No-show entries use the same routing as waiting (shown with distinct styling in the card)
+    noShow.forEach((patient) => {
+      const docName = patient.doctor || "Unknown";
+      const sh =
+        patient.shift === "AM" || patient.shift === "PM" ? patient.shift : null;
+      if (sh) {
+        const card = ensureCard(docName, sh);
+        if (card) card.waiting.push(patient);
+        return;
+      }
+      const am = doctorMap[cardKey(docName, "AM")];
+      const pm = doctorMap[cardKey(docName, "PM")];
+      if (am && !pm) am.waiting.push(patient);
+      else if (pm && !am) pm.waiting.push(patient);
+      else if (am) am.waiting.push(patient);
+    });
+
+    Object.keys(doctorMap).forEach((k) => {
+      doctorMap[k].waiting.sort((a, b) => a.number - b.number);
+    });
+
+    const keys = Object.keys(doctorMap);
+    const shiftOrder = (s) => (s === "AM" ? 0 : s === "PM" ? 1 : 2);
+    keys.sort((a, b) => {
+      const A = doctorMap[a];
+      const B = doctorMap[b];
+      const byShift = shiftOrder(A.shift) - shiftOrder(B.shift);
+      if (byShift !== 0) return byShift;
+      return A.name.localeCompare(B.name);
+    });
+    return keys.map((k) => doctorMap[k]);
+  }, [nowServing, waiting, called, noShow, isLoadingData, shiftDoctorMap]);
+
+  // Doctor card grid: ≤3 cards fill one row when possible; >3 uses 3 columns so extras wrap to row 2+
+  const doctorGridColsClass = useMemo(() => {
+    if (isLoadingData) return "md:grid-cols-3";
+    const n = doctorQueues.length;
+    if (n > 3) return "md:grid-cols-3";
+    if (n <= 1) return "md:grid-cols-1";
+    if (n === 2) return "md:grid-cols-2";
+    return "md:grid-cols-3";
+  }, [doctorQueues.length, isLoadingData]);
 
   // Update time only on client side after mount
   useEffect(() => {
@@ -516,520 +805,65 @@ export default function QueueDisplay() {
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 min-h-0 overflow-hidden">
-        {/* Left Column - Now Serving & Please Proceed */}
-        <div className="col-span-1 md:col-span-4 flex flex-col gap-3 md:gap-4 min-h-0">
-          {/* Now Serving */}
-          <div
-            className="rounded-xl shadow-xl p-5 md:p-6 flex flex-col justify-center items-center relative overflow-hidden border border-[#5D7391]"
-            style={{
-              background:
-                "linear-gradient(to bottom right, #374D6C, #4A6280, #374D6C)",
-            }}
-          >
-            <div className="absolute top-0 left-0 w-full h-full opacity-10">
-              <div className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full"></div>
-              <div className="absolute bottom-10 right-10 w-24 h-24 bg-white rounded-full"></div>
-            </div>
-            <div className="relative z-10 text-center w-full">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full mb-3">
-                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                <span className="text-white text-[10px] md:text-xs font-medium tracking-wide uppercase">
-                  Now Serving
-                </span>
-              </div>
-              {isLoadingData ? (
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
-                  <div className="animate-pulse">
-                    <div className="h-[36px] md:h-[48px] bg-white/20 rounded w-16 mx-auto mb-2.5"></div>
-                    <div className="h-[28px] md:h-[32px] bg-white/20 rounded w-32 mx-auto mb-1.5"></div>
-                    <div className="h-[16px] md:h-[20px] bg-white/20 rounded w-20 mx-auto"></div>
-                  </div>
-                </div>
-              ) : nowServing.length > 0 ? (
-                <div
-                  className={`grid gap-2 ${nowServing.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
-                >
-                  {nowServing.map((patient, index) => (
-                    <div
-                      key={index}
-                      className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 border border-white/25 shadow-sm"
-                    >
-                      <div
-                        className={`font-black text-white leading-none mb-1 ${nowServing.length === 1 ? "text-[36px] md:text-[48px]" : "text-[24px] md:text-[32px]"}`}
-                      >
-                        {formatQueueNumber(patient.number)}
-                      </div>
-                      <div
-                        className={`text-white/90 ${nowServing.length === 1 ? "text-xs md:text-sm" : "text-[10px] md:text-xs"}`}
-                      >
-                        {patient.id_number}
-                      </div>
-                      {patient.queue_entry_id && <div className="mt-1.5" />}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/20">
-                  <div className="text-white/80 text-base md:text-lg"></div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Please Proceed */}
-          <div
-            className="rounded-xl shadow-lg p-3 relative overflow-hidden flex-shrink-0 border border-[#8AA0B8]"
-            style={{
-              background: "linear-gradient(to bottom right, #5A7A9A, #6B8CAC)",
-            }}
-          >
-            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="bg-white rounded-2xl p-2 md:p-3 shadow-lg border border-white/70">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-5 h-5 md:w-6 md:h-6"
-                  style={{ color: "#374D6C" }}
-                >
-                  <path d="M5.85 3.5a.75.75 0 00-1.117-1 9.719 9.719 0 00-2.348 4.876.75.75 0 001.479.248A8.219 8.219 0 015.85 3.5zM19.267 2.5a.75.75 0 10-1.118 1 8.22 8.22 0 011.987 4.124.75.75 0 001.48-.248A9.72 9.72 0 0019.266 2.5z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2.25A6.75 6.75 0 005.25 9v.75a8.217 8.217 0 01-2.119 5.52.75.75 0 00.298 1.206c1.544.57 3.16.99 4.831 1.243a3.75 3.75 0 107.48 0 24.583 24.583 0 004.83-1.244.75.75 0 00.298-1.205 8.217 8.217 0 01-2.118-5.52V9A6.75 6.75 0 0012 2.25zM9.75 18c0-.034 0-.067.002-.1a25.05 25.05 0 004.496 0l.002.1a2.25 2.25 0 11-4.5 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-white text-xs md:text-sm font-bold mb-0.5">
-                  Please Proceed (called)
-                </p>
-                {isLoadingData ? (
-                  <div className="flex items-center justify-between animate-pulse">
-                    <div className="h-[20px] md:h-[28px] bg-white/20 rounded w-10"></div>
-                    <div className="space-y-1">
-                      <div className="h-[14px] md:h-[16px] bg-white/20 rounded w-20"></div>
-                      <div className="h-[12px] md:h-[14px] bg-white/20 rounded w-16"></div>
-                    </div>
-                  </div>
-                ) : ready.length > 0 ? (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {ready.map((patient, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="text-white text-base md:text-lg font-black">
-                            {formatQueueNumber(patient.number)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white/80 text-[10px] md:text-xs">
-                            {patient.id_number}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-white/80 text-xs md:text-sm">
-                    Next in Queue
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* No Show */}
-          {noShow.length > 0 && (
-            <div className="rounded-xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-amber-50 border border-amber-200">
-              <div className="flex items-center gap-2 mb-3">
-                <XCircle className="w-4 h-4 md:w-5 md:h-5 text-amber-600 flex-shrink-0" />
-                <p className="text-amber-600 text-sm font-bold">
-                  No Show ({noShow.length})
-                </p>
-              </div>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {noShow.map((patient, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between"
+      {/* Main content: doctor grid — column count depends on number of doctor cards */}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <div
+          className={`flex-1 overflow-y-auto grid grid-cols-1 ${doctorGridColsClass} p-1 ${doctorQueues.length > 3 ? "gap-2 md:gap-2.5" : "gap-3 md:gap-4"}`}
+        >
+          {isLoadingData ? (
+            // Loading state: show skeleton cards
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <DoctorQueueCard
+                  key={`skeleton-${i}`}
+                  doctorName={`Doctor ${i}`}
+                  doctorId={i}
+                  shift={i % 2 === 0 ? "AM" : "PM"}
+                  nowServingPatient={null}
+                  waitingPatients={[]}
+                  formatQueueNumber={formatQueueNumber}
+                  formatTime={formatTime}
+                  isLoading={true}
+                  compact={doctorQueues.length > 3}
+                />
+              ))}
+            </>
+          ) : doctorQueues.length === 0 ? (
+            // No doctors scheduled
+            <div className="col-span-full flex items-center justify-center h-full min-h-[200px]">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-8 h-8 text-gray-400"
                   >
-                    <div>
-                      <p className="text-amber-800 text-base md:text-lg font-black">
-                        {formatQueueNumber(patient.number)}
-                      </p>
-                      {patient.scheduledTime && (
-                        <p className="text-amber-600/80 text-[10px] md:text-xs">
-                          {formatTime(patient.scheduledTime)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-amber-600/80 text-[10px] md:text-xs">
-                        {patient.id_number}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Emergency Encounters */}
-          {emergencyEncounters.length > 0 && (
-            <div className="rounded-xl shadow-sm p-4 relative overflow-hidden flex-shrink-0 bg-red-50 border border-red-200">
-              <div className="flex items-center gap-2 mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-red-600 text-sm font-bold">
-                  Emergency ({emergencyEncounters.length})
+                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-500">
+                  No health personnel scheduled for today
                 </p>
               </div>
-              <div className="space-y-2.5 max-h-32 overflow-y-auto">
-                {emergencyEncounters.map((enc, index) => (
-                  <div
-                    key={enc.id || index}
-                    className="flex items-center gap-3 pl-1"
-                  >
-                    <p className="text-xs font-medium text-gray-800 truncate flex-1">
-                      {enc.id_number || enc.patient_id || "—"}
-                    </p>
-                  </div>
-                ))}
-              </div>
             </div>
+          ) : (
+            // Doctor cards
+            doctorQueues.map((doctor) => (
+              <DoctorQueueCard
+                key={`${doctor.name}-${doctor.shift}`}
+                doctorName={doctor.name}
+                doctorId={`${doctor.name}-${doctor.shift}`}
+                shift={doctor.shift}
+                nowServingPatient={doctor.nowServing}
+                waitingPatients={doctor.waiting}
+                formatQueueNumber={formatQueueNumber}
+                formatTime={formatTime}
+                isLoading={false}
+                compact={doctorQueues.length > 3}
+              />
+            ))
           )}
-        </div>
-
-        {/* Right Column - Waiting Queue */}
-        <div className="col-span-1 md:col-span-8 bg-white/95 rounded-xl border border-slate-300/70 flex flex-col overflow-hidden min-h-0">
-          <div
-            className="px-3 md:px-4 py-2 md:py-2.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0"
-            style={{
-              background: "linear-gradient(to right, #EFF3F7, transparent)",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-4 h-4 md:w-5 md:h-5"
-                style={{ color: "#374D6C" }}
-              >
-                <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-              </svg>
-              <h2 className="text-sm md:text-base font-bold text-gray-900">
-                In Queue
-              </h2>
-            </div>
-            {isLoadingData ? (
-              <div className="h-[20px] md:h-[24px] w-16 bg-slate-200 rounded-full animate-pulse"></div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div
-                  className="px-2 py-0.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
-                  style={{
-                    borderColor: "#374D6C",
-                    color: "#374D6C",
-                    backgroundColor: "#E8EDF2",
-                  }}
-                >
-                  {waiting.filter((w) => w.shift === "AM").length} AM
-                </div>
-                <div
-                  className="px-2 py-0.5 rounded-full font-semibold text-[10px] md:text-xs border-1"
-                  style={{
-                    borderColor: "#374D6C",
-                    color: "#374D6C",
-                    backgroundColor: "#E8EDF2",
-                  }}
-                >
-                  {waiting.filter((w) => w.shift === "PM").length} PM
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 p-2.5 md:p-3 overflow-y-auto min-h-0">
-            {isLoadingData ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* AM Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 px-1">
-                    <div className="h-3 w-6 bg-slate-300 rounded animate-pulse"></div>
-                    <div className="flex-1 h-px bg-slate-300"></div>
-                    <div className="h-3 w-4 bg-slate-200 rounded animate-pulse"></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="rounded-xl p-3 border border-slate-200" style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-200 rounded-lg animate-pulse"></div>
-                          <div className="flex-1 space-y-1.5">
-                            <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                            <div className="h-2 bg-slate-100 rounded w-1/2 animate-pulse"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* PM Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 px-1">
-                    <div className="h-3 w-6 bg-slate-300 rounded animate-pulse"></div>
-                    <div className="flex-1 h-px bg-slate-300"></div>
-                    <div className="h-3 w-4 bg-slate-200 rounded animate-pulse"></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="rounded-xl p-3 border border-slate-200" style={{ background: "linear-gradient(to right, #F8FAFC, transparent)" }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-200 rounded-lg animate-pulse"></div>
-                          <div className="flex-1 space-y-1.5">
-                            <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                            <div className="h-2 bg-slate-100 rounded w-1/2 animate-pulse"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              (() => {
-                // Group waiting entries by shift and doctor
-                const amQueue = waiting.filter((w) => w.shift === "AM");
-                const pmQueue = waiting.filter((w) => w.shift === "PM");
-
-                // Group by doctor name within AM and PM
-                const groupByDoctor = (queue) => {
-                  const groups = {};
-                  queue.forEach((w) => {
-                    // Use the primary assigned doctor for this queue entry
-                    const doc = w.doctor || "Unknown";
-                    if (!groups[doc]) groups[doc] = [];
-                    groups[doc].push(w);
-                  });
-                  return groups;
-                };
-
-                const amByDoctor = groupByDoctor(amQueue);
-                const pmByDoctor = groupByDoctor(pmQueue);
-
-                // Collect all unique doctors per shift (from schedule)
-                const amDoctors = shiftDoctorMap.AM || [];
-                const pmDoctors = shiftDoctorMap.PM || [];
-
-                // Combined unique doctors (from schedule + queue data)
-                const amDoctorsCombined = Array.from(
-                  new Set([...amDoctors, ...Object.keys(amByDoctor)]),
-                );
-                const pmDoctorsCombined = Array.from(
-                  new Set([...pmDoctors, ...Object.keys(pmByDoctor)]),
-                );
-
-                // Build doctor columns - for each shift, show each doctor's queue in a sub-column
-                const renderDoctorColumns = (
-                  doctors,
-                  queueByDoctor,
-                  shiftLabel,
-                ) => {
-                  if (
-                    doctors.length === 0 &&
-                    Object.keys(queueByDoctor).length === 0
-                  ) {
-                    return (
-                      <div className="text-xs text-gray-400 text-center py-4">
-                        No {shiftLabel} queues
-                      </div>
-                    );
-                  }
-                  // Combine doctors from schedule AND doctors from queue data to get all doctors with queues
-                  const allDoctorsSet = new Set([
-                    ...doctors,
-                    ...Object.keys(queueByDoctor),
-                  ]);
-                  const allDoctors = Array.from(allDoctorsSet);
-                  if (allDoctors.length <= 1) {
-                    const singleDoctorName =
-                      allDoctors.length === 1
-                        ? allDoctors[0]
-                        : Object.keys(queueByDoctor)[0] || "Unknown";
-                    const entries = allDoctors.flatMap(
-                      (d) => queueByDoctor[d] || [],
-                    );
-                    return (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 px-2 py-2 bg-slate-100 rounded-lg">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#374D6C]"></div>
-                          <span className="text-sm font-bold text-[#374D6C] truncate">
-                            {singleDoctorName}
-                          </span>
-                          <span className="text-xs text-gray-400 ml-auto">
-                            {entries.length}
-                          </span>
-                        </div>
-                        {entries.length > 0 ? (
-                          entries.map((w) => (
-                            <div
-                              key={w.number}
-                              className="rounded-xl p-3 border border-slate-200 hover:shadow-sm transition-all"
-                              style={{
-                                background:
-                                  "linear-gradient(to right, #F8FAFC, transparent)",
-                              }}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="rounded-lg w-10 h-10 flex items-center justify-center flex-shrink-0 shadow-sm border text-base font-black"
-                                  style={{
-                                    backgroundColor: "#E8EDF2",
-                                    borderColor: "#374D6C",
-                                    color: "#374D6C",
-                                  }}
-                                >
-                                  {formatQueueNumber(w.number)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-gray-600 truncate font-bold">
-                                    {w.id_number}
-                                  </p>
-                                  {w.scheduledTime && (
-                                    <p className="text-xs text-[#374D6C] font-bold">
-                                      {formatTime(w.scheduledTime)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-[10px] text-gray-300 text-center py-1">
-                            No patients
-                          </p>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // Multiple doctors - render as sub-columns per doctor (2 per row)
-                  return (
-                    <div
-                      className="grid gap-2"
-                      style={{
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                      }}
-                    >
-                      {allDoctors.map((docName) => {
-                        const entries = queueByDoctor[docName] || [];
-                        return (
-                          <div key={docName} className="space-y-1.5">
-                            <div className="flex items-center gap-2 px-2 py-2 bg-slate-100 rounded-lg">
-                              <div className="w-2.5 h-2.5 rounded-full bg-[#374D6C]"></div>
-                              <span className="text-sm font-bold text-[#374D6C] truncate">
-                                {docName}
-                              </span>
-                              <span className="text-xs text-gray-400 ml-auto">
-                                {entries.length}
-                              </span>
-                            </div>
-                            {entries.length > 0 ? (
-                              entries.map((w) => (
-                                <div
-                                  key={w.number}
-                                  className="rounded-xl p-3 border border-slate-200 hover:shadow-sm transition-all"
-                                  style={{
-                                    background:
-                                      "linear-gradient(to right, #F8FAFC, transparent)",
-                                  }}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className="rounded-lg w-10 h-10 flex items-center justify-center flex-shrink-0 shadow-sm border text-base font-black"
-                                      style={{
-                                        backgroundColor: "#E8EDF2",
-                                        borderColor: "#374D6C",
-                                        color: "#374D6C",
-                                      }}
-                                    >
-                                      {formatQueueNumber(w.number)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-gray-600 truncate">
-                                        {w.id_number}
-                                      </p>
-                                      {w.scheduledTime && (
-                                        <p className="text-sm text-[#374D6C] font-medium">
-                                          {formatTime(w.scheduledTime)}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-[10px] text-gray-300 text-center py-1">
-                                No patients
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                };
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* AM Column */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 px-1">
-                        <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">
-                          AM
-                        </span>
-                        <div className="flex-1 h-px bg-[#374D6C]/20"></div>
-                        <span className="text-xs text-gray-500">
-                          {amQueue.length}
-                        </span>
-                      </div>
-                      {renderDoctorColumns(amDoctorsCombined, amByDoctor, "AM")}
-                    </div>
-
-                    {/* PM Column */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 px-1">
-                        <span className="text-xs font-semibold text-[#374D6C] uppercase tracking-wide">
-                          PM
-                        </span>
-                        <div className="flex-1 h-px bg-[#374D6C]/20"></div>
-                        <span className="text-xs text-gray-500">
-                          {pmQueue.length}
-                        </span>
-                      </div>
-                      {renderDoctorColumns(pmDoctorsCombined, pmByDoctor, "PM")}
-                    </div>
-                  </div>
-                );
-              })()
-            )}
-          </div>
         </div>
       </div>
     </div>

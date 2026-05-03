@@ -28,6 +28,9 @@ const formatTime = (timeString) => {
   return `${hours}:${minutesStr} ${ampm}`;
 };
 
+const panelQueuesKey = (doctorId, scheduleId) =>
+  scheduleId ? `${doctorId}:${scheduleId}` : String(doctorId);
+
 export default function DoctorQueuePanels({ setQueues }) {
   const [queueEntries, setQueueEntries] = useState([]);
   const [users, setUsers] = useState({});
@@ -164,40 +167,41 @@ export default function DoctorQueuePanels({ setQueues }) {
     "queue-updated": () => fetchQueueData(),
   });
 
-  // Get doctors who have a schedule today (from doctor_schedules + schedules join)
+  // One row per doctor schedule slot today (same doctor can appear for AM and PM)
   const doctorsWithScheduleToday = useMemo(() => {
     const todayDay = getTodayDayName();
     const daySchedules = apiData.schedules.filter((s) => s.day === todayDay);
 
-    const doctorIds = new Set();
-    const doctorShiftMap = {};
+    const entries = [];
     daySchedules.forEach((sched) => {
       const schedKey = String(sched.schedule_id);
       const docs = scheduleDoctorMap[schedKey] || [];
       docs.forEach((d) => {
-        doctorIds.add(d);
-        doctorShiftMap[d] = sched.shift || null;
+        entries.push({
+          doctorId: d,
+          doctorName: doctorNameMap[d] || "Unknown Doctor",
+          shift: sched.shift || null,
+          scheduleId: schedKey,
+        });
       });
     });
 
-    return Array.from(doctorIds).map((id) => ({
-      doctorId: id,
-      doctorName: doctorNameMap[id] || "Unknown Doctor",
-      shift: doctorShiftMap[id] || null,
-    }));
+    return entries;
   }, [apiData.schedules, scheduleDoctorMap, doctorNameMap, getTodayDayName]);
 
-  // Group queues by doctor
-  const queuesByDoctor = useMemo(() => {
+  // Group queues by doctor + schedule (matches appointment schedule_id)
+  const queuesByDoctorSchedule = useMemo(() => {
     const grouped = {};
     queueEntries.forEach((entry) => {
       const doctorId = aptDoctorMap[String(entry.appointment_id)] || null;
       if (!doctorId) return;
-      if (!grouped[doctorId]) grouped[doctorId] = [];
-      grouped[doctorId].push(entry);
+      const scheduleId = aptScheduleMap[String(entry.appointment_id)] || null;
+      const key = panelQueuesKey(doctorId, scheduleId);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(entry);
     });
     return grouped;
-  }, [queueEntries, aptDoctorMap]);
+  }, [queueEntries, aptDoctorMap, aptScheduleMap]);
 
   // Actions
   const handleCallPatient = async (queue) => {
@@ -251,8 +255,10 @@ export default function DoctorQueuePanels({ setQueues }) {
         recipient = `+63${digits}`;
       }
 
+      const qDoctor = aptDoctorMap[String(queue.appointment_id)];
+      const qSched = aptScheduleMap[String(queue.appointment_id)] || null;
       const sortedQueues = [
-        ...(queuesByDoctor[aptDoctorMap[String(queue.appointment_id)]] || []),
+        ...(queuesByDoctorSchedule[panelQueuesKey(qDoctor, qSched)] || []),
       ].sort((a, b) => a.queue_number - b.queue_number);
       const position =
         sortedQueues.findIndex(
@@ -606,15 +612,19 @@ export default function DoctorQueuePanels({ setQueues }) {
 
                 {/* Doctor Panels Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {shiftDoctors.map(({ doctorId, doctorName }) => {
+                  {shiftDoctors.map(({ doctorId, doctorName, scheduleId }) => {
                     const doctorQueues = sortQueuesByTime(
-                      queuesByDoctor[doctorId] || [],
-                    ).filter((q) => q.queue_status.toLowerCase() !== "completed");
+                      queuesByDoctorSchedule[
+                        panelQueuesKey(doctorId, scheduleId)
+                      ] || [],
+                    ).filter(
+                      (q) => q.queue_status.toLowerCase() !== "completed",
+                    );
                     const waitingCount = totalWaiting(doctorQueues);
 
                     return (
                       <motion.div
-                        key={doctorId}
+                        key={`${doctorId}-${scheduleId}`}
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.35 }}
