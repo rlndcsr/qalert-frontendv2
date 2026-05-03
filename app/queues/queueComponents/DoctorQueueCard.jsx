@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /** First letter of first two name parts (e.g. "Doc Don" → DD, "Doc Martinez Santos" → DM). */
 function getDoctorInitials(name) {
@@ -17,6 +17,91 @@ function getDoctorInitials(name) {
   return word.charAt(0).toUpperCase();
 }
 
+/** In compact (4+ doctors) mode, at most this many waiting rows stack in the left column; rest go right. */
+const COMPACT_WAITING_LEFT_MAX = 3;
+
+function WaitingQueueEntry({
+  patient,
+  compact,
+  formatQueueNumber,
+  formatTime,
+  /** True when item sits in the 2-col compact grid (parent uses gap; no margin-bottom). */
+  inCompactGrid = false,
+}) {
+  const isNoShow = patient.queueStatus === "no_show";
+  const isCalled = patient.queueStatus === "called";
+  const marginClass = inCompactGrid ? "" : compact ? "mb-1" : "mb-2";
+
+  return (
+    <div
+      className={`break-inside-avoid rounded-lg hover:shadow-sm transition-all ${marginClass} ${compact ? "p-1.5" : "p-2.5"} ${
+        isNoShow
+          ? "ring-2 ring-orange-400 border border-orange-400 bg-orange-50/60"
+          : isCalled
+            ? "ring-2 ring-blue-400 border border-blue-400 bg-blue-50/70"
+            : "border border-slate-200 bg-gradient-to-r from-slate-50 to-transparent"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className={`flex min-w-0 flex-1 items-center ${compact ? "gap-2" : "gap-3"}`}
+        >
+          <div
+            className={`flex flex-shrink-0 items-center justify-center rounded-lg border font-black shadow-sm ${compact ? "w-8 h-8 text-sm" : "w-10 h-10 text-base"}`}
+            style={{
+              backgroundColor: isNoShow
+                ? "#ffedd5"
+                : isCalled
+                  ? "#dbeafe"
+                  : "#E8EDF2",
+              borderColor: isNoShow
+                ? "#ea580c"
+                : isCalled
+                  ? "#2563eb"
+                  : "#374D6C",
+              color: isNoShow
+                ? "#9a3412"
+                : isCalled
+                  ? "#1e3a8a"
+                  : "#374D6C",
+            }}
+          >
+            {formatQueueNumber(patient.number)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
+              className={`max-md:whitespace-normal max-md:break-words md:truncate font-medium text-gray-600 ${compact ? "text-[10px]" : "text-xs"}`}
+            >
+              {patient.id_number}
+            </p>
+            {patient.scheduledTime && (
+              <p
+                className={`font-medium text-[#374D6C] ${compact ? "text-[10px]" : "text-xs"}`}
+              >
+                {formatTime(patient.scheduledTime)}
+              </p>
+            )}
+          </div>
+        </div>
+        {isNoShow && (
+          <span
+            className={`flex-shrink-0 font-semibold uppercase tracking-wide text-orange-700 ${compact ? "text-[9px]" : "text-[10px]"}`}
+          >
+            No show
+          </span>
+        )}
+        {isCalled && (
+          <span
+            className={`flex-shrink-0 font-semibold uppercase tracking-wide text-blue-800 ${compact ? "text-[9px]" : "text-[10px]"}`}
+          >
+            Called
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DoctorQueueCard({
   doctorName,
   doctorId,
@@ -29,12 +114,149 @@ export default function DoctorQueueCard({
   /** Tighter padding and type when many cards are on screen (e.g. live display). */
   compact = false,
 }) {
+  const waitingOuterRef = useRef(null);
+  const waitingInnerRef = useRef(null);
+
   const waitingCount = useMemo(
     () => waitingPatients?.length || 0,
     [waitingPatients],
   );
 
   const initials = useMemo(() => getDoctorInitials(doctorName), [doctorName]);
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mq.matches);
+    const onChange = () => setPrefersReducedMotion(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  /**
+   * Ping-pong vertical reveal when the waiting list is taller than its viewport.
+   * Uses translateY on an inner wrapper (reliable with CSS columns); outer is overflow-hidden
+   * so the list auto-plays instead of relying on scrollHeight quirks + scroll wheel.
+   */
+  useEffect(() => {
+    if (isLoading || prefersReducedMotion) return;
+    const outer = waitingOuterRef.current;
+    const inner = waitingInnerRef.current;
+    if (!outer || !inner) return;
+
+    let rafId = 0;
+    let cancelled = false;
+    let running = false;
+    let last = performance.now();
+    /** 1 = toward end of list (more negative translate), -1 = back to start */
+    let direction = 1;
+    let pauseUntil = 0;
+    let translate = 0;
+    const speed = compact ? 22 : 32;
+    const pauseMs = 2600;
+
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(rafId);
+    };
+
+    const maxTranslate = () => {
+      const cap = outer.clientHeight;
+      const h = inner.scrollHeight;
+      return Math.max(0, h - cap);
+    };
+
+    const applyTransform = () => {
+      inner.style.transform = `translateY(${translate}px)`;
+    };
+
+    const tick = (now) => {
+      if (cancelled || !running) return;
+
+      const maxT = maxTranslate();
+      if (maxT <= 1) {
+        translate = 0;
+        applyTransform();
+        stop();
+        return;
+      }
+
+      translate = Math.max(-maxT, Math.min(0, translate));
+
+      if (now < pauseUntil) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const dt = Math.min(now - last, 120);
+      last = now;
+      translate -= (direction * speed * dt) / 1000;
+
+      if (direction === 1 && translate <= -maxT + 0.5) {
+        translate = -maxT;
+        direction = -1;
+        pauseUntil = now + pauseMs;
+      } else if (direction === -1 && translate >= -0.5) {
+        translate = 0;
+        direction = 1;
+        pauseUntil = now + pauseMs;
+      }
+
+      applyTransform();
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (running) return;
+      if (maxTranslate() <= 1) return;
+      running = true;
+      last = performance.now();
+      direction = 1;
+      pauseUntil = 0;
+      translate = 0;
+      applyTransform();
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const onResize = () => {
+      const maxT = maxTranslate();
+      if (maxT <= 1) {
+        translate = 0;
+        applyTransform();
+        if (running) stop();
+        return;
+      }
+      translate = Math.max(-maxT, Math.min(0, translate));
+      applyTransform();
+      if (!running) start();
+    };
+
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(() => requestAnimationFrame(onResize));
+    });
+    ro.observe(outer);
+    ro.observe(inner);
+
+    requestAnimationFrame(() => requestAnimationFrame(onResize));
+
+    return () => {
+      cancelled = true;
+      stop();
+      ro.disconnect();
+      inner.style.transform = "";
+    };
+  }, [
+    isLoading,
+    prefersReducedMotion,
+    compact,
+    waitingPatients,
+    waitingCount,
+  ]);
+
+  /** On narrow screens, cap list height so overflow + auto-scroll can kick in when the queue is long. */
+  const mobileListMaxClass =
+    waitingCount >= 4 ? "max-md:max-h-[min(58svh,26rem)]" : "";
 
   if (isLoading) {
     return (
@@ -85,32 +307,57 @@ export default function DoctorQueueCard({
           </div>
         </div>
 
-        {/* Waiting skeleton — single column on small screens, two from md up */}
+        {/* Waiting skeleton — compact: 3+ split cols; else columns-1 / md:columns-2 */}
         <div
           className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
         >
-          <div
-            className={`columns-1 [column-fill:auto] md:columns-2 ${compact ? "gap-x-1 gap-y-1 md:gap-x-2" : "gap-x-2 gap-y-2"}`}
-          >
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className={`break-inside-avoid flex items-center rounded-lg bg-slate-50 ${compact ? "mb-1 gap-2 p-1.5" : "mb-2 gap-3 p-2"}`}
-            >
-              <div
-                className={`${compact ? "w-8 h-8" : "w-10 h-10"} bg-slate-200 rounded-lg animate-pulse`}
-              ></div>
-              <div className="flex-1 space-y-1">
-                <div
-                  className={`${compact ? "h-2.5 w-12" : "h-3 w-16"} bg-slate-200 rounded animate-pulse`}
-                ></div>
-                <div
-                  className={`${compact ? "h-2 w-10" : "h-2 w-12"} bg-slate-100 rounded animate-pulse`}
-                ></div>
+          {compact ? (
+            <div className="grid grid-cols-2 gap-x-1.5">
+              <div className="flex flex-col gap-1">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg bg-slate-50 p-1.5"
+                  >
+                    <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-2.5 w-12 rounded bg-slate-200 animate-pulse" />
+                      <div className="h-2 w-10 rounded bg-slate-100 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-1">
+                {[4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg bg-slate-50 p-1.5"
+                  >
+                    <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-2.5 w-12 rounded bg-slate-200 animate-pulse" />
+                      <div className="h-2 w-10 rounded bg-slate-100 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-          </div>
+          ) : (
+            <div className="columns-1 gap-x-2 gap-y-2 [column-fill:auto] md:columns-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="mb-2 flex break-inside-avoid items-center gap-3 rounded-lg bg-slate-50 p-2"
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 animate-pulse" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 w-16 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-2 w-12 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -215,92 +462,77 @@ export default function DoctorQueueCard({
         )}
       </div>
 
-      {/* Waiting Queue Section — grows with content on small screens; scroll inside card from md (clinic grid) */}
+      {/* Waiting: label fixed; list scrolls (auto ping-pong when overflow; scrollbar hidden unless reduced-motion) */}
       <div
-        className={`${compact ? "px-2.5 py-2" : "px-4 py-3"} md:flex-1 md:min-h-0 md:overflow-y-auto`}
+        className={`flex min-h-0 flex-col ${compact ? "px-2.5 py-2" : "px-4 py-3"} md:min-h-0 md:flex-1`}
       >
         <p
-          className={`font-semibold text-gray-500 uppercase tracking-wide ${compact ? "text-[10px] mb-1" : "text-xs mb-2"}`}
+          className={`shrink-0 font-semibold text-gray-500 uppercase tracking-wide ${compact ? "text-[10px] mb-1" : "text-xs mb-2"}`}
         >
           Waiting ({waitingCount})
         </p>
         {waitingPatients && waitingPatients.length > 0 ? (
           <div
-            className={`columns-1 [column-fill:auto] md:columns-2 ${compact ? "gap-x-1 gap-y-1 md:gap-x-2" : "gap-x-2 gap-y-2"}`}
+            ref={waitingOuterRef}
+            tabIndex={-1}
+            aria-label={`Waiting queue for ${doctorName}`}
+            className={`min-h-0 md:flex-1 ${mobileListMaxClass} ${
+              prefersReducedMotion
+                ? "overflow-y-auto"
+                : "overflow-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            }`}
           >
-            {waitingPatients.map((patient) => {
-              const isNoShow = patient.queueStatus === "no_show";
-              const isCalled = patient.queueStatus === "called";
-              return (
-                <div
-                  key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
-                  className={`break-inside-avoid rounded-lg hover:shadow-sm transition-all ${compact ? "mb-1 p-1.5" : "mb-2 p-2.5"} ${
-                    isNoShow
-                      ? "ring-2 ring-orange-400 border border-orange-400 bg-orange-50/60"
-                      : isCalled
-                        ? "ring-2 ring-blue-400 border border-blue-400 bg-blue-50/70"
-                        : "border border-slate-200 bg-gradient-to-r from-slate-50 to-transparent"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div
-                      className={`flex min-w-0 flex-1 items-center ${compact ? "gap-2" : "gap-3"}`}
-                    >
-                      <div
-                        className={`flex flex-shrink-0 items-center justify-center rounded-lg border font-black shadow-sm ${compact ? "w-8 h-8 text-sm" : "w-10 h-10 text-base"}`}
-                        style={{
-                          backgroundColor: isNoShow
-                            ? "#ffedd5"
-                            : isCalled
-                              ? "#dbeafe"
-                              : "#E8EDF2",
-                          borderColor: isNoShow
-                            ? "#ea580c"
-                            : isCalled
-                              ? "#2563eb"
-                              : "#374D6C",
-                          color: isNoShow
-                            ? "#9a3412"
-                            : isCalled
-                              ? "#1e3a8a"
-                              : "#374D6C",
-                        }}
-                      >
-                        {formatQueueNumber(patient.number)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`max-md:whitespace-normal max-md:break-words md:truncate font-medium text-gray-600 ${compact ? "text-[10px]" : "text-xs"}`}
-                        >
-                          {patient.id_number}
-                        </p>
-                        {patient.scheduledTime && (
-                          <p
-                            className={`font-medium text-[#374D6C] ${compact ? "text-[10px]" : "text-xs"}`}
-                          >
-                            {formatTime(patient.scheduledTime)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {isNoShow && (
-                      <span
-                        className={`flex-shrink-0 font-semibold uppercase tracking-wide text-orange-700 ${compact ? "text-[9px]" : "text-[10px]"}`}
-                      >
-                        No show
-                      </span>
-                    )}
-                    {isCalled && (
-                      <span
-                        className={`flex-shrink-0 font-semibold uppercase tracking-wide text-blue-800 ${compact ? "text-[9px]" : "text-[10px]"}`}
-                      >
-                        Called
-                      </span>
-                    )}
+            <div
+              ref={waitingInnerRef}
+              className={
+                compact
+                  ? "will-change-transform grid grid-cols-2 items-start gap-x-1.5 gap-y-0"
+                  : "columns-1 will-change-transform [column-fill:auto] md:columns-2 gap-x-2 gap-y-2"
+              }
+            >
+              {compact ? (
+                <>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    {waitingPatients
+                      .slice(0, COMPACT_WAITING_LEFT_MAX)
+                      .map((patient) => (
+                        <WaitingQueueEntry
+                          key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                          patient={patient}
+                          compact={compact}
+                          formatQueueNumber={formatQueueNumber}
+                          formatTime={formatTime}
+                          inCompactGrid
+                        />
+                      ))}
                   </div>
-                </div>
-              );
-            })}
+                  <div className="flex min-w-0 flex-col gap-1">
+                    {waitingPatients
+                      .slice(COMPACT_WAITING_LEFT_MAX)
+                      .map((patient) => (
+                        <WaitingQueueEntry
+                          key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                          patient={patient}
+                          compact={compact}
+                          formatQueueNumber={formatQueueNumber}
+                          formatTime={formatTime}
+                          inCompactGrid
+                        />
+                      ))}
+                  </div>
+                </>
+              ) : (
+                waitingPatients.map((patient) => (
+                  <WaitingQueueEntry
+                    key={`${patient.number}-${patient.queueStatus ?? "waiting"}`}
+                    patient={patient}
+                    compact={compact}
+                    formatQueueNumber={formatQueueNumber}
+                    formatTime={formatTime}
+                  />
+                ))
+              )}
+            </div>
           </div>
         ) : (
           <div className={`text-center ${compact ? "py-3" : "py-6"}`}>
