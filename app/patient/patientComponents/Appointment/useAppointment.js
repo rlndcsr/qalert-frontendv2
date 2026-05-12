@@ -657,6 +657,68 @@ export function useAppointment() {
     [fetchAppointments],
   );
 
+  // Reschedule an appointment
+  const rescheduleAppointment = useCallback(
+    async (appointmentId, newTime) => {
+      const token = getAuthToken();
+      if (!token) {
+        sileo.error({
+          title: "Not authenticated",
+          description: "You are not authenticated. Please log in again.",
+        });
+        return false;
+      }
+
+      setIsBooking(true);
+
+      const reschedulePromise = fetch(
+        `${API_BASE_URL}/appointments/${appointmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({ appointment_time: newTime }),
+        },
+      ).then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to reschedule appointment");
+        }
+        return data;
+      });
+
+      try {
+        await sileo.promise(reschedulePromise, {
+          loading: {
+            title: "Rescheduling",
+            description: "Updating your appointment time...",
+          },
+          success: {
+            title: "Appointment rescheduled",
+            description: "Your appointment time has been updated.",
+          },
+          error: (err) => ({
+            title: "Reschedule failed",
+            description: err?.message || "An error occurred while rescheduling",
+          }),
+        });
+
+        await fetchAppointments();
+        return true;
+      } catch (err) {
+        console.error("[rescheduleAppointment] Error:", err);
+        return false;
+      } finally {
+        setIsBooking(false);
+      }
+    },
+    [fetchAppointments],
+  );
+
   // Initial data fetch
   useEffect(() => {
     fetchAppointments();
@@ -716,6 +778,7 @@ export function useAppointment() {
     error,
     bookAppointment,
     cancelAppointment,
+    rescheduleAppointment,
     getSchedulesForDate,
     isWeekday,
     fetchBookedSlotsForDate,

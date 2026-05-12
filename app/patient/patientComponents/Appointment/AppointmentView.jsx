@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClipLoader } from "react-spinners";
+import RescheduleDialog from "../RescheduleDialog";
 
 // Calendar Component - Enhanced UI
 function Calendar({
@@ -775,6 +776,8 @@ function BookingPanel({
 
 export default function AppointmentView() {
   const [selectedDate, setSelectedDate] = useState("");
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
+  const [rescheduleTarget, setRescheduleTarget] = useState(null); // { appointment, schedule }
 
   const {
     schedules,
@@ -792,9 +795,11 @@ export default function AppointmentView() {
     error,
     bookAppointment,
     cancelAppointment,
+    rescheduleAppointment,
     getSchedulesForDate,
     isWeekday,
     fetchBookedSlotsForDate,
+    refreshAppointments,
   } = useAppointment();
 
   const isLoading = isLoadingAppointments || isLoadingSchedules;
@@ -953,6 +958,11 @@ export default function AppointmentView() {
             visitCompleted={
               Boolean(hasCompletedVisitToday) && !activeAppointment
             }
+            onReschedule={(id) => {
+              setRescheduleTarget({ appointment: displayAppointment, schedule: appointmentSchedule });
+              setIsRescheduleDialogOpen(true);
+            }}
+            isRescheduling={isBooking}
           />
         )}
 
@@ -971,6 +981,21 @@ export default function AppointmentView() {
           />
         )}
       </div>
+
+      <RescheduleDialog
+        isOpen={isRescheduleDialogOpen}
+        onClose={() => {
+          setIsRescheduleDialogOpen(false);
+          setRescheduleTarget(null);
+        }}
+        appointment={rescheduleTarget?.appointment}
+        schedule={rescheduleTarget?.schedule}
+        onSuccess={async () => {
+          await refreshAppointments();
+          setIsRescheduleDialogOpen(false);
+          setRescheduleTarget(null);
+        }}
+      />
     </motion.div>
   );
 }

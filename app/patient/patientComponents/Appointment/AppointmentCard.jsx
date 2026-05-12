@@ -114,6 +114,10 @@ export default function AppointmentCard({
   allowCancel = true,
   /** True when queue/visit is done but appointment row may still say "confirmed". */
   visitCompleted = false,
+  /** Callback when user wants to reschedule */
+  onReschedule,
+  /** Whether reschedule is in progress */
+  isRescheduling = false,
 }) {
   if (!appointment) return null;
 
@@ -268,6 +272,36 @@ export default function AppointmentCard({
               </p>
             </div>
           </div>
+        )}
+
+        {/* Reschedule Button */}
+        {canCancel && onReschedule && (
+          <motion.button
+            type="button"
+            onClick={() =>
+              onReschedule(appointment.appointment_id || appointment.id)
+            }
+            disabled={isRescheduling}
+            whileHover={isRescheduling ? {} : { scale: 1.01 }}
+            whileTap={isRescheduling ? {} : { scale: 0.99 }}
+            className={`w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 mt-3 ${
+              isRescheduling
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-[#4ad294]/10 text-[#4ad294] hover:bg-[#4ad294]/20 border border-[#4ad294]/20 hover:border-[#4ad294]/30"
+            }`}
+          >
+            {isRescheduling ? (
+              <>
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-[#4ad294] rounded-full animate-spin" />
+                <span>Rescheduling...</span>
+              </>
+            ) : (
+              <>
+                <Clock className="w-4 h-4" />
+                <span className="hover:cursor-pointer">Edit Schedule</span>
+              </>
+            )}
+          </motion.button>
         )}
 
         {/* Cancel Button */}
