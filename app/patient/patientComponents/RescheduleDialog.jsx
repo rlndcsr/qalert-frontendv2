@@ -43,10 +43,21 @@ export default function RescheduleDialog({
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [error, setError] = useState(null);
 
-  // Build time options based on shift (AM: 8-12, PM: 13-17)
+  // Build time options based on shift (AM: 8-12, PM: 13-17), filtering past times if appointment is today
   const timeOptions = useMemo(() => {
     if (!schedule?.shift) return [];
     const times = [];
+    const now = new Date();
+
+    // Check if appointment is today
+    const aptDateStr = appointment?.appointment_date
+      ? String(appointment.appointment_date).split("T")[0]
+      : null;
+    const todayStr = now.toISOString().split("T")[0];
+    const isToday = aptDateStr === todayStr;
+
+    const currentTotalMin = isToday ? (now.getHours() * 60 + now.getMinutes()) : null;
+
     if (schedule.shift === "AM") {
       for (let totalMin = 8 * 60; totalMin < 12 * 60; totalMin += 20) {
         const hour = Math.floor(totalMin / 60);
@@ -54,6 +65,7 @@ export default function RescheduleDialog({
         times.push({
           value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
           label: `${hour}:${minute.toString().padStart(2, "0")} AM`,
+          totalMin,
         });
       }
     } else if (schedule.shift === "PM") {
@@ -64,11 +76,18 @@ export default function RescheduleDialog({
         times.push({
           value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
           label: `${displayHour}:${minute.toString().padStart(2, "0")} PM`,
+          totalMin,
         });
       }
     }
+
+    // If appointment is today, filter out times that have already passed
+    if (isToday && currentTotalMin !== null) {
+      return times.filter((t) => t.totalMin > currentTotalMin);
+    }
+
     return times;
-  }, [schedule?.shift]);
+  }, [schedule?.shift, appointment?.appointment_date]);
 
   // Fetch booked slots for the appointment's date + schedule + doctor
   useEffect(() => {
