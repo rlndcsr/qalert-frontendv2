@@ -429,7 +429,7 @@ export default function DoctorQueueCard({
       >
         {nowServingPatient ? (
           <div
-            className={`flex flex-col items-center justify-center gap-0.5 -mt-[4px] rounded-lg bg-gradient-to-br from-[#374D6C] to-[#4A6280] ${compact ? "min-h-[3.5rem] px-2 py-1.5" : "min-h-[5rem] px-3 py-2"}`}
+            className={`flex flex-col items-center justify-center gap-0.5 -mt-[4px] rounded-lg bg-gradient-to-br from-[#00968a] to-[#11b3a6] ${compact ? "min-h-[3.5rem] px-2 py-1.5" : "min-h-[5rem] px-3 py-2"}`}
           >
             <p
               className={`font-semibold uppercase tracking-wide text-white/90 ${compact ? "text-[11px] leading-tight" : "text-sm leading-tight"}`}

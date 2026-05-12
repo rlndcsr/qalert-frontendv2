@@ -35,6 +35,8 @@ export default function DoctorQueuePanels({ setQueues }) {
   const [queueEntries, setQueueEntries] = useState([]);
   const [users, setUsers] = useState({});
   const [isLoadingData, setIsLoadingData] = useState(true);
+  // Tracks previous queue_status per queue_entry_id (for undo functionality)
+  const [previousStatusMap, setPreviousStatusMap] = useState({});
 
   // Appointment time map keyed by appointment_id
   const [appointmentTimeMap, setAppointmentTimeMap] = useState({});
@@ -289,6 +291,11 @@ export default function DoctorQueuePanels({ setQueues }) {
       });
 
       // Immediately update local state — backend status is already "called"
+      // Save current status as previous before transitioning
+      setPreviousStatusMap((prev) => ({
+        ...prev,
+        [queue.queue_entry_id]: queue.queue_status,
+      }));
       setQueueEntries((prev) =>
         prev.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
@@ -355,6 +362,11 @@ export default function DoctorQueuePanels({ setQueues }) {
       );
       if (!response.ok) throw new Error("Failed to update queue status");
 
+      // Save current status as previous before transitioning
+      setPreviousStatusMap((prev) => ({
+        ...prev,
+        [queue.queue_entry_id]: queue.queue_status,
+      }));
       setQueueEntries((prev) =>
         prev.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
@@ -407,6 +419,11 @@ export default function DoctorQueuePanels({ setQueues }) {
       );
       if (!response.ok) throw new Error("Failed to update queue status");
 
+      // Save current status as previous before transitioning
+      setPreviousStatusMap((prev) => ({
+        ...prev,
+        [queue.queue_entry_id]: queue.queue_status,
+      }));
       setQueueEntries((prev) =>
         prev.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
@@ -459,6 +476,11 @@ export default function DoctorQueuePanels({ setQueues }) {
       );
       if (!response.ok) throw new Error("Failed to update queue status");
 
+      // Save current status as previous before transitioning
+      setPreviousStatusMap((prev) => ({
+        ...prev,
+        [queue.queue_entry_id]: queue.queue_status,
+      }));
       setQueueEntries((prev) =>
         prev.map((q) =>
           q.queue_entry_id === queue.queue_entry_id
@@ -482,6 +504,59 @@ export default function DoctorQueuePanels({ setQueues }) {
       sileo.error({
         title: "Update failed",
         description: "Failed to mark patient as no-show.",
+      });
+    }
+  };
+
+  const handleResetToNoShow = async (queue) => {
+    const token = getAuthToken();
+    if (!token) {
+      sileo.error({
+        title: "Authentication required",
+        description: "Please log in again.",
+      });
+      return;
+    }
+    const previousStatus = previousStatusMap[queue.queue_entry_id] || "no_show";
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/queues/status/${queue.queue_entry_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({ queue_status: previousStatus }),
+        },
+      );
+      if (!response.ok) throw new Error("Failed to reset queue status");
+
+      setQueueEntries((prev) =>
+        prev.map((q) =>
+          q.queue_entry_id === queue.queue_entry_id
+            ? { ...q, queue_status: previousStatus }
+            : q,
+        ),
+      );
+      setQueues((prevQueues) =>
+        prevQueues.map((q) =>
+          q.queue_entry_id === queue.queue_entry_id
+            ? { ...q, queue_status: previousStatus }
+            : q,
+        ),
+      );
+      sileo.success({
+        title: "Status reset",
+        description: `Queue #${String(queue.queue_number).padStart(3, "0")} returned to ${previousStatus}.`,
+      });
+    } catch (error) {
+      console.error("Error resetting patient to no-show:", error);
+      sileo.error({
+        title: "Reset failed",
+        description: "Failed to reset patient to no-show.",
       });
     }
   };
@@ -755,45 +830,64 @@ export default function DoctorQueuePanels({ setQueues }) {
                                             </button>
                                           )}
                                           {status === "called" && (
-                                            <button
-                                              onClick={() =>
-                                                handleArrived(queue)
-                                              }
-                                              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
-                                            >
-                                              Arrived
-                                            </button>
+                                            <>
+                                              <button
+                                                onClick={() =>
+                                                  handleArrived(queue)
+                                                }
+                                                className="px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                Mark Arrived
+                                              </button>
+                                              <button
+                                                onClick={() =>
+                                                  handleNoShow(queue)
+                                                }
+                                                className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                No Show
+                                              </button>
+                                            </>
                                           )}
                                           {status === "now_serving" && (
-                                            <button
-                                              onClick={() =>
-                                                handleCompletePatient(queue)
-                                              }
-                                              className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
-                                            >
-                                              Done
-                                            </button>
+                                            <>
+                                              <button
+                                                onClick={() =>
+                                                  handleCompletePatient(queue)
+                                                }
+                                                className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                Done
+                                              </button>
+                                              <button
+                                                onClick={() =>
+                                                  handleResetToNoShow(queue)
+                                                }
+                                                className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                Undo
+                                              </button>
+                                            </>
                                           )}
                                           {status === "no_show" && (
-                                            <button
-                                              onClick={() =>
-                                                handleArrived(queue)
-                                              }
-                                              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
-                                            >
-                                              Arrived
-                                            </button>
-                                          )}
-                                          {(status === "called" ||
-                                            status === "now_serving") && (
-                                            <button
-                                              onClick={() =>
-                                                handleNoShow(queue)
-                                              }
-                                              className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
-                                            >
-                                              No Show
-                                            </button>
+                                            <>
+                                              <button
+                                                onClick={() =>
+                                                  handleArrived(queue)
+                                                }
+                                                className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                Arrived
+                                              </button>
+                                              <button
+                                                onClick={() =>
+                                                  handleResetToNoShow(queue)
+                                                }
+                                                className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition-colors hover:cursor-pointer"
+                                              >
+                                                Undo
+                                              </button>
+                                            </>
                                           )}
                                         </div>
                                       </td>
